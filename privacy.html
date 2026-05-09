@@ -1,48 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Privacy Policy - Study Task Tracker</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+
+    .header-inner {
+      align-items: center;
+      padding: 0.5rem 0;
+    }
+
+    .tasks-section p,
+    .form-section p {
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .intro-card {
+      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .intro-card p {
+      color: var(--text);
+      font-size: 1.15rem;
+      font-weight: 700;
+      line-height: 1.8;
+      max-width: 70rem;
+      margin: 0 auto;
+    }
+    
+    .policy-card {
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .policy-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.04),
+        transparent
+      );
+      pointer-events: none;
+    }
+
+    .policy-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .back-home-section {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .btn-primary {
+      text-decoration: none;
+    }
+  </style>
 </head>
+
 <body>
 
 <header class="site-header">
-  <h1>🔒 Privacy Policy</h1>
+  <div class="header-inner">
+    <div>
+      <p class="eyebrow">Privacy & Security</p>
+
+      <h1>🔒 Privacy Policy</h1>
+
+      <p class="header-subtitle">
+        Your data stays private and secure while using Study Task Tracker.
+      </p>
+    </div>
+  </div>
 </header>
 
 <main class="container">
-  <p>
-    This Study Task Tracker is designed with privacy in mind.
-  </p>
 
-  <h2>Data Collection</h2>
-  <p>
-    We do not collect, store, or transmit any personal data.
-    All tasks are stored locally in your browser using local storage.
-  </p>
+  <section class="form-section intro-card">
+    <p>
+      We believe productivity tools should respect user privacy.
+      Study Task Tracker keeps your data local and under your control.
+    </p>
+  </section>
 
-  <h2>Data Usage</h2>
-  <p>
-    Your data stays on your device and is only used to display your tasks within the application.
-  </p>
+  <section class="tasks-section policy-card">
+    <div class="section-header">
+      <h2>Data Collection</h2>
+    </div>
 
-  <h2>Third Parties</h2>
-  <p>
-    This application does not use any third-party analytics, tracking, or advertising services.
-  </p>
+    <p>
+      We do not collect, store, or transmit any personal data.
+      All tasks are stored locally in your browser using local storage.
+    </p>
+  </section>
 
-  <h2>Changes</h2>
-  <p>
-    This privacy policy may be updated if new features are added.
-  </p>
+  <section class="tasks-section policy-card">
+    <div class="section-header">
+      <h2>Data Usage</h2>
+    </div>
 
-  <p><a href="index.html">← Back to Home</a></p>
+    <p>
+      Your data stays on your device and is only used to display your tasks within the application.
+    </p>
+  </section>
+
+  <section class="tasks-section policy-card">
+    <div class="section-header">
+      <h2>Third Parties</h2>
+    </div>
+
+    <p>
+      This application does not use any third-party analytics, tracking, or advertising services.
+    </p>
+  </section>
+
+  <section class="tasks-section policy-card">
+    <div class="section-header">
+      <h2>Policy Updates</h2>
+    </div>
+
+    <p>
+      This privacy policy may be updated if new features are added in the future.
+    </p>
+  </section>
+
+  <section class="toolbar back-home-section">
+    <a href="index.html" class="btn-primary">
+      Back to Home
+    </a>
+  </section>
+
 </main>
 
 <footer class="site-footer">
-  <p>&copy; 2026 Study Task Tracker</p>
+  <p>&copy; 2026 Study Task Tracker | Made for students</p>
 </footer>
 
 </body>
