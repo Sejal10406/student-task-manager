@@ -66,84 +66,64 @@
     }
   </style>
 </head>
+<body class="legal-page" data-theme="dark">
 
-<body>
-
-<header class="site-header">
-  <div class="header-inner">
-    <div>
-      <p class="eyebrow">Privacy & Security</p>
-
+  <header class="site-header">
+    <div class="header-content">
       <h1>🔒 Privacy Policy</h1>
-
-      <p class="header-subtitle">
-        Your data stays private and secure while using Study Task Tracker.
-      </p>
+      <div class="header-actions">
+        <select id="themeSwitcher" class="theme-dropdown" aria-label="Switch Theme">
+          <option value="light">🌞 Light</option>
+          <option value="dark" selected>🌙 Dark</option>
+          <option value="blue">🩵 Blue</option>
+          <option value="pastel">🎀 Pastel</option>
+        </select>
+      </div>
     </div>
-  </div>
-</header>
+  </header>
 
 <main class="container">
+  <p>
+    This Study Task Tracker is designed with privacy in mind.
+  </p>
 
-  <section class="form-section intro-card">
-    <p>
-      We believe productivity tools should respect user privacy.
-      Study Task Tracker keeps your data local and under your control.
-    </p>
-  </section>
-
-  <section class="tasks-section policy-card">
-    <div class="section-header">
-      <h2>Data Collection</h2>
-    </div>
-
+  <div class="legal-tile glass-card">
+    <h2>Data Collection</h2>
     <p>
       We do not collect, store, or transmit any personal data.
       All tasks are stored locally in your browser using local storage.
     </p>
-  </section>
-
-  <section class="tasks-section policy-card">
-    <div class="section-header">
-      <h2>Data Usage</h2>
-    </div>
-
+  </div>
+  
+  <div class="legal-tile glass-card">
+    <h2>Data Usage</h2>
     <p>
       Your data stays on your device and is only used to display your tasks within the application.
     </p>
-  </section>
+  </div>
 
-  <section class="tasks-section policy-card">
-    <div class="section-header">
-      <h2>Third Parties</h2>
-    </div>
-
+  <div class="legal-tile glass-card">
+    <h2>Third Parties</h2>
     <p>
       This application does not use any third-party analytics, tracking, or advertising services.
     </p>
-  </section>
+  </div>
 
-  <section class="tasks-section policy-card">
-    <div class="section-header">
-      <h2>Policy Updates</h2>
-    </div>
-
+  <div class="legal-tile glass-card">
+    <h2>Changes</h2>
     <p>
-      This privacy policy may be updated if new features are added in the future.
+      This privacy policy may be updated if new features are added.
     </p>
-  </section>
+  </div>
 
-  <section class="toolbar back-home-section">
-    <a href="index.html" class="btn-primary">
-      Back to Home
-    </a>
-  </section>
-
+  <p><a href="index.html">← Back to Home</a></p>
 </main>
 
 <footer class="site-footer">
   <p>&copy; 2026 Study Task Tracker | Made for students</p>
 </footer>
+
+<script src="script.js"></script>
 
 </body>
 </html>

@@ -1,25 +1,80 @@
-const state = {
-  tasks: JSON.parse(localStorage.getItem("tasks") || "[]"),
-  currentFilter: "all",
-  searchQuery: "",
-};
+// Nexus Task Master - Core Logic
+// Enhanced Version
+
+document.addEventListener('DOMContentLoaded', () => {
+    // DOM Elements
+    const taskForm = document.getElementById('taskForm');
+    const taskInput = document.getElementById('taskInput');
+    const taskCategory = document.getElementById('taskCategory');
+    const taskPriority = document.getElementById('taskPriority');
+    const taskList = document.getElementById('taskList');
+    const taskStatsText = document.getElementById('taskStatsText');
+    const progressBar = document.getElementById('progressBar');
+    const searchInput = document.getElementById('searchInput');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const errorMsg = document.getElementById('errorMsg');
+    const themeSwitcher = document.getElementById('themeSwitcher');
+    const emptyState = document.getElementById('emptyState');
+    const celebration = document.getElementById('celebration');
+    const closeCelebration = document.getElementById('closeCelebration');
+
+    // State
+    let tasks = JSON.parse(localStorage.getItem('nexus_tasks')) || [];
+
+    // Initialize
+    init();
+
+    function init() {
+        if (taskList) renderTasks();
+        setupTheme();
+        attachEventListeners();
+    }
 
 const elements = {};
 
-document.addEventListener("DOMContentLoaded", () => {
-  elements.themeSwitcher = document.getElementById("themeSwitcher");
-  elements.taskForm = document.getElementById("taskForm");
-  elements.taskInput = document.getElementById("taskInput");
-  elements.categoryInput = document.getElementById("categoryInput");
-  elements.errorMsg = document.getElementById("errorMsg");
-  elements.taskList = document.getElementById("taskList");
-  elements.searchInput = document.getElementById("searchInput");
-  elements.filterButtons = document.getElementById("filterButtons");
-  elements.emptyState = document.getElementById("emptyState");
-  elements.taskStats = document.getElementById("taskStats");
-  elements.celebration = document.getElementById("celebration");
-  elements.sortAscBtn = document.getElementById("sortAscBtn");
-  elements.sortDescBtn = document.getElementById("sortDescBtn");
+    function attachEventListeners() {
+        // Add Task
+        if (taskForm) {
+            taskForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                addTask();
+            });
+        }
+
+        // Theme Switcher
+        if (themeSwitcher) {
+            themeSwitcher.addEventListener('change', (e) => {
+                const theme = e.target.value;
+                document.body.setAttribute('data-theme', theme);
+                localStorage.setItem('nexus_theme', theme);
+            });
+        }
+
+        // Search
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                renderTasks(e.target.value);
+            });
+        }
+
+        // Clear All
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to clear all tasks?')) {
+                    tasks = [];
+                    saveAndRender();
+                }
+            });
+        }
+
+        // Close Celebration
+        if (closeCelebration) {
+            closeCelebration.addEventListener('click', () => {
+                celebration.classList.remove('show');
+                setTimeout(() => celebration.classList.add('hidden'), 500); // Wait for transition
+            });
+        }
+    }
 
   loadTheme();
   bindEvents();
@@ -62,11 +117,25 @@ function bindEvents() {
     });
   }
 
-  if (elements.themeSwitcher) {
-    elements.themeSwitcher.addEventListener("change", (event) => {
-      setTheme(event.target.value);
-    });
-  }
+    function updateStats() {
+        const total = tasks.length;
+        const completedCount = tasks.filter(t => t.completed).length;
+        const percent = total === 0 ? 0 : Math.round((completedCount / total) * 100);
+
+        if (taskStatsText) taskStatsText.textContent = `✅ ${completedCount} / ${total} completed (${percent}%)`;
+        if (progressBar) progressBar.style.width = `${percent}%`;
+
+        // Celebration logic
+        if (celebration) {
+            if (total > 0 && total === completedCount) {
+                celebration.classList.remove('hidden');
+                celebration.classList.add('show');
+            } else {
+                celebration.classList.remove('show');
+                celebration.classList.add('hidden');
+            }
+        }
+    }
 
   if (elements.sortAscBtn) {
     elements.sortAscBtn.addEventListener("click", () => sortTasks("asc"));

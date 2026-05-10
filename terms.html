@@ -67,83 +67,63 @@
 
   </style>
 </head>
+<body class="legal-page" data-theme="dark">
 
-<body>
-
-<header class="site-header">
-  <div class="header-inner">
-    <div>
-      <p class="eyebrow">Guidelines & Usage</p>
-
+  <header class="site-header">
+    <div class="header-content">
       <h1>📄 Terms of Service</h1>
-
-      <p class="header-subtitle">
-        Please review the terms and conditions for using Study Task Tracker.
-      </p>
+      <div class="header-actions">
+        <select id="themeSwitcher" class="theme-dropdown" aria-label="Switch Theme">
+          <option value="light">🌞 Light</option>
+          <option value="dark" selected>🌙 Dark</option>
+          <option value="blue">🩵 Blue</option>
+          <option value="pastel">🎀 Pastel</option>
+        </select>
+      </div>
     </div>
-  </div>
-</header>
+  </header>
 
 <main class="container">
+  <p>
+    By using Study Task Tracker, you agree to the following terms.
+  </p>
 
-  <section class="form-section intro-card">
-    <p>
-      By using Study Task Tracker, you agree to use the application responsibly
-      while understanding that all data remains locally stored within your browser.
-    </p>
-  </section>
-
-  <section class="tasks-section policy-card">
-    <div class="section-header">
-      <h2>Use of the Application</h2>
-    </div>
-
+  <div class="legal-tile glass-card">
+    <h2>Use of the Application</h2>
     <p>
       This application is provided for personal productivity and educational use only.
     </p>
-  </section>
+  </div>
 
-  <section class="tasks-section policy-card">
-    <div class="section-header">
-      <h2>Local Storage</h2>
-    </div>
-
+  <div class="legal-tile glass-card">
+    <h2>Local Storage</h2>
     <p>
       All data is stored locally in your browser. You are responsible for managing your own data.
     </p>
-  </section>
+  </div>
 
-  <section class="tasks-section policy-card">
-    <div class="section-header">
-      <h2>No Warranty</h2>
-    </div>
-
+  <div class="legal-tile glass-card">
+    <h2>No Warranty</h2>
     <p>
       This application is provided "as is" without any warranties regarding performance or data persistence.
     </p>
-  </section>
+  </div>
 
-  <section class="tasks-section policy-card">
-    <div class="section-header">
-      <h2>Modifications</h2>
-    </div>
-
+  <div class="legal-tile glass-card">
+    <h2>Modifications</h2>
     <p>
       Features and terms may be updated or changed at any time.
     </p>
-  </section>
+  </div>
 
-  <section class="toolbar back-home-section">
-    <a href="index.html" class="btn-primary">
-      Back to Home
-    </a>
-  </section>
-
+  <p><a href="index.html">← Back to Home</a></p>
 </main>
 
 <footer class="site-footer">
   <p>&copy; 2026 Study Task Tracker | Made for students</p>
 </footer>
+
+<script src="script.js"></script>
 
 </body>
 </html>
