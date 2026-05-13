@@ -1,129 +1,144 @@
+// --- State Management ---
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+// --- Selectors ---
+const taskForm = document.getElementById("taskForm");
+const taskInput = document.getElementById("taskInput");
+const taskList = document.getElementById("taskList");
+const taskStats = document.getElementById("taskStats");
+const errorMsg = document.getElementById("errorMsg");
+const celebration = document.getElementById("celebration");
+const themeSwitcher = document.getElementById("themeSwitcher");
+
+// --- Initialization ---
+document.addEventListener("DOMContentLoaded", () => {
+  renderTasks();
+  initTheme();
+});
+
+// --- Core Functions ---
+
 function addTask() {
-  const input = document.getElementById("taskInput");
-  const task = input.value.trim();
-  const errorMsg = document.getElementById("errorMsg");
-
-  if (task.trim()=== "") {
-    errorMsg.textContent = " Please enter a task.";
+  const text = taskInput.value.trim();
+  
+  if (text === "") {
+    errorMsg.textContent = "Please enter a task.";
     return;
-  };
+  }
+
   errorMsg.textContent = "";
-  const li = document.createElement("li");
-
-
-  const checkbox = document.createElement("input");
-  checkbox.type = "checkbox";
-  checkbox.addEventListener("change", function () {
-    toggleTask(checkbox);
-  });
-
-  const span = document.createElement("span");
-  span.textContent = task;
 
   const now = new Date();
   const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const day = dayNames[now.getDay()];
-  const date =`${now.getDate()} ${now.toLocaleString("default", { month: "long" })} ${now.getFullYear()}`;
+  const date = `${now.getDate()} ${now.toLocaleString("default", { month: "long" })} ${now.getFullYear()}`;
   const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  const timeElement = document.createElement("small");
-  timeElement.textContent = ` (${day}, ${date} at ${time})`;
-  timeElement.style.marginLeft = "10px";
-  timeElement.style.color = "#888";
 
+  const newTask = {
+    id: Date.now(),
+    text: text,
+    completed: false,
+    timestamp: `(${day}, ${date} at ${time})`
+  };
 
-  const editButton = document.createElement("button");
-    editButton.textContent = "Edit";
-    editButton.addEventListener("click", function () {
-      const newTask = prompt("Edit task:", span.textContent);
-      if (newTask !== null) {
-        span.textContent = newTask;
-      }
+  tasks.push(newTask);
+  saveAndRender();
+  taskInput.value = "";
+}
+
+function removeTask(id) {
+  tasks = tasks.filter(task => task.id !== id);
+  saveAndRender();
+}
+
+function toggleTask(id) {
+  tasks = tasks.map(task => {
+    if (task.id === id) {
+      return { ...task, completed: !task.completed };
+    }
+    return task;
+  });
+  saveAndRender();
+}
+
+function editTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+
+  const newText = prompt("Edit task:", task.text);
+  if (newText !== null && newText.trim() !== "") {
+    task.text = newText.trim();
+    saveAndRender();
+  }
+}
+
+function saveAndRender() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  renderTasks();
+}
+
+function renderTasks() {
+  taskList.innerHTML = "";
+
+  tasks.forEach(task => {
+    const li = document.createElement("li");
+    if (task.completed) li.classList.add("completed");
+
+    li.innerHTML = `
+      <input type="checkbox" ${task.completed ? "checked" : ""} onchange="toggleTask(${task.id})">
+      <span>
+        ${task.text}
+        <small style="display: block; font-size: 0.75rem; opacity: 0.7;">${task.timestamp}</small>
+      </span>
+      <div style="display: flex; gap: 5px;">
+        <button onclick="editTask(${task.id})" style="padding: 0.5rem; font-size: 0.8rem;">Edit</button>
+        <button onclick="removeTask(${task.id})" style="padding: 0.5rem; font-size: 0.8rem; background: var(--error-color, #ef4444);">Remove</button>
+      </div>
+    `;
+
+    taskList.appendChild(li);
+  });
+
+  updateStats();
+}
+
+function updateStats() {
+  const completedCount = tasks.filter(t => t.completed).length;
+  const totalCount = tasks.length;
+
+  if (taskStats) {
+    taskStats.innerText = `✅ ${completedCount} / ${totalCount} completed`;
+  }
+
+  if (celebration) {
+    if (totalCount > 0 && completedCount === totalCount) {
+      celebration.classList.remove("hidden");
+      setTimeout(() => celebration.classList.add("show"), 10);
+    } else {
+      celebration.classList.remove("show");
+      celebration.classList.add("hidden");
+    }
+  }
+}
+
+// --- Theme Management ---
+
+function initTheme() {
+  const savedTheme = localStorage.getItem("theme") || "light";
+  document.documentElement.setAttribute("data-theme", savedTheme);
+
+  if (themeSwitcher) {
+    themeSwitcher.value = savedTheme;
+    themeSwitcher.addEventListener("change", (e) => {
+      const selectedTheme = e.target.value;
+      document.documentElement.setAttribute("data-theme", selectedTheme);
+      localStorage.setItem("theme", selectedTheme);
     });
-    li.appendChild(span);
-    li.appendChild(timeElement);
-    li.appendChild(editButton);
-  const removeButton = document.createElement("button");
-  removeButton.textContent = "Remove";
-  removeButton.addEventListener("click", function () {
-    li.remove();
-
-    taskTracker();
-    
-  });
-
-
-
-  li.appendChild(checkbox);
-  li.appendChild(span);
-
-
-  li.appendChild(removeButton);
-
-  document.getElementById("taskList").appendChild(li);
-  
-  input.value = "";
-
-  taskTracker();
-
-}
-/* =========================
-   MULTI-THEME SWITCHER
-========================= */
-
-const themeSwitcher = document.getElementById("themeSwitcher");
-
-// Load saved theme
-const savedTheme = localStorage.getItem("theme") || "light";
-document.documentElement.setAttribute("data-theme", savedTheme);
-
-if (themeSwitcher) {
-  themeSwitcher.value = savedTheme;
-
-  themeSwitcher.addEventListener("change", function (e) {
-    const selectedTheme = e.target.value;
-
-    document.documentElement.setAttribute("data-theme", selectedTheme);
-    localStorage.setItem("theme", selectedTheme);
-  });
-}
-
-
-
-
-function toggleTask(checkbox) {
-  const span = checkbox.nextElementSibling;
-  span.classList.toggle("completed");
-
-  taskTracker();
-}
-
-
-function taskTracker() {
-  const tasks = document.querySelectorAll("#taskList li");
-  const completed = document.querySelectorAll("#taskList input:checked");
-
-  const empty = document.getElementById("emptyState");
-  if (empty) {
-    empty.style.display = tasks.length === 0 ? "block" : "none";
-  }
-
-  const stats = document.getElementById("taskStats");
-  if (stats) {
-    stats.innerText = `✅ ${completed.length} / ${tasks.length} completed`;
-  }
-
-  const celebration = document.getElementById("celebration");
-
-  if (tasks.length > 0 && tasks.length === completed.length) {
-    celebration.classList.remove("hidden");
-
-    setTimeout(() => {
-      celebration.classList.add("show");
-    }, 100);
-  } else {
-    celebration.classList.remove("show");
-    celebration.classList.add("hidden");
   }
 }
 
-
+// Expose functions to window for inline event handlers
+window.addTask = addTask;
+window.toggleTask = toggleTask;
+window.removeTask = removeTask;
+window.editTask = editTask;
