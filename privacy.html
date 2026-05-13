@@ -1,49 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Privacy Policy - Study Task Tracker</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
+  <link rel="stylesheet" href="style.css" />
 
-<header class="site-header">
-  <h1>🔒 Privacy Policy</h1>
-</header>
+  <style>
+
+    .header-inner {
+      align-items: center;
+      padding: 0.5rem 0;
+    }
+
+    .tasks-section p,
+    .form-section p {
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .intro-card {
+      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .intro-card p {
+      color: var(--text);
+      font-size: 1.15rem;
+      font-weight: 700;
+      line-height: 1.8;
+      max-width: 70rem;
+      margin: 0 auto;
+    }
+    
+    .policy-card {
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .policy-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.04),
+        transparent
+      );
+      pointer-events: none;
+    }
+
+    .policy-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .back-home-section {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .btn-primary {
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body class="legal-page" data-theme="dark">
+
+  <header class="site-header">
+    <div class="header-content">
+      <h1>🔒 Privacy Policy</h1>
+      <div class="header-actions">
+        <select id="themeSwitcher" class="theme-dropdown" aria-label="Switch Theme">
+          <option value="light">🌞 Light</option>
+          <option value="dark" selected>🌙 Dark</option>
+          <option value="blue">🩵 Blue</option>
+          <option value="pastel">🎀 Pastel</option>
+        </select>
+      </div>
+    </div>
+  </header>
 
 <main class="container">
   <p>
     This Study Task Tracker is designed with privacy in mind.
   </p>
 
-  <h2>Data Collection</h2>
-  <p>
-    We do not collect, store, or transmit any personal data.
-    All tasks are stored locally in your browser using local storage.
-  </p>
+  <div class="legal-tile glass-card">
+    <h2>Data Collection</h2>
+    <p>
+      We do not collect, store, or transmit any personal data.
+      All tasks are stored locally in your browser using local storage.
+    </p>
+  </div>
+  
+  <div class="legal-tile glass-card">
+    <h2>Data Usage</h2>
+    <p>
+      Your data stays on your device and is only used to display your tasks within the application.
+    </p>
+  </div>
 
-  <h2>Data Usage</h2>
-  <p>
-    Your data stays on your device and is only used to display your tasks within the application.
-  </p>
+  <div class="legal-tile glass-card">
+    <h2>Third Parties</h2>
+    <p>
+      This application does not use any third-party analytics, tracking, or advertising services.
+    </p>
+  </div>
 
-  <h2>Third Parties</h2>
-  <p>
-    This application does not use any third-party analytics, tracking, or advertising services.
-  </p>
-
-  <h2>Changes</h2>
-  <p>
-    This privacy policy may be updated if new features are added.
-  </p>
+  <div class="legal-tile glass-card">
+    <h2>Changes</h2>
+    <p>
+      This privacy policy may be updated if new features are added.
+    </p>
+  </div>
 
   <p><a href="index.html">← Back to Home</a></p>
 </main>
 
 <footer class="site-footer">
-  <p>&copy; 2026 Study Task Tracker</p>
+  <p>&copy; 2026 Study Task Tracker | Made for students</p>
 </footer>
+
+<script src="script.js"></script>
 
 </body>
 </html>

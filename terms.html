@@ -1,48 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Terms of Service - Study Task Tracker</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
+  <link rel="stylesheet" href="style.css" />
 
-<header class="site-header">
-  <h1>📄 Terms of Service</h1>
-</header>
+  <style>
+
+    .header-inner {
+      align-items: center;
+      padding: 0.5rem 0;
+    }
+
+    .tasks-section p,
+    .form-section p {
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .intro-card {
+      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .intro-card p {
+      color: var(--text);
+      font-size: 1.15rem;
+      font-weight: 700;
+      line-height: 1.8;
+      max-width: 70rem;
+      margin: 0 auto;
+    }
+
+    .policy-card {
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .policy-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .policy-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.04),
+        transparent
+      );
+      pointer-events: none;
+    }
+
+    .back-home-section {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .btn-primary {
+      text-decoration: none;
+    }
+
+  </style>
+</head>
+<body class="legal-page" data-theme="dark">
+
+  <header class="site-header">
+    <div class="header-content">
+      <h1>📄 Terms of Service</h1>
+      <div class="header-actions">
+        <select id="themeSwitcher" class="theme-dropdown" aria-label="Switch Theme">
+          <option value="light">🌞 Light</option>
+          <option value="dark" selected>🌙 Dark</option>
+          <option value="blue">🩵 Blue</option>
+          <option value="pastel">🎀 Pastel</option>
+        </select>
+      </div>
+    </div>
+  </header>
 
 <main class="container">
   <p>
     By using Study Task Tracker, you agree to the following terms.
   </p>
 
-  <h2>Use of the Application</h2>
-  <p>
-    This application is provided for personal productivity and educational use only.
-  </p>
+  <div class="legal-tile glass-card">
+    <h2>Use of the Application</h2>
+    <p>
+      This application is provided for personal productivity and educational use only.
+    </p>
+  </div>
 
-  <h2>Local Storage</h2>
-  <p>
-    All data is stored locally in your browser. You are responsible for managing your own data.
-  </p>
+  <div class="legal-tile glass-card">
+    <h2>Local Storage</h2>
+    <p>
+      All data is stored locally in your browser. You are responsible for managing your own data.
+    </p>
+  </div>
 
-  <h2>No Warranty</h2>
-  <p>
-    This application is provided "as is" without any warranties regarding performance or data persistence.
-  </p>
+  <div class="legal-tile glass-card">
+    <h2>No Warranty</h2>
+    <p>
+      This application is provided "as is" without any warranties regarding performance or data persistence.
+    </p>
+  </div>
 
-  <h2>Modifications</h2>
-  <p>
-    Features and terms may be updated or changed at any time.
-  </p>
+  <div class="legal-tile glass-card">
+    <h2>Modifications</h2>
+    <p>
+      Features and terms may be updated or changed at any time.
+    </p>
+  </div>
 
   <p><a href="index.html">← Back to Home</a></p>
 </main>
 
 <footer class="site-footer">
-  <p>&copy; 2026 Study Task Tracker</p>
+  <p>&copy; 2026 Study Task Tracker | Made for students</p>
 </footer>
+
+<script src="script.js"></script>
 
 </body>
 </html>
