@@ -1,17 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy Policy - Study Task Tracker</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="legal-page">
 
-<header class="site-header">
-  <h1><span class="material-symbols-outlined">shield</span> Privacy Policy</h1>
-</header>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <h1>🔒 Privacy Policy</h1>
+        <p class="header-subtitle">
+          <span id="headerGreeting">👋 Focus Time!</span>
+          <span class="subtitle-divider">•</span>
+          <span id="headerDate">Sun, May 17</span>
+        </p>
+      </div>
+      <div class="header-controls">
+        <div class="stats-pill">
+          <span class="stats-pill-label">Status</span>
+          <span class="stats-pill-value">🔒 Secure</span>
+        </div>
+        <div class="theme-pill">
+          <span class="theme-pill-label">Theme</span>
+          <select id="themeSwitcher" class="theme-dropdown" aria-label="Switch Theme">
+            <option value="light">🌞 Light</option>
+            <option value="dark" selected>🌙 Dark</option>
+            <option value="blue">🩵 Blue</option>
+            <option value="pastel">🎀 Pastel</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </header>
 
 <main class="container">
   <p>

@@ -1,66 +1,115 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Study Task Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 </head>
+
 <body>
   <a class="skip-link" href="#main-content">Skip to main content</a>
 
   <header class="site-header">
-    <h1><span class="material-symbols-outlined">menu_book</span> Study Task Tracker</h1>
-    
-    <div class="theme-picker" id="themePicker">
-      <button class="theme-btn" data-theme="light" title="Light Mode">
-        <span class="material-symbols-outlined">light_mode</span>
-      </button>
-      <button class="theme-btn" data-theme="dark" title="Dark Mode">
-        <span class="material-symbols-outlined">dark_mode</span>
-      </button>
-      <button class="theme-btn" data-theme="blue" title="Blue Mode">
-        <span class="material-symbols-outlined">palette</span>
-      </button>
-      <button class="theme-btn" data-theme="pastel" title="Pastel Mode">
-        <span class="material-symbols-outlined">auto_awesome</span>
-      </button>
+    <div class="header-inner">
+      <div>
+       
+
+        <p class="eyebrow"> Academic planner</p>
+        <h1><img src="favicon.png" alt="icon" width="32" height="32">Study Task Tracker</h1>
+        <p class="header-subtitle">Track study work, filter by topic, and keep momentum visible.</p>
+      </div>
+
+      <label class="theme-control" for="themeSwitcher">
+        <span class="theme-control-label">Theme</span>
+        <select id="themeSwitcher" class="theme-dropdown" aria-label="Theme selector">
+          <option value="light">☀️ Light</option>
+          <option value="dark">🌙Dark</option>
+          <option value="blue">🩵Blue</option>
+          <option value="pastel">🎀Pastel</option>
+        </select>
+      </label>
+      
+
     </div>
-    
   </header>
 
   <main id="main-content" class="container">
-    <form id="taskForm" onsubmit="event.preventDefault(); addTask();">
-      <label for="taskInput">Task description</label>
-      <input type="text" id="taskInput" placeholder="Enter task" aria-describedby="taskHelp">
-      <button type="submit">Add</button>
-      <p id="taskHelp" class="sr-only">Enter a task and press Add to track your study items.</p>
-    </form>
+    <section class="form-section" aria-labelledby="add-task-heading">
+      <form id="taskForm" class="task-form">
+        <div class="form-group">
+          <label id="add-task-heading" for="taskInput">Add a new task</label>
+          <div class="input-row">
+            <input type="text" id="taskInput" placeholder="Enter task description" aria-describedby="taskHelp">
+            <button type="submit" class="btn-primary" id="addBtn">Add Task</button>
+          </div>
+          <p id="taskHelp" class="sr-only">Type a task and press Add Task or Enter.</p>
+        </div>
 
-    <p id="errorMsg" class="error" role="alert"></p>
+        <div class="controls">
+          <select id="categoryInput" aria-label="Task category">
+            <option value="Theory">Theory</option>
+            <option value="Practical">Practical</option>
+            <option value="Revision">Revision</option>
+            <option value="Assignment">Assignment</option>
+          </select>
+        </div>
+      </form>
+      <p id="errorMsg" class="error" role="alert" aria-live="polite"></p>
+    </section>
 
-    <ul id="taskList" aria-live="polite" aria-label="Task list"></ul>
-    <p id="taskStats"></p>
+    <section class="toolbar" aria-label="Task tools">
+      <div class="sort-controls" aria-label="Sort tasks">
+        <button type="button" id="sortAscBtn">A to Z</button>
+        <button type="button" id="sortDescBtn">Z to A</button>
+      </div>
 
-    <div id="celebration" class="celebration hidden">
-    <img src="task completed image.jpg" alt="Celebration" />
-    <p>All tasks completed! <span class="material-symbols-outlined" style="vertical-align: middle;">celebration</span></p>
-  </div>
+      <div class="search-wrapper">
+        <input type="search" id="searchInput" placeholder="Search tasks" aria-label="Search tasks">
+      </div>
 
+      <div class="filter-buttons" id="filterButtons" aria-label="Filter tasks">
+        <button type="button" class="filter-btn active" data-filter="all">All</button>
+        <button type="button" class="filter-btn" data-filter="active">Active</button>
+        <button type="button" class="filter-btn" data-filter="completed">Completed</button>
+        <button type="button" class="filter-btn" data-filter="Theory">Theory</button>
+        <button type="button" class="filter-btn" data-filter="Practical">Practical</button>
+        <button type="button" class="filter-btn" data-filter="Revision">Revision</button>
+        <button type="button" class="filter-btn" data-filter="Assignment">Assignment</button>
+      </div>
+    </section>
+
+    <section class="tasks-section" aria-labelledby="tasks-heading">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">Your list</p>
+          <h2 id="tasks-heading">Tasks</h2>
+        </div>
+        <p id="taskStats" class="stats-badge" aria-live="polite"></p>
+      </div>
+
+      <div id="emptyState" class="empty-state" hidden>No tasks yet. Add one to get started.</div>
+      <ul id="taskList" class="task-list" aria-live="polite" aria-label="Task list"></ul>
+
+      <div id="celebration" class="celebration hidden" aria-live="polite">
+        
+        <img src="task completed image.jpg" alt="Task completed celebration" width="150" height="150">
+      </div>
+    </section>
+    
   </main>
 
   <footer class="site-footer">
-    <nav aria-label="Footer navigation">
-  <a href="#taskInput">Add task</a>
-  <a href="#taskList">View tasks</a>
-  <a href="#main-content">Back to top</a>
-  <a href="privacy.html">Privacy Policy</a>
-  <a href="terms.html">Terms of Service</a>
+    <nav class="footer-nav" aria-label="Footer navigation">
       <a href="#main-content">Back to top</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Service</a>
     </nav>
-    <p>Accessible study tracking with keyboard support and semantic structure.</p>
-    <p>&copy; 2026 Study Task Tracker</p>
+    <p>&copy; 2026 Study Task Tracker | Made for students</p>
   </footer>
 
   <script src="script.js"></script>
