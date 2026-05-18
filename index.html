@@ -3,15 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title> Gamified Task Tracker</title>
+  <title>Gamified Task Tracker - Level Up Your Productivity</title>
 
-  <!-- Google Font -->
+  <!-- Google Fonts (Inter & Poppins) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Icon Libraries -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  
+  <!-- Chart.js for premium analytics visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -121,12 +127,11 @@
 
     </aside>
 
-    <!-- MAIN -->
+    <!-- MAIN CONTENT -->
     <section class="main-content">
 
-      <!-- TOP -->
+      <!-- TOPBAR -->
       <div class="topbar">
-
         <div>
           <h2>Dashboard</h2>
           <p>Complete tasks and earn rewards ✨</p>
@@ -135,91 +140,197 @@
         <button id="themeToggle">
           <i class="ri-moon-clear-fill"></i>
         </button>
-
       </div>
 
-      <!-- ADD TASK -->
-      <div class="task-box">
-
-        <input
-          type="text"
-          id="taskInput"
-          placeholder="Enter your next task..."
-        />
-
-        <select id="categorySelect">
-          <option value="Theory">📘 Theory</option>
-          <option value="Practical">🧪 Practical</option>
-          <option value="Assignment">📝 Assignment</option>
-          <option value="Revision">📖 Revision</option>
-        </select>
-
-        <button id="addTaskBtn">
-          <i class="ri-add-line"></i>Add Task</button>
-
+      <!-- SLEEK TAB NAVIGATION -->
+      <div class="nav-tabs">
+        <button class="tab-btn active" data-tab="quests">
+          <i class="ri-checkbox-multiple-line"></i> Quests & Workspace
+        </button>
+        <button class="tab-btn" data-tab="analytics">
+          <i class="ri-bar-chart-2-line"></i> Analytics Hub
+        </button>
       </div>
 
-      <!-- FILTERS -->
-      <div class="filters">
+      <!-- TAB 1: QUESTS & TIMER -->
+      <div id="quests-tab" class="tab-content active">
+        <div class="workspace-layout">
+          <!-- Tasks Work area -->
+          <div class="workspace-main">
+            <!-- ADD TASK -->
+            <div class="task-box">
+              <input
+                type="text"
+                id="taskInput"
+                placeholder="Enter your next task..."
+              />
 
-        <button class="filter-btn active" data-filter="All">
-          All
-        </button>
+              <select id="categorySelect">
+                <option value="Theory">📘 Theory</option>
+                <option value="Practical">🧪 Practical</option>
+                <option value="Assignment">📝 Assignment</option>
+                <option value="Revision">📖 Revision</option>
+              </select>
 
-        <button class="filter-btn" data-filter="Theory">
-          Theory
-        </button>
+              <button id="addTaskBtn">
+                <i class="ri-add-line"></i>Add Task
+              </button>
+            </div>
 
-        <button class="filter-btn" data-filter="Practical">
-          Practical
-        </button>
+            <!-- FILTERS -->
+            <div class="filters">
+              <button class="filter-btn active" data-filter="All">All</button>
+              <button class="filter-btn" data-filter="Theory">Theory</button>
+              <button class="filter-btn" data-filter="Practical">Practical</button>
+              <button class="filter-btn" data-filter="Assignment">Assignment</button>
+              <button class="filter-btn" data-filter="Revision">Revision</button>
+            </div>
 
-        <button class="filter-btn" data-filter="Assignment">
-          Assignment
-        </button>
+            <!-- TASKS -->
+            <div class="task-list" id="taskList">
+              <div class="empty-state">
+                <i class="ri-ghost-2-line"></i>
+                <h3>No Tasks Yet</h3>
+                <p>Add tasks and start your productivity adventure.</p>
+              </div>
+            </div>
+          </div>
 
-        <button class="filter-btn" data-filter="Revision">
-          Revision
-        </button>
-
+          <!-- Timer Sidebar -->
+          <div class="workspace-sidebar">
+            <div class="study-mode glass">
+              <h2 id="mode">Study Time</h2>
+              <div class="timer" id="timer">25:00</div>
+              <div class="buttons">
+                <button onclick="startTimer()"><i class="fa-solid fa-play"></i> Start</button>
+                <button onclick="pauseTimer()"><i class="fa-solid fa-pause"></i> Pause</button>
+                <button onclick="resetTimer()"><i class="fa-solid fa-rotate-right"></i> Reset</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- TASKS -->
-      <div class="task-list" id="taskList">
-
-        <div class="empty-state">
-
-          <i class="ri-ghost-2-line"></i>
-
-          <h3>No Tasks Yet</h3>
-
-          <p>
-            Add tasks and start your productivity adventure.
-          </p>
-
+      <!-- TAB 2: ANALYTICS HUB -->
+      <div id="analytics-tab" class="tab-content hidden">
+        <!-- Stats summary row -->
+        <div class="analytics-stats-grid">
+          <div class="analytics-stat-card glass">
+            <div class="stat-icon-wrapper blue">
+              <i class="ri-time-line"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="analyticsTotalHours">0.0h</h3>
+              <p>Total Study Time</p>
+            </div>
+          </div>
+          
+          <div class="analytics-stat-card glass">
+            <div class="stat-icon-wrapper green">
+              <i class="ri-checkbox-circle-fill"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="analyticsCompletedQuests">0</h3>
+              <p>Completed Quests</p>
+            </div>
+          </div>
+          
+          <div class="analytics-stat-card glass">
+            <div class="stat-icon-wrapper orange">
+              <i class="ri-fire-fill"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="analyticsStreak">0 days</h3>
+              <p>Active Streak</p>
+            </div>
+          </div>
+          
+          <div class="analytics-stat-card glass">
+            <div class="stat-icon-wrapper purple">
+              <i class="ri-percent-line"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="analyticsCompletionRate">0%</h3>
+              <p>Completion Rate</p>
+            </div>
+          </div>
         </div>
 
+        <!-- Charts grid -->
+        <div class="analytics-charts-grid">
+          <!-- Chart 1: Study hours -->
+          <div class="chart-card glass">
+            <div class="chart-header">
+              <div class="header-left">
+                <i class="ri-bar-chart-fill"></i>
+                <h3>Study Hours</h3>
+              </div>
+              <div class="chart-toggle-group">
+                <button class="toggle-btn active" id="btnWeeklyStudy">Weekly</button>
+                <button class="toggle-btn" id="btnMonthlyStudy">Monthly</button>
+              </div>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="studyHoursChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 2: Category Pie/Doughnut -->
+          <div class="chart-card glass">
+            <div class="chart-header">
+              <div class="header-left">
+                <i class="ri-pie-chart-fill"></i>
+                <h3>Subject Category Mastery</h3>
+              </div>
+            </div>
+            <div class="chart-wrapper pie-chart-wrapper">
+              <canvas id="categoryChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Heatmap & Subject detail grid -->
+        <div class="analytics-heatmap-layout">
+          <!-- Github style Heatmap -->
+          <div class="chart-card glass heatmap-card">
+            <div class="chart-header">
+              <div class="header-left">
+                <i class="ri-calendar-todo-fill"></i>
+                <h3>Consistency Heatmap</h3>
+              </div>
+              <p class="subtitle">Daily completions and study sessions (15-week view)</p>
+            </div>
+            <div class="heatmap-legend-wrapper">
+              <div class="heatmap-container" id="heatmapContainer"></div>
+              <div class="heatmap-legend">
+                <span>Less</span>
+                <div class="legend-box level-0"></div>
+                <div class="legend-box level-1"></div>
+                <div class="legend-box level-2"></div>
+                <div class="legend-box level-3"></div>
+                <div class="legend-box level-4"></div>
+                <span>More</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Subject completions -->
+          <div class="chart-card glass subject-stats-card">
+            <div class="chart-header">
+              <div class="header-left">
+                <i class="ri-medal-2-fill"></i>
+                <h3>Quest Mastery</h3>
+              </div>
+              <p class="subtitle">Completed vs. Total tasks per category</p>
+            </div>
+            <div class="subject-progress-list" id="subjectProgressList">
+              <!-- Dynamically populated by JavaScript -->
+            </div>
+          </div>
+        </div>
       </div>
 
     </section>
-    <div class="study-mode">
-
-  <h2 id="mode">Study Time</h2>
-
-  <div class="timer" id="timer">
-    25:00
-  </div>
-
-  <div class="buttons">
-  <button onclick="startTimer()"><i class="fa-solid fa-play"></i> Start</button>
-  <button onclick="pauseTimer()"><i class="fa-solid fa-pause"></i> Pause</button>
-  <button onclick="resetTimer()"><i class="fa-solid fa-rotate-right"></i> Reset</button>
-</div>
-
-
-</div>
-
-  </main>
 
   </main>
 
