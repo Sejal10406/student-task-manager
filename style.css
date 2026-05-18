@@ -874,3 +874,31 @@ body {
   }
 
 }
+
+/* Grit & Habit card variations (Phase 5 Extension) */
+.grit-card .quote-author {
+  color: #fb923c !important; /* Grit orange */
+}
+.grit-card:hover {
+  box-shadow: 0 8px 30px rgba(249, 115, 22, 0.08) !important;
+}
+
+.habit-card .quote-author {
+  color: #34d399 !important; /* Habit emerald */
+}
+.habit-card:hover {
+  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.08) !important;
+}
+
+.quotes-form-row, .quotes-workspace-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+
+@media (max-width: 640px) {
+  .quotes-form-row, .quotes-workspace-row {
+    grid-template-columns: 1fr;
+  }
+}
