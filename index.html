@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 </head>
 
 <body>
@@ -16,8 +18,10 @@
   <header class="site-header">
     <div class="header-inner">
       <div>
-        <p class="eyebrow">Academic planner</p>
-        <h1>Study Task Tracker</h1>
+       
+
+        <p class="eyebrow"> Academic planner</p>
+        <h1><img src="favicon.png" alt="icon" width="32" height="32">Study Task Tracker</h1>
         <p class="header-subtitle">Track study work, filter by topic, and keep momentum visible.</p>
       </div>
 
@@ -97,6 +101,23 @@
         <img src="task completed image.jpg" alt="Task completed celebration" width="150" height="150">
       </div>
     </section>
+    <div class="study-mode">
+
+  <h2 id="mode">Study Time</h2>
+
+  <div class="timer" id="timer">
+    25:00
+  </div>
+
+  <div class="buttons">
+  <button onclick="startTimer()"><i class="fa-solid fa-play"></i> Start</button>
+  <button onclick="pauseTimer()"><i class="fa-solid fa-pause"></i> Pause</button>
+  <button onclick="resetTimer()"><i class="fa-solid fa-rotate-right"></i> Reset</button>
+</div>
+
+
+</div>
+
   </main>
 
   <footer class="site-footer">

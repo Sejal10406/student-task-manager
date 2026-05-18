@@ -364,3 +364,89 @@ document.addEventListener("DOMContentLoaded", () => {
     return emojis[category] || "📚";
   }
 });
+let studyTime = 25 * 60;
+let breakTime = 5 * 60;
+
+let currentTime = studyTime;
+
+let timer;
+let isStudy = true;
+
+function updateDisplay() {
+
+  let minutes = Math.floor(currentTime / 60);
+  let seconds = currentTime % 60;
+
+  seconds = seconds < 10 ? "0" + seconds : seconds;
+
+  document.getElementById("timer").innerText =
+    `${minutes}:${seconds}`;
+}
+
+function startTimer() {
+
+  if (timer) return;
+
+  timer = setInterval(() => {
+
+    currentTime--;
+
+    updateDisplay();
+
+    if (currentTime <= 0) {
+
+      clearInterval(timer);
+      timer = null;
+
+      if (isStudy) {
+
+        alert("Study session complete! Take a break.");
+
+        isStudy = false;
+        currentTime = breakTime;
+
+        document.getElementById("mode").innerText =
+          "Break Time";
+
+      } else {
+
+        alert("Break over! Back to study.");
+
+        isStudy = true;
+        currentTime = studyTime;
+
+        document.getElementById("mode").innerText =
+          "Study Time";
+      }
+
+      updateDisplay();
+
+      startTimer();
+    }
+
+  }, 1000);
+}
+
+function pauseTimer() {
+
+  clearInterval(timer);
+  timer = null;
+}
+
+function resetTimer() {
+
+  clearInterval(timer);
+  timer = null;
+
+  isStudy = true;
+  currentTime = studyTime;
+
+  document.getElementById("mode").innerText =
+    "Study Time";
+
+  updateDisplay();
+}
+
+updateDisplay();
+new Notification("Break Time!");
+
