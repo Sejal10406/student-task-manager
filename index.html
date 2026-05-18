@@ -1,78 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Study Task Tracker</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title> Gamified Task Tracker</title>
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 </head>
+
 <body>
-  <a class="skip-link" href="#main-content">Skip to main content</a>
 
-  <header class="site-header">
-    <h1>📚 Study Task Tracker</h1>
-    
-  <select id="themeSwitcher" class="theme-dropdown">
-  <option value="light">🌞 Light</option>
-  <option value="dark">🌙 Dark</option>
-  <option value="blue">🩵 Blue</option>
-  <option value="pastel">🎀 Pastel</option>
-</select>
-    
-  </header>
+  <!-- BACKGROUND -->
+  <div class="bg blur1"></div>
+  <div class="bg blur2"></div>
+  <div class="grid-overlay"></div>
 
-  <main id="main-content" class="container">
-    <form id="taskForm" onsubmit="event.preventDefault(); addTask();">
-      <label for="taskInput">Task description</label>
-      <input type="text" id="taskInput" placeholder="Enter task" aria-describedby="taskHelp">
-      
-      <div class="form-row">
-        <select id="priorityInput" aria-label="Task Priority">
-          <option value="low">Low Priority</option>
-          <option value="medium">Medium Priority</option>
-          <option value="high">High Priority</option>
-        </select>
-        <input type="date" id="dueDateInput" aria-label="Due Date">
+  <main class="container">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+      <div class="logo-box">
+        <div class="logo">
+          <i class="ri-gamepad-line"></i>
+        </div>
+
+        <div>
+          <h1>Gamified Task Tracker</h1>
+          <p>Level Up Your Productivity</p>
+        </div>
       </div>
 
-      <button type="submit">Add</button>
-    <button type="button" id="clearAllBtn">Clear All</button>
-      <p id="taskHelp" class="sr-only">Enter a task and press Add to track your study items.</p>
-    </form>
-    
-    <div class="search-container">
-      <input type="text" id="searchInput" placeholder="Search tasks..." aria-label="Search tasks">
-    </div>
+      <!-- USER CARD -->
+      <div class="profile-card">
 
-    <p id="errorMsg" class="error" role="alert"></p>
+        <div class="avatar">
+          <i class="ri-user-3-fill"></i>
+        </div>
 
-    <ul id="taskList" aria-live="polite" aria-label="Task list"></ul>
-    
-    <div class="progress-container">
-      <div id="progressBar" class="progress-bar"></div>
-    </div>
-    <p id="taskStats"></p>
+        <h2>Student Hero</h2>
 
-    <div id="celebration" class="celebration hidden">
-    <img src="task completed image.jpg" alt="Celebration" />
-    <p>All tasks completed! 🎉</p>
+        <p>Focus Warrior ⚔️</p>
+
+        <div class="xp-container">
+          <div class="xp-info">
+            <span>Level 3</span>
+            <span id="xpText">120 / 300 XP</span>
+          </div>
+
+          <div class="xp-bar">
+            <div class="xp-fill" id="xpFill"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-grid">
+
+        <div class="stat-card">
+          <i class="ri-file-list-3-line"></i>
+          <h3 id="totalTasks">0</h3>
+          <p>Total Tasks</p>
+        </div>
+
+        <div class="stat-card">
+          <i class="ri-checkbox-circle-line"></i>
+          <h3 id="completedTasks">0</h3>
+          <p>Completed</p>
+        </div>
+
+        <div class="stat-card">
+          <i class="ri-fire-fill"></i>
+          <h3 id="streakCount">0</h3>
+          <p>Day Streak</p>
+        </div>
+
+        <div class="stat-card">
+          <i class="ri-star-smile-fill"></i>
+          <h3 id="points">0</h3>
+          <p>Coins</p>
+        </div>
+
+      </div>
+
+      <!-- BADGES -->
+      <div class="badges-card">
+
+        <div class="card-title">
+          <i class="ri-medal-fill"></i>
+          <span>Achievements</span>
+        </div>
+
+        <div class="badges">
+
+          <div class="badge unlocked">
+            🥇
+          </div>
+
+          <div class="badge unlocked">
+            🔥
+          </div>
+
+          <div class="badge">
+            🚀
+          </div>
+
+          <div class="badge">
+            👑
+          </div>
+
+        </div>
+
+      </div>
+
+    </aside>
+
+    <!-- MAIN -->
+    <section class="main-content">
+
+      <!-- TOP -->
+      <div class="topbar">
+
+        <div>
+          <h2>Dashboard</h2>
+          <p>Complete tasks and earn rewards ✨</p>
+        </div>
+
+        <button id="themeToggle">
+          <i class="ri-moon-clear-fill"></i>
+        </button>
+
+      </div>
+
+      <!-- ADD TASK -->
+      <div class="task-box">
+
+        <input
+          type="text"
+          id="taskInput"
+          placeholder="Enter your next task..."
+        />
+
+        <select id="categorySelect">
+          <option value="Theory">📘 Theory</option>
+          <option value="Practical">🧪 Practical</option>
+          <option value="Assignment">📝 Assignment</option>
+          <option value="Revision">📖 Revision</option>
+        </select>
+
+        <button id="addTaskBtn">
+          <i class="ri-add-line"></i>Add Task</button>
+
+      </div>
+
+      <!-- FILTERS -->
+      <div class="filters">
+
+        <button class="filter-btn active" data-filter="All">
+          All
+        </button>
+
+        <button class="filter-btn" data-filter="Theory">
+          Theory
+        </button>
+
+        <button class="filter-btn" data-filter="Practical">
+          Practical
+        </button>
+
+        <button class="filter-btn" data-filter="Assignment">
+          Assignment
+        </button>
+
+        <button class="filter-btn" data-filter="Revision">
+          Revision
+        </button>
+
+      </div>
+
+      <!-- TASKS -->
+      <div class="task-list" id="taskList">
+
+        <div class="empty-state">
+
+          <i class="ri-ghost-2-line"></i>
+
+          <h3>No Tasks Yet</h3>
+
+          <p>
+            Add tasks and start your productivity adventure.
+          </p>
+
+        </div>
+
+      </div>
+
+    </section>
+    <div class="study-mode">
+
+  <h2 id="mode">Study Time</h2>
+
+  <div class="timer" id="timer">
+    25:00
   </div>
+
+  <div class="buttons">
+  <button onclick="startTimer()"><i class="fa-solid fa-play"></i> Start</button>
+  <button onclick="pauseTimer()"><i class="fa-solid fa-pause"></i> Pause</button>
+  <button onclick="resetTimer()"><i class="fa-solid fa-rotate-right"></i> Reset</button>
+</div>
+
+
+</div>
 
   </main>
 
-  <footer class="site-footer">
-    <nav aria-label="Footer navigation">
-      <a href="docs.html">📖 Docs</a>
-      <a href="faq.html">❓ FAQ</a>
-      <a href="privacy.html">🛡️ Privacy</a>
-      <a href="terms.html">📜 Terms</a>
-      <a href="#main-content">🔝 Back to top</a>
-    </nav>
-    <p>Accessible study tracking with keyboard support and semantic structure.</p>
-    <p>&copy; 2026 Study Task Tracker</p>
-  </footer>
+  </main>
 
   <script src="script.js"></script>
+
 </body>
 </html>
