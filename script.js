@@ -1,145 +1,3 @@
-
-const themeSwitcher = document.getElementById("themeSwitcher");
-
-// Load saved theme
-const savedTheme = localStorage.getItem("theme") || "light";
-document.documentElement.setAttribute("data-theme", savedTheme);
-
-if (themeSwitcher) {
-  themeSwitcher.value = savedTheme;
-
-  themeSwitcher.addEventListener("change", function (e) {
-    const selectedTheme = e.target.value;
-    document.documentElement.setAttribute("data-theme", selectedTheme);
-    localStorage.setItem("theme", selectedTheme);
-  });
-}
-
-function toggleTask(checkbox) {
-  const span = checkbox.nextElementSibling;
-  span.classList.toggle("completed");
-  taskTracker();
-}
-
-function taskTracker() {
-  const tasks = document.querySelectorAll("#taskList li");
-  const completed = document.querySelectorAll("#taskList input:checked");
-
-  const empty = document.getElementById("emptyState");
-  if (empty) {
-    empty.style.display = tasks.length === 0 ? "block" : "none";
-  }
-
-  const stats = document.getElementById("taskStats");
-  if (stats) {
-    stats.innerText = `✅ ${completed.length} / ${tasks.length} completed`;
-  }
-
-}
-
-
-  const celebration = document.getElementById("celebration");
-
-  if (tasks.length > 0 && tasks.length === completed.length) {
-    celebration.classList.remove("hidden");
-
-    setTimeout(() => {
-      celebration.classList.add("show");
-    }, 100);
-  } else {
-    celebration.classList.remove("show");
-    celebration.classList.add("hidden");
-  }
-}
- 
-
-const themeSwitcher = document.getElementById("themeSwitcher");
-
-// Load saved theme
-const savedTheme = localStorage.getItem("theme") || "light";
-document.documentElement.setAttribute("data-theme", savedTheme);
-
-if (themeSwitcher) {
-   themeSwitcher.value = savedTheme;
-
-   themeSwitcher.addEventListener("change", function (e) {
-      const selectedTheme = e.target.value;
-
-      document.documentElement.setAttribute("data-theme", selectedTheme);
-      localStorage.setItem("theme", selectedTheme);
-   });
-}
-
-function toggleTask(checkbox) {
-   const li = checkbox.closest("li");
-   const textWrapper = checkbox.nextElementSibling;
-   const span = textWrapper ? textWrapper.querySelector("span") : li.querySelector("span");
-
-   if (span) {
-      span.classList.toggle("completed");
-   }
-
-   if (li) {
-      if (checkbox.checked) {
-         li.classList.add("completed");
-         if (span) span.setAttribute("aria-label", `${span.textContent}, completed`);
-      } else {
-         li.classList.remove("completed");
-         if (span) span.removeAttribute("aria-label");
-      }
-   }
-
-   taskTracker();
-}
-
-
-function taskTracker() {
-   const tasks = document.querySelectorAll("#taskList li");
-   const completed = document.querySelectorAll("#taskList input:checked");
-
-   const empty = document.getElementById("emptyState");
-   if (empty) {
-      empty.style.display = tasks.length === 0 ? "block" : "none";
-   }
-
-   const stats = document.getElementById("taskStats");
-   if (stats) {
-      stats.innerText = `✅ ${completed.length} / ${tasks.length} completed`;
-   }
-
-   const celebration = document.getElementById("celebration");
-
-   if (celebration) {
-      if (tasks.length > 0 && tasks.length === completed.length) {
-         celebration.classList.remove("hidden");
-
-         setTimeout(() => {
-            celebration.classList.add("show");
-         }, 100);
-      } else {
-         celebration.classList.remove("show");
-         celebration.classList.add("hidden");
-      }
-   }
-}
-
-function sortTasks(order) {
-   const taskList = document.getElementById("taskList");
-   const tasks = Array.from(taskList.getElementsByTagName("li"));
-
-   tasks.sort((a, b) => {
-      const textA = a.querySelector("span").textContent.toLowerCase();
-      const textB = b.querySelector("span").textContent.toLowerCase();
-
-      if (order === "asc") {
-         return textA.localeCompare(textB);
-      } else {
-         return textB.localeCompare(textA);
-      }
-   });
-
-   tasks.forEach(task => taskList.appendChild(task));
-}
 document.addEventListener("DOMContentLoaded", () => {
   const elements = {
     taskForm: document.getElementById("taskForm"),
@@ -506,3 +364,89 @@ document.addEventListener("DOMContentLoaded", () => {
     return emojis[category] || "📚";
   }
 });
+let studyTime = 25 * 60;
+let breakTime = 5 * 60;
+
+let currentTime = studyTime;
+
+let timer;
+let isStudy = true;
+
+function updateDisplay() {
+
+  let minutes = Math.floor(currentTime / 60);
+  let seconds = currentTime % 60;
+
+  seconds = seconds < 10 ? "0" + seconds : seconds;
+
+  document.getElementById("timer").innerText =
+    `${minutes}:${seconds}`;
+}
+
+function startTimer() {
+
+  if (timer) return;
+
+  timer = setInterval(() => {
+
+    currentTime--;
+
+    updateDisplay();
+
+    if (currentTime <= 0) {
+
+      clearInterval(timer);
+      timer = null;
+
+      if (isStudy) {
+
+        alert("Study session complete! Take a break.");
+
+        isStudy = false;
+        currentTime = breakTime;
+
+        document.getElementById("mode").innerText =
+          "Break Time";
+
+      } else {
+
+        alert("Break over! Back to study.");
+
+        isStudy = true;
+        currentTime = studyTime;
+
+        document.getElementById("mode").innerText =
+          "Study Time";
+      }
+
+      updateDisplay();
+
+      startTimer();
+    }
+
+  }, 1000);
+}
+
+function pauseTimer() {
+
+  clearInterval(timer);
+  timer = null;
+}
+
+function resetTimer() {
+
+  clearInterval(timer);
+  timer = null;
+
+  isStudy = true;
+  currentTime = studyTime;
+
+  document.getElementById("mode").innerText =
+    "Study Time";
+
+  updateDisplay();
+}
+
+updateDisplay();
+new Notification("Break Time!");
+
