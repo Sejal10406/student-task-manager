@@ -7,7 +7,7 @@ const categorySelect = document.getElementById("categorySelect");
 // Sidebar metrics elements
 const totalTasks = document.getElementById("totalTasks");
 const completedTasks = document.getElementById("completedTasks");
-const points = document.getElementById("points");
+const points = document.getElementById("coins");
 const streakCount = document.getElementById("streakCount");
 const xpFill = document.getElementById("xpFill");
 const xpText = document.getElementById("xpText");
@@ -363,6 +363,8 @@ document.getElementById("claimMilestoneBtn")?.addEventListener("click", () => {
 function addTask() {
   const text = taskInput.value.trim();
   const category = categorySelect.value;
+  const deadlineInput = document.getElementById("deadlineInput");
+  const deadline = deadlineInput.value;
 
   if (text === "") return;
 
@@ -371,11 +373,13 @@ function addTask() {
     text,
     category,
     completed: false,
-    createdAt: getFormattedDate(new Date())
+    createdAt: getFormattedDate(new Date()),
+    deadline: deadline || null
   };
 
   tasks.push(task);
   taskInput.value = "";
+  deadlineInput.value = "";
 
   // Update analytics created count
   if (!analyticsData.categoryStats[category]) {
@@ -385,6 +389,7 @@ function addTask() {
 
   saveData();
   renderTasks();
+  updateDeadlineAlerts();
 }
 
 function renderTasks() {
@@ -418,6 +423,7 @@ function renderTasks() {
         <div>
           <h3 class="task-title">${escapeHtml(task.text)}</h3>
           <p class="task-category">${getCategoryEmoji(task.category)} ${task.category}</p>
+          ${task.deadline ? `<p class="task-deadline ${getDeadlineUrgency(task.deadline)}"><i class="ri-time-line"></i> ${formatDeadlineDisplay(task.deadline)}</p>` : ''}
         </div>
       </div>
       <div class="task-actions">
@@ -509,6 +515,8 @@ function updateStats() {
 
 function updateGamification() {
   points.textContent = coins;
+  totalTasks.textContent = tasks.length;
+  completedTasks.textContent = getCompletedQuestsCount();
   streakCount.textContent = streak;
 
   // Level progression bar update
@@ -1021,6 +1029,128 @@ function renderQuestMastery() {
 }
 
 // ==========================================================================
+// DEADLINE TRACKER FUNCTIONS
+// ==========================================================================
+
+function getTimeUntilDeadline(deadlineString) {
+  if (!deadlineString) return null;
+  
+  const deadline = new Date(deadlineString).getTime();
+  const now = Date.now();
+  const diff = deadline - now;
+
+  if (diff < 0) {
+    return { 
+      formatted: "OVERDUE", 
+      minutes: 0, 
+      urgency: "critical" 
+    };
+  }
+
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  let formatted = "";
+  if (days > 0) {
+    formatted = `${days}d ${hours % 24}h`;
+  } else if (hours > 0) {
+    formatted = `${hours}h ${minutes % 60}m`;
+  } else {
+    formatted = `${minutes}m`;
+  }
+
+  const urgency = diff < 7200000 ? "critical" : (diff < 86400000 ? "warning" : "normal");
+
+  return { formatted, minutes, urgency };
+}
+
+function getDeadlineUrgency(deadlineString) {
+  if (!deadlineString) return "";
+  const urgencyData = getTimeUntilDeadline(deadlineString);
+  return urgencyData ? urgencyData.urgency : "";
+}
+
+function formatDeadlineDisplay(deadlineString) {
+  if (!deadlineString) return "";
+  const urgencyData = getTimeUntilDeadline(deadlineString);
+  return urgencyData ? urgencyData.formatted + " left" : "";
+}
+
+function updateDeadlineAlerts() {
+  const container = document.getElementById("deadlineAlerts");
+  if (!container) return;
+
+  const now = Date.now();
+  const urgentTasks = tasks
+    .filter(task => task.deadline && !task.completed)
+    .filter(task => {
+      const deadline = new Date(task.deadline).getTime();
+      const diff = deadline - now;
+      return diff < 86400000; // 24 hours
+    })
+    .sort((a, b) => {
+      const aDeadline = new Date(a.deadline).getTime();
+      const bDeadline = new Date(b.deadline).getTime();
+      return aDeadline - bDeadline;
+    });
+
+  container.innerHTML = "";
+
+  if (urgentTasks.length === 0) {
+    return;
+  }
+
+  urgentTasks.slice(0, 3).forEach(task => {
+    const urgencyData = getTimeUntilDeadline(task.deadline);
+    const alertDiv = document.createElement("div");
+    alertDiv.classList.add("deadline-alert");
+    if (urgencyData.urgency !== "normal") {
+      alertDiv.classList.add("warning");
+    }
+
+    const icon = urgencyData.urgency === "critical" ? "ri-alarm-warning-fill" : "ri-time-line";
+    
+    alertDiv.innerHTML = `
+      <i class="${icon}"></i>
+      <div class="alert-content">
+        <strong>${escapeHtml(task.text)}</strong>
+        <p>${urgencyData.formatted}</p>
+      </div>
+    `;
+
+    container.appendChild(alertDiv);
+  });
+}
+
+function sortByDeadline() {
+  const now = Date.now();
+  
+  tasks.sort((a, b) => {
+    const aDeadline = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+    const bDeadline = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+    
+    if (aDeadline === Infinity && bDeadline === Infinity) return 0;
+    if (aDeadline === Infinity) return 1;
+    if (bDeadline === Infinity) return -1;
+    
+    return aDeadline - bDeadline;
+  });
+
+  currentFilter = "All";
+  renderTasks();
+}
+
+// Initialize deadline update interval
+function initDeadlineUpdater() {
+  updateDeadlineAlerts();
+  setInterval(() => {
+    updateDeadlineAlerts();
+    renderTasks();
+  }, 60000); // Update every minute
+}
+
+// ==========================================================================
 // 11. ADVANCED RESPONSIVENESS AND COLLAPSIBLE SIDEBAR MENU
 // ==========================================================================
 
@@ -1187,6 +1317,14 @@ taskInput.addEventListener("keypress", e => {
 
 addTaskBtn.addEventListener("click", addTask);
 
+// Deadline filter button
+const sortByDeadlineBtn = document.getElementById("sortByDeadline");
+if (sortByDeadlineBtn) {
+  sortByDeadlineBtn.addEventListener("click", () => {
+    sortByDeadline();
+  });
+}
+
 // Dom Loaded
 document.addEventListener("DOMContentLoaded", () => {
   loadData();
@@ -1195,4 +1333,5 @@ document.addEventListener("DOMContentLoaded", () => {
   renderAchievements();
   renderWeeklyStreak();
   updateDisplay();
+  initDeadlineUpdater();
 });
