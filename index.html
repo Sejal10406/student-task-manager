@@ -126,6 +126,7 @@
       </div>
 
     </aside>
+    <!-- MAIN CONTENT REMOVED DUPLICATE HEADER -->
 
     <!-- MAIN CONTENT -->
     <section class="main-content">
@@ -159,6 +160,10 @@
       <!-- TOP BAR -->
       <div class="topbar">
         <div class="topbar-left">
+
+          <h2>Dashboard</h2>
+          <p>Conquer your goals one task at a time ✨</p>
+
           <button class="burger-btn" id="mobileSidebarToggle" aria-label="Toggle Sidebar Menu">
             <i class="ri-menu-line"></i>
           </button>
@@ -166,6 +171,7 @@
             <h2>Dashboard</h2>
             <p>Conquer your goals one task at a time ✨</p>
           </div>
+
         </div>
 
         <div class="topbar-right">
@@ -212,6 +218,14 @@
                 <option value="Revision">📖 Revision</option>
               </select>
 
+
+
+              <select id="prioritySelect" title="Select priority level">
+                <option value="High">🚩 High</option>
+                <option value="Medium" selected>🔸 Medium</option>
+                <option value="Low">🔹 Low</option>
+              </select>
+
               <input
                 type="datetime-local"
                 id="deadlineInput"
@@ -252,6 +266,7 @@
               <button class="filter-btn" id="sortByDeadline" title="Sort by earliest deadline">
                 <i class="ri-time-line"></i> Due Soon
               </button>
+
             </div>
 
             <!-- DEADLINE ALERTS -->
@@ -259,6 +274,16 @@
 
 
             </div>
+
+
+            </div>
+
+            <!-- DEADLINE ALERTS -->
+            <div class="deadline-alerts" id="deadlineAlerts"></div>
+
+
+            </div>
+
 
 
             <!-- DAILY QUEST -->
@@ -419,7 +444,8 @@
       <div id="analytics-tab" class="tab-content hidden">
 
         <!-- Consistency Heatmap & Mastery Progress List -->
- 
+
+
         <div class="analytics-heatmap-layout">
           <!-- Github style Heatmap -->
           <div class="chart-card glass heatmap-card">
@@ -557,6 +583,11 @@
       </select>
 
       <select id="mobilePrioritySelect" aria-label="Task priority">
+
+        <option value="High">🚩 High Priority</option>
+        <option value="Medium" selected>🔸 Medium Priority</option>
+        <option value="Low">🔹 Low Priority</option>
+
         <option value="High">🔴 High Priority</option>
         <option value="Medium" selected>🟡 Medium Priority</option>
         <option value="Low">🟢 Low Priority</option>
@@ -607,6 +638,7 @@
     </div>
     <button class="popup-claim-btn" id="claimMilestoneBtn">Awesome!</button>
   </div>
+
 
 
 

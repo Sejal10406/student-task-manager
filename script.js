@@ -509,6 +509,10 @@ function addTask() {
   const text = taskInput.value.trim();
   const category = categorySelect.value;
 
+
+
+  const priority = document.getElementById("prioritySelect").value;
+
   const deadlineInput = document.getElementById("deadlineInput");
   const deadline = deadlineInput.value;
 
@@ -615,12 +619,21 @@ function createTaskEl(task) {
       xp += 20;
 
 
+
+
     div.innerHTML = `
       <div class="task-left">
         <div class="check-btn" tabindex="0" aria-label="Toggle completed task"></div>
         <div>
           <h3 class="task-title">${escapeHtml(task.text)}</h3>
+
           <p class="task-category">${getCategoryEmoji(task.category)} ${task.category}</p>
+
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
+            <span class="priority-badge ${(task.priority || 'Medium').toLowerCase()}">${task.priority || 'Medium'}</span>
+            <p class="task-category" style="margin: 0;">${getCategoryEmoji(task.category)} ${task.category}</p>
+          </div>
+
           ${task.deadline ? `<p class="task-deadline ${getDeadlineUrgency(task.deadline)}"><i class="ri-time-line"></i> ${formatDeadlineDisplay(task.deadline)}</p>` : ''}
         </div>
       </div>
@@ -2012,6 +2025,11 @@ if (mobileAddTaskBtn) {
   mobileAddTaskBtn.addEventListener("click", () => {
     const text = mobileTaskInput.value.trim();
     const category = mobileCategorySelect.value;
+
+    const priority = document.getElementById("mobilePrioritySelect").value;
+
+    if (text === "") return;
+
     const mobilePrioritySelect = document.getElementById("mobilePrioritySelect");
     const priority = mobilePrioritySelect ? mobilePrioritySelect.value : "Medium";
 
@@ -2025,6 +2043,7 @@ if (mobileAddTaskBtn) {
       return;
     }
     mobileTaskInput.setAttribute("aria-invalid", "false");
+
 
     const task = {
       id: Date.now(),
