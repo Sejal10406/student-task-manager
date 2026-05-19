@@ -755,14 +755,15 @@ body {
 }
 
 .check-btn {
-  width: 26px;
-  height: 26px;
-
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-
   border: 2px solid var(--primary);
-
   cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .task.completed .check-btn {
@@ -1371,12 +1372,7 @@ body.light .subject-bar-container {
   box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
 }
 
-/* Extra Mobile Adjustments */
-@media(max-width: 900px) {
-  .workspace-layout {
-    grid-template-columns: 1fr;
-  }
-}
+/* Workspace stacking handled in the main responsive block */
 
 /* ==========================================================================
    PHASE 7: 4-THEME COLOR SYSTEM & ADVANCED RESPONSIVENESS / ACCESSIBILITY
@@ -1544,7 +1540,7 @@ body.light .burger-btn,
 }
 
 /* 5. Mobile collapsed sidebar transitions */
-@media(max-width: 900px) {
+@media(max-width: 1024px) {
   .burger-btn {
     display: flex;
   }
@@ -1558,7 +1554,7 @@ body.light .burger-btn,
     position: fixed;
     top: 0;
     left: -380px;
-    width: 320px;
+    width: min(320px, 85vw);
     height: 100vh;
     z-index: 2000;
     background: var(--bg);
@@ -1591,9 +1587,42 @@ body.light .burger-btn,
     pointer-events: auto;
   }
   
-  /* Stacking workspace on smaller devices */
+  /* Stacking workspace on smaller devices: Timer above Tasks */
   .workspace-layout {
-    grid-template-columns: 1fr !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+  
+  .workspace-sidebar {
+    order: 1;
+    margin-bottom: 10px;
+  }
+  
+  .workspace-main {
+    order: 2;
+  }
+  
+  /* Hide top navigation tabs, fallback to bottom dock */
+  .nav-tabs {
+    display: none !important;
+  }
+  
+  /* Prevent filter buttons wrapping, enable horizontal scroll */
+  .filters {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding-bottom: 12px !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  
+  .filters::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .filter-btn {
+    flex-shrink: 0;
   }
   
   /* Give enough spacing below content for bottom dock */
@@ -1629,7 +1658,7 @@ body.light .burger-btn,
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
 }
 
-@media(max-width: 900px) {
+@media(max-width: 1024px) {
   .mobile-bottom-dock {
     display: flex;
   }
@@ -2155,7 +2184,7 @@ body.light .reward-item,
   bottom: 25px;
 }
 
-@media(max-width: 900px) {
+@media(max-width: 1024px) {
   .achievement-toast.show {
     bottom: 110px; /* Positions toast cleanly above mobile navigation bar */
     left: 50%;
@@ -2214,6 +2243,194 @@ body.light .reward-item,
     transform: translateY(105vh) rotate(720deg) translateX(50px);
     opacity: 0;
   }
+}
+
+/* 4. Topbar subtitle hiding on mobile */
+@media(max-width: 600px) {
+  .topbar-left p {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   PHASE 9: LEGAL & DOCUMENTATION PAGES STYLING
+   ========================================================================== */
+
+.legal-page {
+  font-family: "Inter", sans-serif;
+  color: var(--text) !important;
+  background: var(--bg) !important;
+  line-height: 1.7;
+  --border-color: var(--border);
+  --text-color: var(--text);
+  --text-muted: var(--textLight);
+}
+
+.legal-page .container {
+  display: block !important;
+  max-width: 800px !important;
+  margin: 0 auto !important;
+  padding: 40px 20px 100px !important;
+  min-height: auto !important;
+}
+
+.legal-page section {
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 24px;
+  padding: 32px;
+  margin-bottom: 25px;
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-sm);
+}
+
+.legal-page h2 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  margin-bottom: 15px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.legal-page p {
+  color: var(--textLight) !important;
+  margin-bottom: 10px;
+}
+
+.legal-page strong {
+  color: var(--text) !important;
+}
+
+/* Site Header for Legal Pages */
+.site-header {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border);
+  background: rgba(15, 12, 38, 0.4);
+  backdrop-filter: blur(10px);
+}
+
+.site-header h1 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.site-header nav {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.site-header nav a,
+.site-header a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.site-header nav a:hover,
+.site-header a:hover {
+  color: var(--secondary);
+}
+
+.header-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.header-brand h1 {
+  font-size: 26px;
+  font-weight: 800;
+  text-align: left;
+  margin-bottom: 4px;
+}
+
+.header-subtitle {
+  font-size: 13px;
+  color: var(--textLight);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.subtitle-divider {
+  opacity: 0.5;
+}
+
+.header-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.stats-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.stats-pill-label {
+  color: var(--textLight);
+  margin-right: 4px;
+}
+
+.stats-pill-value {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.theme-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 12px;
+}
+
+.theme-pill-label {
+  color: var(--textLight);
+}
+
+.theme-dropdown {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+.theme-dropdown option {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Site Footer for Legal Pages */
+.site-footer {
+  text-align: center;
+  padding: 30px 20px;
+  border-top: 1px solid var(--border);
+  color: var(--textLight);
+  font-size: 13px;
 }
 
 

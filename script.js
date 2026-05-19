@@ -576,7 +576,13 @@ let lastTimerTickTimestamp = null;
 function updateDisplay() {
   const minutes = Math.floor(currentTime / 60);
   const seconds = currentTime % 60;
-  document.getElementById("timer").innerText = `${minutes}:${String(seconds).padStart(2, '0')}`;
+  const timeStr = `${minutes}:${String(seconds).padStart(2, '0')}`;
+  
+  const timerEl = document.getElementById("timer");
+  if (timerEl) timerEl.innerText = timeStr;
+  
+  const timerDisplayEl = document.getElementById("timerDisplay");
+  if (timerDisplayEl) timerDisplayEl.innerText = timeStr;
 }
 
 function startTimer() {
@@ -613,8 +619,17 @@ function startTimer() {
 
         isStudy = false;
         currentTime = breakTime;
-        document.getElementById("mode").innerText = "Break Time";
-        document.getElementById("mode").style.color = "#22c55e";
+        
+        const modeEl = document.getElementById("mode");
+        if (modeEl) {
+          modeEl.innerText = "Break Time";
+          modeEl.style.color = "#22c55e";
+        }
+        const modeTextEl = document.getElementById("modeText");
+        if (modeTextEl) {
+          modeTextEl.innerText = "Break Time";
+          modeTextEl.style.color = "#22c55e";
+        }
 
         // Evaluate milestone popups
         checkStudyMilestones();
@@ -625,8 +640,17 @@ function startTimer() {
 
         isStudy = true;
         currentTime = studyTime;
-        document.getElementById("mode").innerText = "Study Time";
-        document.getElementById("mode").style.color = "var(--primary)";
+        
+        const modeEl = document.getElementById("mode");
+        if (modeEl) {
+          modeEl.innerText = "Study Time";
+          modeEl.style.color = "var(--text)";
+        }
+        const modeTextEl = document.getElementById("modeText");
+        if (modeTextEl) {
+          modeTextEl.innerText = "Study Time";
+          modeTextEl.style.color = "var(--primary)";
+        }
       }
 
       updateDisplay();
@@ -645,8 +669,17 @@ function resetTimer() {
   timer = null;
   isStudy = true;
   currentTime = studyTime;
-  document.getElementById("mode").innerText = "Study Time";
-  document.getElementById("mode").style.color = "var(--text)";
+  
+  const modeEl = document.getElementById("mode");
+  if (modeEl) {
+    modeEl.innerText = "Study Time";
+    modeEl.style.color = "var(--text)";
+  }
+  const modeTextEl = document.getElementById("modeText");
+  if (modeTextEl) {
+    modeTextEl.innerText = "Study Time";
+    modeTextEl.style.color = "var(--primary)";
+  }
   updateDisplay();
 }
 
