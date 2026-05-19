@@ -130,6 +130,7 @@
       </div>
 
     </aside>
+    <!-- MAIN CONTENT REMOVED DUPLICATE HEADER -->
 
     <!-- MAIN CONTENT -->
     <section class="main-content">
@@ -137,6 +138,10 @@
       <!-- TOP BAR -->
       <div class="topbar">
         <div class="topbar-left">
+
+          <h2>Dashboard</h2>
+          <p>Conquer your goals one task at a time ✨</p>
+
           <button class="burger-btn" id="mobileSidebarToggle" aria-label="Toggle Sidebar Menu">
             <i class="ri-menu-line"></i>
           </button>
@@ -144,6 +149,7 @@
             <h2>Dashboard</h2>
             <p>Conquer your goals one task at a time ✨</p>
           </div>
+
         </div>
         <div class="topbar-right">
           <div class="theme-selector-panel">
@@ -156,8 +162,13 @@
       </div>
 
       <!-- TAB NAVIGATION -->
+
+      <div class="nav-tabs">
+        <button class="tab-btn active" data-tab="quests">
+
       <div class="nav-tabs" role="tablist">
         <button class="tab-btn active" id="tabBtnQuests" data-tab="quests" role="tab" aria-selected="true" aria-controls="quests-tab">
+
           <i class="ri-checkbox-multiple-line"></i> Quests & Workspace
         </button>
         <button class="tab-btn" id="tabBtnAnalytics" data-tab="analytics" role="tab" aria-selected="false" aria-controls="analytics-tab">
@@ -183,6 +194,20 @@
                 <option value="Assignment">📝 Assignment</option>
                 <option value="Revision">📖 Revision</option>
               </select>
+
+              <select id="prioritySelect" title="Select priority level">
+                <option value="High">🚩 High</option>
+                <option value="Medium" selected>🔸 Medium</option>
+                <option value="Low">🔹 Low</option>
+              </select>
+              <input
+                type="datetime-local"
+                id="deadlineInput"
+                title="Set deadline for this task"
+              />
+              <button id="addTaskBtn">
+                <i class="ri-add-line"></i> Add Task
+
               <select id="prioritySelect" aria-label="Task priority">
                 <option value="High">🔴 High</option>
                 <option value="Medium" selected>🟡 Medium</option>
@@ -200,6 +225,7 @@
               </button>
               <button class="view-btn" id="boardViewBtn" aria-label="Show Kanban board view">
                 <i class="ri-kanban-view"></i> Kanban Board
+
               </button>
             </div>
 
@@ -210,7 +236,18 @@
               <button class="filter-btn" data-filter="Practical">🧪 Practical</button>
               <button class="filter-btn" data-filter="Assignment">📝 Assignment</button>
               <button class="filter-btn" data-filter="Revision">📖 Revision</button>
+
+              <button class="filter-btn" id="sortByDeadline" title="Sort by earliest deadline">
+                <i class="ri-time-line"></i> Due Soon
+              </button>
             </div>
+
+            <!-- DEADLINE ALERTS -->
+            <div class="deadline-alerts" id="deadlineAlerts"></div>
+
+
+            </div>
+
 
             <!-- DAILY QUEST -->
             <div class="daily-quest">
@@ -253,7 +290,11 @@
           </div>
         </div>
       </div>
+
+      <div id="analytics-tab" class="tab-content hidden">
+
       <div id="analytics-tab" class="tab-content hidden" role="tabpanel" aria-labelledby="tabBtnAnalytics">
+
         <!-- Stats summary row -->
         <div class="analytics-stats-grid">
           <div class="analytics-stat-card glass">
@@ -360,7 +401,13 @@
           </div>
         </div>
 
+
+
+      <!-- TAB 2: ANALYTICS HUB -->
+      <div id="analytics-tab" class="tab-content hidden">
+
         <!-- Consistency Heatmap & Mastery Progress List -->
+
         <div class="analytics-heatmap-layout">
           <!-- Github style Heatmap -->
           <div class="chart-card glass heatmap-card">
@@ -523,6 +570,11 @@
       </select>
 
       <select id="mobilePrioritySelect" aria-label="Task priority">
+
+        <option value="High">🚩 High Priority</option>
+        <option value="Medium" selected>🔸 Medium Priority</option>
+        <option value="Low">🔹 Low Priority</option>
+
         <option value="High">🔴 High Priority</option>
         <option value="Medium" selected>🟡 Medium Priority</option>
         <option value="Low">🟢 Low Priority</option>
@@ -575,6 +627,8 @@
   </div>
 
 
+
+
   <!-- ACHIEVEMENT DETAILS MODAL -->
   <div class="popup-overlay" id="achievementModalOverlay"></div>
   <div class="popup-card glass achievement-details-card" id="achievementModal">
@@ -608,6 +662,7 @@
       Status: Locked
     </div>
   </div>
+
 
 
   <!-- FLOATING ACHIEVEMENT TOAST ALERT -->
@@ -653,8 +708,11 @@
   <!-- ACCESSIBILITY ANNOUNCER -->
   <div id="srAnnouncement" class="sr-only" aria-live="polite"></div>
 
+
   <script src="script.js"></script>
 
 </body>
 
+
 </html>
+
