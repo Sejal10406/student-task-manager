@@ -2578,5 +2578,278 @@ body.light .history-item:hover {
   width: 20%;
 }
 
+/* Gamified Progression - Badge Rarities */
+.badge.rarity-common {
+  border: 2px solid rgba(148, 163, 184, 0.4) !important;
+  box-shadow: 0 0 10px rgba(148, 163, 184, 0.15);
+}
+.badge.unlocked.rarity-common {
+  background: radial-gradient(circle, rgba(148, 163, 184, 0.2) 0%, rgba(255,255,255,0.03) 100%) !important;
+}
+
+.badge.rarity-rare {
+  border: 2px solid rgba(6, 182, 212, 0.5) !important;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+}
+.badge.unlocked.rarity-rare {
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.25) 0%, rgba(255,255,255,0.03) 100%) !important;
+  animation: rareGlow 3s infinite ease-in-out;
+}
+@keyframes rareGlow {
+  0%, 100% { box-shadow: 0 0 10px rgba(6, 182, 212, 0.2); }
+  50% { box-shadow: 0 0 18px rgba(6, 182, 212, 0.45); }
+}
+
+.badge.rarity-epic {
+  border: 2px solid rgba(236, 72, 153, 0.6) !important;
+  box-shadow: 0 0 12px rgba(236, 72, 153, 0.25);
+}
+.badge.unlocked.rarity-epic {
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.3) 0%, rgba(255,255,255,0.03) 100%) !important;
+  animation: epicGlow 2.5s infinite ease-in-out;
+}
+@keyframes epicGlow {
+  0%, 100% { box-shadow: 0 0 12px rgba(236, 72, 153, 0.25); }
+  50% { box-shadow: 0 0 22px rgba(236, 72, 153, 0.55); }
+}
+
+.badge.rarity-legendary {
+  border: 2px solid rgba(245, 158, 11, 0.8) !important;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+}
+.badge.unlocked.rarity-legendary {
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.4) 0%, rgba(255,255,255,0.03) 100%) !important;
+  animation: legendaryGlow 2s infinite ease-in-out;
+}
+@keyframes legendaryGlow {
+  0%, 100% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); transform: scale(1); }
+  50% { box-shadow: 0 0 28px rgba(245, 158, 11, 0.7); transform: scale(1.03); }
+}
+
+/* Flying Coin Animation particle styling */
+.flying-coin {
+  position: fixed;
+  font-size: 24px;
+  color: #f59e0b;
+  z-index: 10000;
+  pointer-events: none;
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.8));
+  animation: flyCoin 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes flyCoin {
+  0% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(var(--mid-x), var(--mid-y)) scale(1.4) rotate(180deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dest-x), var(--dest-y)) scale(0.4) rotate(720deg);
+    opacity: 0.2;
+  }
+}
+
+/* XP Progress glow animation */
+.xp-fill {
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.xp-fill.pulse {
+  animation: xpGlowPulse 0.8s ease-out;
+}
+@keyframes xpGlowPulse {
+  0% {
+    filter: brightness(1);
+    box-shadow: 0 0 0px var(--primary);
+  }
+  50% {
+    filter: brightness(1.8);
+    box-shadow: 0 0 20px var(--primary);
+  }
+  100% {
+    filter: brightness(1);
+    box-shadow: 0 0 0px var(--primary);
+  }
+}
+
+/* Achievement Details Modal Card */
+.achievement-details-card {
+  width: min(380px, 90vw);
+  padding: 30px;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0.85);
+  opacity: 0;
+  z-index: 1001;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+.achievement-details-card.active {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.close-modal-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: var(--textLight);
+  font-size: 20px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+.close-modal-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.modal-glow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: -1;
+  border-radius: 24px;
+}
+
+.modal-badge-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.modal-badge {
+  font-size: 64px;
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.1));
+  animation: floatBadge 3s ease-in-out infinite;
+}
+@keyframes floatBadge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.modal-rarity-pill {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modal-rarity-pill.rarity-common {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+.modal-rarity-pill.rarity-rare {
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+.modal-rarity-pill.rarity-epic {
+  background: rgba(236, 72, 153, 0.15);
+  color: #ec4899;
+  border: 1px solid rgba(236, 72, 153, 0.3);
+}
+.modal-rarity-pill.rarity-legendary {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.achievement-details-card h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.modal-desc {
+  font-size: 13px;
+  color: var(--textLight);
+  margin-bottom: 24px;
+}
+
+.modal-progress-section {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.modal-progress-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--textLight);
+  margin-bottom: 8px;
+}
+
+.modal-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 99px;
+  overflow: hidden;
+}
+body.light .modal-progress-bar {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.modal-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--primary);
+  transition: width 0.4s ease;
+}
+
+.modal-rewards-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.modal-status-section {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.unlocked-status {
+  color: #22c55e;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.locked-status {
+  color: var(--textLight);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 
 

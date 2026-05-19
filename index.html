@@ -519,6 +519,41 @@
   </div>
 
 
+  <!-- ACHIEVEMENT DETAILS MODAL -->
+  <div class="popup-overlay" id="achievementModalOverlay"></div>
+  <div class="popup-card glass achievement-details-card" id="achievementModal">
+    <button class="close-modal-btn" id="closeAchievementModalBtn" aria-label="Close modal"><i class="ri-close-line"></i></button>
+    <div class="modal-glow" id="modalGlow"></div>
+    <div class="modal-badge-wrapper">
+      <div class="modal-badge" id="modalBadgeIcon">🎓</div>
+      <div class="modal-rarity-pill" id="modalRarityLabel">Common</div>
+    </div>
+    <h2 id="modalBadgeTitle">Novice Scholar</h2>
+    <p class="modal-desc" id="modalBadgeDesc">Complete your first quest!</p>
+    
+    <div class="modal-progress-section">
+      <div class="modal-progress-header">
+        <span>Quest Progress</span>
+        <span id="modalProgressText">0 / 1</span>
+      </div>
+      <div class="modal-progress-bar">
+        <div class="modal-progress-fill" id="modalProgressFill"></div>
+      </div>
+    </div>
+    
+    <div class="modal-rewards-section">
+      <div class="reward-item">
+        <i class="ri-money-dollar-circle-fill"></i>
+        <span id="modalRewardText">+20 Coins Reward</span>
+      </div>
+    </div>
+    
+    <div class="modal-status-section" id="modalStatusText">
+      Status: Locked
+    </div>
+  </div>
+
+
   <!-- FLOATING ACHIEVEMENT TOAST ALERT -->
   <div class="achievement-toast glass" id="achievementToast">
     <div class="toast-icon">🏆</div>

@@ -49,12 +49,84 @@ let analyticsData = {
 
 // Achievement specifications
 const achievementSpecs = [
-  { id: "novice", title: "Novice Scholar", desc: "Complete your first quest!", icon: "🎓", check: () => getCompletedQuestsCount() >= 1 },
-  { id: "spark", title: "Productivity Spark", desc: "Complete 5 quests!", icon: "⚡", check: () => getCompletedQuestsCount() >= 5 },
-  { id: "streak_flame", title: "Streak Flame", desc: "Reach a 3-day active streak!", icon: "🔥", check: () => streak >= 3 },
-  { id: "focus_master", title: "Focus Master", desc: "Accumulate 60 minutes of study!", icon: "🧭", check: () => getCumulativeStudyMinutes() >= 60 },
-  { id: "quest_master", title: "Quest Master Elite", desc: "Complete 15 quests!", icon: "🏆", check: () => getCompletedQuestsCount() >= 15 },
-  { id: "champion", title: "Grand Champion", desc: "Reach Level 5!", icon: "👑", check: () => getLevelNumber() >= 5 }
+  { 
+    id: "novice", 
+    title: "Novice Scholar", 
+    desc: "Complete your first quest!", 
+    icon: "🎓", 
+    rarity: "Common",
+    reward: 20,
+    check: () => getCompletedQuestsCount() >= 1,
+    progress: () => {
+      const completed = getCompletedQuestsCount();
+      return { current: completed, target: 1, percent: Math.min(100, (completed / 1) * 100) };
+    }
+  },
+  { 
+    id: "spark", 
+    title: "Productivity Spark", 
+    desc: "Complete 5 quests!", 
+    icon: "⚡", 
+    rarity: "Rare",
+    reward: 50,
+    check: () => getCompletedQuestsCount() >= 5,
+    progress: () => {
+      const completed = getCompletedQuestsCount();
+      return { current: completed, target: 5, percent: Math.min(100, (completed / 5) * 100) };
+    }
+  },
+  { 
+    id: "streak_flame", 
+    title: "Streak Flame", 
+    desc: "Reach a 3-day active streak!", 
+    icon: "🔥", 
+    rarity: "Rare",
+    reward: 50,
+    check: () => (analyticsData.currentStreak || 0) >= 3,
+    progress: () => {
+      const current = analyticsData.currentStreak || 0;
+      return { current, target: 3, percent: Math.min(100, (current / 3) * 100) };
+    }
+  },
+  { 
+    id: "focus_master", 
+    title: "Focus Master", 
+    desc: "Accumulate 60 minutes of study!", 
+    icon: "🧭", 
+    rarity: "Epic",
+    reward: 150,
+    check: () => getCumulativeStudyMinutes() >= 60,
+    progress: () => {
+      const mins = Math.round(getCumulativeStudyMinutes());
+      return { current: mins, target: 60, percent: Math.min(100, (mins / 60) * 100) };
+    }
+  },
+  { 
+    id: "quest_master", 
+    title: "Quest Master Elite", 
+    desc: "Complete 15 quests!", 
+    icon: "🏆", 
+    rarity: "Legendary",
+    reward: 300,
+    check: () => getCompletedQuestsCount() >= 15,
+    progress: () => {
+      const completed = getCompletedQuestsCount();
+      return { current: completed, target: 15, percent: Math.min(100, (completed / 15) * 100) };
+    }
+  },
+  { 
+    id: "champion", 
+    title: "Grand Champion", 
+    desc: "Reach Level 5!", 
+    icon: "👑", 
+    rarity: "Legendary",
+    reward: 500,
+    check: () => getLevelNumber() >= 5,
+    progress: () => {
+      const lvl = getLevelNumber();
+      return { current: lvl, target: 5, percent: Math.min(100, (lvl / 5) * 100) };
+    }
+  }
 ];
 
 // Focus milestones specifications
@@ -352,12 +424,14 @@ function checkStudyMilestones() {
 }
 
 // Dismiss popup buttons click listeners
-document.getElementById("claimLevelBtn")?.addEventListener("click", () => {
+document.getElementById("claimLevelBtn")?.addEventListener("click", (e) => {
+  triggerCoinExplosion(e);
   document.getElementById("levelUpPopupOverlay").classList.remove("active");
   document.getElementById("levelUpPopup").classList.remove("active");
 });
 
-document.getElementById("claimMilestoneBtn")?.addEventListener("click", () => {
+document.getElementById("claimMilestoneBtn")?.addEventListener("click", (e) => {
+  triggerCoinExplosion(e);
   document.getElementById("milestonePopupOverlay").classList.remove("active");
   document.getElementById("milestonePopup").classList.remove("active");
 });
@@ -530,6 +604,11 @@ function updateGamification() {
   
   const fillPercentage = Math.min(100, (currentLevelXp / 3));
   xpFill.style.width = `${fillPercentage}%`;
+
+  // Trigger XP fill pulse animation
+  xpFill.classList.remove("pulse");
+  void xpFill.offsetWidth; // Trigger DOM reflow to restart animation
+  xpFill.classList.add("pulse");
 }
 
 function updateAnalyticsStreak(todayStr) {
@@ -760,22 +839,126 @@ function renderAchievements() {
 
   achievementSpecs.forEach(ach => {
     const isUnlocked = analyticsData.unlockedAchievements.includes(ach.id);
+    const prog = ach.progress();
 
     const badgeDiv = document.createElement("div");
     badgeDiv.classList.add("badge");
     badgeDiv.classList.add(isUnlocked ? "unlocked" : "locked");
+    badgeDiv.classList.add(`rarity-${ach.rarity.toLowerCase()}`);
 
     badgeDiv.textContent = ach.icon;
 
-    // Set custom tooltip
+    // Set custom tooltip showing progress
     const tooltipText = isUnlocked 
-      ? `Unlocked: ${ach.title} (${ach.desc})`
-      : `Locked: ${ach.desc}`;
+      ? `Unlocked: ${ach.title} (${ach.desc}) - ${ach.rarity}`
+      : `Locked: ${ach.desc} (${Math.round(prog.percent)}% complete)`;
     badgeDiv.setAttribute("data-tooltip", tooltipText);
     badgeDiv.setAttribute("aria-label", tooltipText);
 
+    // Click to open details modal
+    badgeDiv.addEventListener("click", () => {
+      openAchievementModal(ach);
+    });
+
     container.appendChild(badgeDiv);
   });
+}
+
+function openAchievementModal(ach) {
+  const overlay = document.getElementById("achievementModalOverlay");
+  const modal = document.getElementById("achievementModal");
+  if (!overlay || !modal) return;
+
+  const isUnlocked = analyticsData.unlockedAchievements.includes(ach.id);
+  const prog = ach.progress();
+
+  // Populate data
+  document.getElementById("modalBadgeIcon").textContent = ach.icon;
+  
+  const rarityEl = document.getElementById("modalRarityLabel");
+  rarityEl.textContent = ach.rarity;
+  rarityEl.className = `modal-rarity-pill rarity-${ach.rarity.toLowerCase()}`;
+  
+  // Set glow color based on rarity
+  const glowEl = document.getElementById("modalGlow");
+  let glowColor = "rgba(139, 92, 246, 0.4)";
+  if (ach.rarity === "Common") glowColor = "rgba(148, 163, 184, 0.3)";
+  else if (ach.rarity === "Rare") glowColor = "rgba(6, 182, 212, 0.4)";
+  else if (ach.rarity === "Epic") glowColor = "rgba(236, 72, 153, 0.4)";
+  else if (ach.rarity === "Legendary") glowColor = "rgba(245, 158, 11, 0.5)";
+  glowEl.style.background = `radial-gradient(circle, ${glowColor} 0%, rgba(0,0,0,0) 70%)`;
+
+  document.getElementById("modalBadgeTitle").textContent = ach.title;
+  document.getElementById("modalBadgeDesc").textContent = ach.desc;
+  document.getElementById("modalProgressText").textContent = `${prog.current} / ${prog.target}`;
+  document.getElementById("modalProgressFill").style.width = `${prog.percent}%`;
+  document.getElementById("modalRewardText").textContent = `+${ach.reward} Coins Reward`;
+  
+  const statusEl = document.getElementById("modalStatusText");
+  if (isUnlocked) {
+    statusEl.innerHTML = `<span class="unlocked-status"><i class="ri-checkbox-circle-fill"></i> Unlocked</span>`;
+  } else {
+    statusEl.innerHTML = `<span class="locked-status"><i class="ri-lock-2-line"></i> Locked (${Math.round(prog.percent)}% complete)</span>`;
+  }
+
+  overlay.classList.add("active");
+  modal.classList.add("active");
+}
+
+function closeAchievementModal() {
+  const overlay = document.getElementById("achievementModalOverlay");
+  const modal = document.getElementById("achievementModal");
+  if (overlay) overlay.classList.remove("active");
+  if (modal) modal.classList.remove("active");
+}
+
+// Attach Achievement Modal Close Event Listeners
+document.getElementById("closeAchievementModalBtn")?.addEventListener("click", closeAchievementModal);
+document.getElementById("achievementModalOverlay")?.addEventListener("click", closeAchievementModal);
+
+function triggerCoinExplosion(event) {
+  const target = document.getElementById("coins");
+  if (!target) return;
+
+  const targetRect = target.getBoundingClientRect();
+  
+  // Get button location or center of screen if event is not passed
+  let startX = window.innerWidth / 2;
+  let startY = window.innerHeight / 2;
+  if (event && event.clientX) {
+    startX = event.clientX;
+    startY = event.clientY;
+  }
+
+  const coinCount = 15;
+  for (let i = 0; i < coinCount; i++) {
+    const coin = document.createElement("div");
+    coin.className = "flying-coin";
+    coin.innerHTML = '<i class="ri-coin-fill"></i>';
+    coin.style.left = `${startX}px`;
+    coin.style.top = `${startY}px`;
+    
+    // Random direction and delay
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 40 + Math.random() * 60;
+    const midX = startX + Math.cos(angle) * distance;
+    const midY = startY + Math.sin(angle) * distance;
+
+    coin.style.setProperty("--mid-x", `${midX - startX}px`);
+    coin.style.setProperty("--mid-y", `${midY - startY}px`);
+    coin.style.setProperty("--dest-x", `${targetRect.left + (targetRect.width / 2) - startX}px`);
+    coin.style.setProperty("--dest-y", `${targetRect.top + (targetRect.height / 2) - startY}px`);
+    
+    const delay = Math.random() * 0.2;
+    coin.style.animationDelay = `${delay}s`;
+
+    document.body.appendChild(coin);
+
+    // Clean up
+    setTimeout(() => {
+      coin.remove();
+    }, 1200 + delay * 1000);
+  }
 }
 
 // ==========================================================================
