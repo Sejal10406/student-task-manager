@@ -1,20 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Gamified Task Tracker - Level Up Your Productivity</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskQuest • Gamified Productivity</title>
 
-  <!-- Google Fonts (Inter & Poppins) -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Icon Libraries -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   
-  <!-- Chart.js for premium analytics visualization -->
+  <!-- Chart.js for analytics visualization -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <link rel="stylesheet" href="style.css">
@@ -34,24 +35,20 @@
 
       <div class="logo-box">
         <div class="logo">
-          <i class="ri-gamepad-line"></i>
+          <i class="ri-gamepad-fill"></i>
         </div>
-
         <div>
-          <h1>Gamified Task Tracker</h1>
-          <p>Level Up Your Productivity</p>
+          <h1>TaskQuest</h1>
+          <p>Level Up Productivity</p>
         </div>
       </div>
 
-      <!-- USER CARD -->
+      <!-- PROFILE CARD -->
       <div class="profile-card">
-
         <div class="avatar">
           <i class="ri-user-3-fill"></i>
         </div>
-
         <h2>Student Hero</h2>
-
         <p>Focus Warrior ⚔️</p>
 
         <div class="xp-container">
@@ -59,50 +56,60 @@
             <span id="xpLevel">Level 3</span>
             <span id="xpText">120 / 300 XP</span>
           </div>
-
           <div class="xp-bar">
             <div class="xp-fill" id="xpFill"></div>
           </div>
-
         </div>
-
-      <!-- STATS -->
+      </div>      <!-- STATS -->
       <div class="stats-grid">
-
         <div class="stat-card">
           <i class="ri-file-list-3-line"></i>
           <h3 id="totalTasks">0</h3>
           <p>Total Tasks</p>
         </div>
-
         <div class="stat-card">
-          <i class="ri-checkbox-circle-line"></i>
+          <i class="ri-checkbox-circle-fill"></i>
           <h3 id="completedTasks">0</h3>
           <p>Completed</p>
         </div>
-
         <div class="stat-card">
           <i class="ri-fire-fill"></i>
           <h3 id="streakCount">0</h3>
-          <p>Day Streak</p>
+          <p>Streak</p>
         </div>
-
         <div class="stat-card">
-          <i class="ri-star-smile-fill"></i>
-          <h3 id="points">0</h3>
+          <i class="ri-coin-fill"></i>
+          <h3 id="coins">0</h3>
           <p>Coins</p>
         </div>
-
       </div>
 
-      <!-- DYNAMIC BADGES -->
-      <div class="badges-card">
-        <div class="card-title">
+      <!-- ACHIEVEMENTS -->
+      <div class="achievement-card">
+        <div class="section-title">
           <i class="ri-medal-fill"></i>
           <span>Achievements</span>
         </div>
         <div class="badges" id="badgesGrid">
-          <!-- Dynamically populated by JS -->
+          <div class="badge unlocked">🔥</div>
+          <div class="badge unlocked">⚡</div>
+          <div class="badge">👑</div>
+          <div class="badge">🚀</div>
+        </div>
+      </div>
+
+      <!-- POMODORO -->
+      <div class="pomodoro-card">
+        <div class="section-title">
+          <i class="ri-timer-2-fill"></i>
+          <span>Focus Mode</span>
+        </div>
+        <h2 id="modeText">Study Time</h2>
+        <div class="timer" id="timer">25:00</div>
+        <div class="timer-buttons">
+          <button onclick="startTimer()" title="Start timer"><i class="ri-play-fill"></i></button>
+          <button onclick="pauseTimer()" title="Pause timer"><i class="ri-pause-fill"></i></button>
+          <button onclick="resetTimer()" title="Reset timer"><i class="ri-restart-fill"></i></button>
         </div>
       </div>
 
@@ -110,12 +117,12 @@
       <div class="streak-tracker-card glass">
         <div class="card-title">
           <i class="ri-fire-fill"></i>
-          <span>Weekly Streak Tracker</span>
+          <span>Weekly Streak</span>
         </div>
         <div class="streak-days" id="streakDaysGrid">
-          <!-- Dynamically populated circular check-in cells by JS -->
+          <!-- Dynamically populated by JS -->
         </div>
-        <p class="streak-footer">Complete at least one task or study session daily to protect your streak!</p>
+        <p class="streak-footer">Complete at least one task daily to protect your streak!</p>
       </div>
 
     </aside>
@@ -123,34 +130,41 @@
     <!-- MAIN CONTENT -->
     <section class="main-content">
 
-      <!-- TOPBAR -->
+
+      <!-- TOP BAR -->
       <div class="topbar">
-        <div class="topbar-left">
-          <button id="mobileSidebarToggle" class="burger-btn" aria-label="Toggle Sidebar Menu">
-            <i class="ri-menu-line"></i>
-          </button>
-          <div>
-            <h2>Dashboard</h2>
-            <p>Complete tasks and earn rewards ✨</p>
-          </div>
+
+        <div>
+          <h2>Dashboard</h2>
+          <p>Conquer your goals one task at a time ✨</p>
         </div>
 
+        <button id="themeToggle">
+          <i class="ri-moon-clear-fill"></i>
+        </button>
+
+      </div>
+
+    <!-- MAIN CONTENT -->
+    <section class="main-content">
+
+      <!-- TOP BAR -->
+      <div class="topbar">
+        <div class="topbar-left">
+          <h2>Dashboard</h2>
+          <p>Conquer your goals one task at a time ✨</p>
+        </div>
         <div class="topbar-right">
-          <!-- Accessibility Keyboard shortcuts visual hint -->
-          <span class="keyboard-hint" title="Keyboard Shortcuts: Alt+1 (Quests), Alt+2 (Stats), Alt+A (Focus Input), Alt+Space (Timer)">
-            <i class="ri-keyboard-line"></i> Shortcuts
-          </span>
-          
           <div class="theme-selector-panel">
-            <button class="theme-dot active" data-theme="cosmic" aria-label="Cosmic Abyss Theme" style="background: linear-gradient(135deg, #a855f7, #06b6d4);"></button>
-            <button class="theme-dot" data-theme="aurora" aria-label="Aurora Borealis Theme" style="background: linear-gradient(135deg, #10b981, #2dd4bf);"></button>
-            <button class="theme-dot" data-theme="cyberpunk" aria-label="Neon Cyberpunk Theme" style="background: linear-gradient(135deg, #ec4899, #3b82f6);"></button>
-            <button class="theme-dot" data-theme="sunset" aria-label="Sunset Gold Theme" style="background: linear-gradient(135deg, #f59e0b, #f43f5e);"></button>
+            <button class="theme-dot active" data-theme="cosmic" aria-label="Cosmic Theme" style="background: linear-gradient(135deg, #a855f7, #06b6d4);"></button>
+            <button class="theme-dot" data-theme="aurora" aria-label="Aurora Theme" style="background: linear-gradient(135deg, #10b981, #2dd4bf);"></button>
+            <button class="theme-dot" data-theme="cyberpunk" aria-label="Cyberpunk Theme" style="background: linear-gradient(135deg, #ec4899, #3b82f6);"></button>
+            <button class="theme-dot" data-theme="sunset" aria-label="Sunset Theme" style="background: linear-gradient(135deg, #f59e0b, #f43f5e);"></button>
           </div>
         </div>
       </div>
 
-      <!-- SLEEK TAB NAVIGATION -->
+      <!-- TAB NAVIGATION -->
       <div class="nav-tabs">
         <button class="tab-btn active" data-tab="quests">
           <i class="ri-checkbox-multiple-line"></i> Quests & Workspace
@@ -172,26 +186,35 @@
                 id="taskInput"
                 placeholder="Enter your next task..."
               />
-
               <select id="categorySelect">
                 <option value="Theory">📘 Theory</option>
                 <option value="Practical">🧪 Practical</option>
                 <option value="Assignment">📝 Assignment</option>
                 <option value="Revision">📖 Revision</option>
               </select>
-
               <button id="addTaskBtn">
-                <i class="ri-add-line"></i>Add Task
+                <i class="ri-add-line"></i> Add Task
               </button>
             </div>
 
             <!-- FILTERS -->
             <div class="filters">
               <button class="filter-btn active" data-filter="All">All</button>
-              <button class="filter-btn" data-filter="Theory">Theory</button>
-              <button class="filter-btn" data-filter="Practical">Practical</button>
-              <button class="filter-btn" data-filter="Assignment">Assignment</button>
-              <button class="filter-btn" data-filter="Revision">Revision</button>
+              <button class="filter-btn" data-filter="Theory">📘 Theory</button>
+              <button class="filter-btn" data-filter="Practical">🧪 Practical</button>
+              <button class="filter-btn" data-filter="Assignment">📝 Assignment</button>
+              <button class="filter-btn" data-filter="Revision">📖 Revision</button>
+            </div>
+
+            <!-- DAILY QUEST -->
+            <div class="daily-quest">
+              <div>
+                <h3>Daily Quest</h3>
+                <p>Complete 5 tasks today to earn bonus XP ⚡</p>
+              </div>
+              <div class="quest-progress">
+                <span id="questText">0 / 5</span>
+              </div>
             </div>
 
             <!-- TASKS -->
@@ -208,18 +231,16 @@
           <div class="workspace-sidebar">
             <div class="study-mode glass">
               <h2 id="mode">Study Time</h2>
-              <div class="timer" id="timer">25:00</div>
+              <div class="timer" id="timerDisplay">25:00</div>
               <div class="buttons">
-                <button onclick="startTimer()"><i class="fa-solid fa-play"></i> Start</button>
-                <button onclick="pauseTimer()"><i class="fa-solid fa-pause"></i> Pause</button>
-                <button onclick="resetTimer()"><i class="fa-solid fa-rotate-right"></i> Reset</button>
+                <button onclick="startTimer()" title="Start"><i class="ri-play-fill"></i></button>
+                <button onclick="pauseTimer()" title="Pause"><i class="ri-pause-fill"></i></button>
+                <button onclick="resetTimer()" title="Reset"><i class="ri-restart-fill"></i></button>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- TAB 2: ANALYTICS HUB -->
       <div id="analytics-tab" class="tab-content hidden">
         <!-- Stats summary row -->
         <div class="analytics-stats-grid">
@@ -264,6 +285,7 @@
           </div>
         </div>
 
+
         <!-- Charts grid -->
         <div class="analytics-charts-grid">
           <!-- Chart 1: Study hours -->
@@ -297,7 +319,9 @@
           </div>
         </div>
 
-        <!-- Heatmap & Subject detail grid -->
+
+      <!-- TAB 2: ANALYTICS HUB -->
+      <div id="analytics-tab" class="tab-content hidden">
         <div class="analytics-heatmap-layout">
           <!-- Github style Heatmap -->
           <div class="chart-card glass heatmap-card">
@@ -322,6 +346,7 @@
             </div>
           </div>
 
+
           <!-- Subject completions -->
           <div class="chart-card glass subject-stats-card">
             <div class="chart-header">
@@ -339,6 +364,7 @@
       </div>
 
     </section>
+
 
   </main>
 
@@ -429,6 +455,7 @@
     <button class="popup-claim-btn" id="claimMilestoneBtn">Awesome!</button>
   </div>
 
+
   <!-- FLOATING ACHIEVEMENT TOAST ALERT -->
   <div class="achievement-toast glass" id="achievementToast">
     <div class="toast-icon">🏆</div>
@@ -441,4 +468,5 @@
   <script src="script.js"></script>
 
 </body>
+
 </html>
