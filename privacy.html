@@ -7,12 +7,19 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="legal-page">
 
+  <!-- BACKGROUND -->
+  <div class="bg blur1"></div>
+  <div class="bg blur2"></div>
+  <div class="grid-overlay"></div>
+
   <header class="site-header">
     <div class="header-inner">
+      <a href="index.html" class="view-btn" style="text-decoration: none;"><i class="ri-home-4-line"></i> Home</a>
       <div class="header-brand">
         <h1>🔒 Privacy Policy</h1>
         <p class="header-subtitle">
@@ -29,10 +36,10 @@
         <div class="theme-pill">
           <span class="theme-pill-label">Theme</span>
           <select id="themeSwitcher" class="theme-dropdown" aria-label="Switch Theme">
-            <option value="light">🌞 Light</option>
-            <option value="dark" selected>🌙 Dark</option>
-            <option value="blue">🩵 Blue</option>
-            <option value="pastel">🎀 Pastel</option>
+            <option value="cosmic">🌌 Cosmic</option>
+            <option value="aurora">🍃 Aurora</option>
+            <option value="cyberpunk">🌸 Cyberpunk</option>
+            <option value="sunset">🌅 Sunset</option>
           </select>
         </div>
       </div>
@@ -66,9 +73,18 @@
   </footer>
 
   <script>
-    // Keep theme consistent
-    const savedTheme = localStorage.getItem("theme") || "dark";
-    document.documentElement.setAttribute("data-theme", savedTheme);
+    const themeSwitcher = document.getElementById("themeSwitcher");
+    const savedTheme = localStorage.getItem("quests_theme") || "cosmic";
+    document.body.setAttribute("data-theme", savedTheme);
+    if (savedTheme === "sunset") document.body.classList.add("light");
+    themeSwitcher.value = savedTheme;
+
+    themeSwitcher.addEventListener("change", (e) => {
+      const theme = e.target.value;
+      document.body.setAttribute("data-theme", theme);
+      if (theme === "sunset") document.body.classList.add("light"); else document.body.classList.remove("light");
+      localStorage.setItem("quests_theme", theme);
+    });
   </script>
 </body>
 </html>

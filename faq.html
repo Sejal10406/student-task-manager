@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FAQ - Study Task Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
   <link rel="stylesheet" href="style.css">
   <style>
     .faq-accordion {
@@ -46,12 +50,39 @@
     }
   </style>
 </head>
-<body class="legal-page" data-theme="dark">
+<body class="legal-page">
+  <!-- BACKGROUND -->
+  <div class="bg blur1"></div>
+  <div class="bg blur2"></div>
+  <div class="grid-overlay"></div>
+
   <header class="site-header">
-    <h1>❓ Frequently Asked Questions</h1>
-    <nav>
-      <a href="index.html">🏠 Home</a>
-    </nav>
+    <div class="header-inner">
+      <a href="index.html" class="view-btn" style="text-decoration: none;"><i class="ri-home-4-line"></i> Home</a>
+      <div class="header-brand">
+        <h1>❓ FAQ</h1>
+        <p class="header-subtitle">
+          <span>👋 Help Center</span>
+          <span class="subtitle-divider">•</span>
+          <span>Get Answers Fast</span>
+        </p>
+      </div>
+      <div class="header-controls">
+        <div class="stats-pill">
+          <span class="stats-pill-label">Status</span>
+          <span class="stats-pill-value">❓ Active</span>
+        </div>
+        <div class="theme-pill">
+          <span class="theme-pill-label">Theme</span>
+          <select id="themeSwitcher" class="theme-dropdown" aria-label="Switch Theme">
+            <option value="cosmic">🌌 Cosmic</option>
+            <option value="aurora">🍃 Aurora</option>
+            <option value="cyberpunk">🌸 Cyberpunk</option>
+            <option value="sunset">🌅 Sunset</option>
+          </select>
+        </div>
+      </div>
+    </div>
   </header>
 
   <main class="container">
@@ -103,8 +134,18 @@
   </footer>
 
   <script>
-    const savedTheme = localStorage.getItem("theme") || "dark";
-    document.documentElement.setAttribute("data-theme", savedTheme);
+    const themeSwitcher = document.getElementById("themeSwitcher");
+    const savedTheme = localStorage.getItem("quests_theme") || "cosmic";
+    document.body.setAttribute("data-theme", savedTheme);
+    if (savedTheme === "sunset") document.body.classList.add("light");
+    themeSwitcher.value = savedTheme;
+
+    themeSwitcher.addEventListener("change", (e) => {
+      const theme = e.target.value;
+      document.body.setAttribute("data-theme", theme);
+      if (theme === "sunset") document.body.classList.add("light"); else document.body.classList.remove("light");
+      localStorage.setItem("quests_theme", theme);
+    });
 
     // Accordion Logic
     document.querySelectorAll('.faq-question').forEach(button => {
