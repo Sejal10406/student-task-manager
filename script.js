@@ -13,22 +13,21 @@ const xpFill = document.getElementById("xpFill");
 const xpText = document.getElementById("xpText");
 
 // Filters & Navigation
-const filterBtns = document.querySelectorAll(".filter-btn");
 const tabBtns = document.querySelectorAll(".tab-btn");
 const tabContents = document.querySelectorAll(".tab-content");
+const filterBtns = document.querySelectorAll(".filters .filter-btn[data-filter]");
+const sortBtns = document.querySelectorAll(".filters .filter-btn[data-sort]");
 
-// Global states
+// Global states (Removed duplicates)
 let tasks = [];
 let currentFilter = "All";
-
+let currentSort = "default";
 let searchQuery = "";
-
-let currentView = "list"; // "list" or "board"
-
+let currentView = "list";
 let coins = 0;
 let streak = 0;
 let xp = 120;
-let currentStudyView = "weekly"; // "weekly" or "monthly"
+let currentStudyView = "weekly";
 let profile = { name: "Student Hero", gender: "Male", class: "Class 10" };
 
 // Chart.js instances
@@ -590,9 +589,6 @@ function createTaskEl(task) {
   if (task.completed) {
     div.classList.add("completed");
   }
-  if (searchQuery) {
-    filteredTasks = filteredTasks.filter(task => task.text.toLowerCase().includes(searchQuery));
-  }
 
   const pri = task.priority || "Medium";
   const catEmoji = getCategoryEmoji(task.category);
@@ -638,11 +634,12 @@ function createTaskEl(task) {
       analyticsData.completedTasksPerDay[todayStr] = (analyticsData.completedTasksPerDay[todayStr] || 0) + 1;
       analyticsData.categoryStats[task.category].completed = (analyticsData.categoryStats[task.category].completed || 0) + 1;
       updateAnalyticsStreak(todayStr);
-      triggerConfetti();
     } else {
       coins = Math.max(0, coins - 10);
       streak = Math.max(0, streak - 1);
       xp = Math.max(0, xp - 20);
+
+
 
       if (analyticsData.completedTasksPerDay[todayStr]) {
         analyticsData.completedTasksPerDay[todayStr] = Math.max(0, analyticsData.completedTasksPerDay[todayStr] - 1);
@@ -880,6 +877,25 @@ function renderTasks() {
       filteredTasks = tasks.filter(task => task.category === currentFilter);
     }
 
+    // Apply sort logic
+    if (currentSort === "priority") {
+      const priorityOrder = { "High": 1, "Medium": 2, "Low": 3 };
+      filteredTasks.sort((a, b) => (priorityOrder[a.priority] || 99) - (priorityOrder[b.priority] || 99));
+    } else if (currentSort === "alphabetical") {
+      filteredTasks.sort((a, b) => a.text.localeCompare(b.text));
+    } else if (currentSort === "deadline") {
+      filteredTasks.sort((a, b) => {
+        const aD = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+        const bD = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+        return aD - bD;
+      });
+    }
+
+    // Apply search query
+    if (searchQuery) {
+      filteredTasks = filteredTasks.filter(task => task.text.toLowerCase().includes(searchQuery));
+    }
+
     if (filteredTasks.length === 0) {
       taskList.innerHTML = `
         <div class="empty-state">
@@ -939,10 +955,37 @@ function updateStats() {
   const completedTasks = document.getElementById("completedTasks");
   if (totalTasks) totalTasks.textContent = tasks.length;
   if (completedTasks) completedTasks.textContent = tasks.filter(task => task.completed).length;
+  updateDailyQuest();
+}
+
+function updateDailyQuest() {
+  const today = getFormattedDate(new Date());
+  const completedToday = tasks.filter(t => t.completed && t.createdAt === today).length;
+  const questText = document.getElementById("questText");
+  if (questText) {
+    questText.textContent = `${completedToday} / 5`;
+  }
+}
+
+function showTaskPopup(message) {
+  const popup = document.createElement("div");
+  popup.className = "task-popup";
+  popup.innerHTML = `
+    <i class="ri-sparkling-fill" style="color: var(--secondary)"></i>
+    <p>${message}</p>
+  `;
+  document.body.appendChild(popup);
+  
+  setTimeout(() => popup.classList.add("show"), 100);
+  setTimeout(() => {
+    popup.classList.remove("show");
+    setTimeout(() => popup.remove(), 600);
+  }, 4000);
 }
 
 function updateGamification() {
-  points.textContent = coins;
+  const pointsEl = document.getElementById("coins");
+  if (pointsEl) pointsEl.textContent = coins;
   totalTasks.textContent = tasks.length;
   completedTasks.textContent = getCompletedQuestsCount();
   streakCount.textContent = streak;
@@ -965,6 +1008,15 @@ function updateGamification() {
   xpFill.classList.remove("pulse");
   void xpFill.offsetWidth; // Trigger DOM reflow to restart animation
   xpFill.classList.add("pulse");
+}
+
+function updateDailyQuest() {
+  const completedToday = tasks.filter(t => t.completed && t.createdAt === getFormattedDate(new Date())).length;
+  const questText = document.getElementById("questText");
+  if (questText) {
+    questText.textContent = `${completedToday} / 5`;
+    if (completedToday >= 5) triggerConfetti();
+  }
 }
 
 function updateAnalyticsStreak(todayStr) {
@@ -2147,6 +2199,20 @@ filterBtns.forEach(btn => {
   });
 });
 
+// Sort Button Event Listeners
+sortBtns.forEach(btn => {
+  btn.addEventListener("click", () => {
+    sortBtns.forEach(b => {
+      b.classList.remove("active");
+      b.setAttribute("aria-pressed", "false");
+    });
+    btn.classList.add("active");
+    btn.setAttribute("aria-pressed", "true");
+    currentSort = btn.dataset.sort;
+    renderTasks();
+  });
+});
+
 // Theme selection dot selectors click listeners
 document.querySelectorAll(".theme-dot").forEach(dot => {
   dot.addEventListener("click", () => {
@@ -2320,787 +2386,55 @@ document.getElementById("saveProfileBtn")?.addEventListener("click", (e) => {
   announce("Profile updated successfully.");
 });
 
-// ==========================================================================
-// MOTIVATIONAL QUOTES
-// ==========================================================================
-
-const QUOTES = [
-  { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
-  { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
-  { text: "It always seems impossible until it is done.", author: "Nelson Mandela" },
-  { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
-  { text: "Success is the sum of small efforts, repeated day in and day out.", author: "Robert Collier" },
-  { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
-  { text: "You don't have to be great to start, but you have to start to be great.", author: "Zig Ziglar" },
-  { text: "Push yourself, because no one else is going to do it for you.", author: "Anonymous" },
-  { text: "Small progress is still progress. Keep going.", author: "Anonymous" },
-  { text: "Your future is created by what you do today, not tomorrow.", author: "Robert Kiyosaki" },
-  { text: "Hard work beats talent when talent doesn't work hard.", author: "Tim Notke" },
-  { text: "Study now, Netflix later.", author: "Every Student Ever" },
-  { text: "Education is the most powerful weapon which you can use to change the world.", author: "Nelson Mandela" },
-  { text: "The beautiful thing about learning is nobody can take it away from you.", author: "B.B. King" },
-  { text: "An investment in knowledge pays the best interest.", author: "Benjamin Franklin" },
-  { text: "The expert in anything was once a beginner.", author: "Helen Hayes" },
-  { text: "Every accomplishment starts with the decision to try.", author: "John F. Kennedy" },
-  { text: "Dream big. Start small. Act now.", author: "Robin Sharma" },
-  { text: "Discipline is the bridge between goals and accomplishment.", author: "Jim Rohn" },
-  { text: "Focus on progress, not perfection.", author: "Anonymous" },
-];
-
-const quoteIndices = { 1: 0, 2: 10 };
-
-function refreshQuote(slot) {
-  const textEl = document.getElementById(`quoteText${slot}`);
-  const authorEl = document.getElementById(`quoteAuthor${slot}`);
-  if (!textEl || !authorEl) return;
-
-  // Fade out
-  textEl.classList.add("refreshing");
-  authorEl.classList.add("refreshing");
-
+/**
+ * UI Helper: Show a floating task confirmation popup
+ */
+function showTaskPopup(message) {
+  const popup = document.createElement("div");
+  popup.className = "task-popup";
+  popup.innerHTML = `
+    <i class="ri-sparkling-fill" style="color: var(--secondary); font-size: 24px;"></i>
+    <p>${message}</p>
+  `;
+  document.body.appendChild(popup);
+  
+  // Trigger animation
+  setTimeout(() => popup.classList.add("show"), 100);
+  
+  // Auto-remove
   setTimeout(() => {
-    // Advance to next quote
-    quoteIndices[slot] = (quoteIndices[slot] + 1) % QUOTES.length;
-    const q = QUOTES[quoteIndices[slot]];
-    textEl.textContent = `"${q.text}"`;
-    authorEl.textContent = `— ${q.author}`;
-
-    // Fade back in
-    textEl.classList.remove("refreshing");
-    authorEl.classList.remove("refreshing");
-  }, 280);
+    popup.classList.remove("show");
+    setTimeout(() => popup.remove(), 600);
+  }, 3500);
 }
 
-document.getElementById("quoteRefresh1")?.addEventListener("click", () => refreshQuote(1));
-document.getElementById("quoteRefresh2")?.addEventListener("click", () => refreshQuote(2));
+// Apply formatting commands
+function formatDoc(cmd) {
+  document.execCommand(cmd, false, null);
+}
 
-// ==========================================================================
-// BREAK REMINDER SYSTEM
-// ==========================================================================
+// Save notes to localStorage
+function saveNotes() {
+  const content = document.getElementById("notesEditor").innerHTML;
+  localStorage.setItem("studyNotes", content);
+  alert("Notes saved!");
+}
 
-(function () {
-  // --- DOM refs ---
-  const breakStartBtn   = document.getElementById("breakStartBtn");
-  const breakPauseBtn   = document.getElementById("breakPauseBtn");
-  const breakResetBtn   = document.getElementById("breakResetBtn");
-  const breakTimeDisp   = document.getElementById("breakTimeDisplay");
-  const breakStatusBadge= document.getElementById("breakStatusBadge");
-  const breakIntervalSel= document.getElementById("breakIntervalSelect");
-  const breakRingFill   = document.getElementById("breakRingFill");
-  const breakSoundToggle= document.getElementById("breakSoundToggle");
-  const breakToast      = document.getElementById("breakToast");
-  const breakToastClose = document.getElementById("breakToastClose");
-  const breakToastMsg   = document.getElementById("breakToastMsg");
-  const breakToastProgress = document.getElementById("breakToastProgress");
-
-  if (!breakStartBtn) return; // Guard: elements not in DOM
-
-  // --- State ---
-  const RING_CIRCUMFERENCE = 163.4; // 2 * π * 26
-  let totalSecs   = 25 * 60;
-  let remainSecs  = totalSecs;
-  let timerHandle = null;
-  let toastHandle = null;
-  let running     = false;
-
-  const BREAK_EMOJIS = ["☕", "🧘", "🚶", "💧", "🌿", "🎵", "😌", "🙆"];
-  const BREAK_MSGS = [
-    m => `You've been focused for ${m} minutes. Take a 5-min stretch break!`,
-    m => `${m} minutes of solid work! Hydrate and rest your eyes. 💧`,
-    m => `Great focus session (${m} min)! Stand up and breathe deeply. 🌿`,
-    m => `${m} minutes done! Your brain deserves a short reset. 🧠`,
-    m => `Impressive! ${m} minutes of study. Time to recharge for 5 minutes. 🔋`,
-  ];
-
-  // --- Helpers ---
-  function padTwo(n) { return String(n).padStart(2, "0"); }
-
-  function formatTime(s) {
-    return `${padTwo(Math.floor(s / 60))}:${padTwo(s % 60)}`;
+// Load notes on page load
+window.onload = function() {
+  // Update Dynamic Greeting
+  const greetingEl = document.getElementById("dynamicGreeting");
+  if (greetingEl) {
+    const hour = new Date().getHours();
+    let greeting = "Ready for a quest?";
+    if (hour < 12) greeting = "Good Morning, Hero!";
+    else if (hour < 18) greeting = "Good Afternoon, Warrior!";
+    else greeting = "Good Evening, Scholar!";
+    greetingEl.textContent = greeting;
   }
 
-  function updateRing() {
-    const progress = remainSecs / totalSecs;
-    const offset   = RING_CIRCUMFERENCE * (1 - progress);
-    breakRingFill.style.strokeDashoffset = offset;
+  const saved = localStorage.getItem("studyNotes");
+  if (saved) {
+    document.getElementById("notesEditor").innerHTML = saved;
   }
-
-  function updateDisplay() {
-    breakTimeDisp.textContent = formatTime(remainSecs);
-    updateRing();
-  }
-
-  function setStatus(state) {
-    if (state === "running") {
-      breakStatusBadge.textContent = "ON";
-      breakStatusBadge.classList.add("active");
-    } else if (state === "paused") {
-      breakStatusBadge.textContent = "PAUSE";
-      breakStatusBadge.classList.remove("active");
-    } else {
-      breakStatusBadge.textContent = "OFF";
-      breakStatusBadge.classList.remove("active");
-    }
-  }
-
-  function applyInterval() {
-    const mins = parseInt(breakIntervalSel.value, 10);
-    totalSecs  = mins * 60;
-    remainSecs = totalSecs;
-    updateDisplay();
-    breakToastMsg.textContent = BREAK_MSGS[0](mins);
-  }
-
-  // --- Sound (Web Audio API) ---
-  function playBreakSound() {
-    if (!breakSoundToggle.checked) return;
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-
-      // Gentle chime: three ascending notes
-      const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
-      notes.forEach((freq, i) => {
-        const osc  = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = "sine";
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.22);
-        gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + i * 0.22 + 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.22 + 0.5);
-        osc.start(ctx.currentTime + i * 0.22);
-        osc.stop(ctx.currentTime + i * 0.22 + 0.55);
-      });
-    } catch (_) { /* no AudioContext support */ }
-  }
-
-  // --- Toast ---
-  function showBreakToast() {
-    const mins = parseInt(breakIntervalSel.value, 10);
-    const msgIdx = Math.floor(Math.random() * BREAK_MSGS.length);
-    const emojiIdx = Math.floor(Math.random() * BREAK_EMOJIS.length);
-
-    document.getElementById("breakToastEmoji").textContent = BREAK_EMOJIS[emojiIdx];
-    breakToastMsg.textContent = BREAK_MSGS[msgIdx](mins);
-
-    breakToast.classList.add("show");
-
-    // Animated progress bar auto-dismiss in 8 seconds
-    const AUTO_DISMISS_MS = 8000;
-    breakToastProgress.style.transition = "none";
-    breakToastProgress.style.transform  = "scaleX(1)";
-    // Force reflow
-    breakToastProgress.offsetHeight;
-    breakToastProgress.style.transition = `transform ${AUTO_DISMISS_MS}ms linear`;
-    breakToastProgress.style.transform  = "scaleX(0)";
-
-    clearTimeout(toastHandle);
-    toastHandle = setTimeout(dismissBreakToast, AUTO_DISMISS_MS);
-
-    playBreakSound();
-
-    // Vibration if supported
-    if ("vibrate" in navigator) {
-      navigator.vibrate([200, 100, 200]);
-    }
-
-    announce("Break time! You've earned a rest.");
-  }
-
-  function dismissBreakToast() {
-    breakToast.classList.remove("show");
-    clearTimeout(toastHandle);
-  }
-
-  // --- Timer core ---
-  function tick() {
-    if (remainSecs <= 0) {
-      clearInterval(timerHandle);
-      timerHandle = null;
-      running = false;
-      remainSecs = 0;
-      updateDisplay();
-      showBreakToast();
-      // Auto-restart after toast is dismissed
-      setStatus("off");
-      breakStartBtn.disabled = false;
-      breakPauseBtn.disabled = true;
-      return;
-    }
-    remainSecs--;
-    updateDisplay();
-  }
-
-  // --- Controls ---
-  breakStartBtn.addEventListener("click", () => {
-    if (running) return;
-    if (remainSecs <= 0) applyInterval();
-    running = true;
-    setStatus("running");
-    breakStartBtn.disabled = true;
-    breakPauseBtn.disabled = false;
-    timerHandle = setInterval(tick, 1000);
-  });
-
-  breakPauseBtn.addEventListener("click", () => {
-    if (!running) return;
-    running = false;
-    clearInterval(timerHandle);
-    timerHandle = null;
-    setStatus("paused");
-    breakStartBtn.disabled = false;
-    breakPauseBtn.disabled = true;
-  });
-
-  breakResetBtn.addEventListener("click", () => {
-    running = false;
-    clearInterval(timerHandle);
-    timerHandle = null;
-    applyInterval();
-    setStatus("off");
-    breakStartBtn.disabled = false;
-    breakPauseBtn.disabled = true;
-  });
-
-  breakIntervalSel.addEventListener("change", () => {
-    const wasRunning = running;
-    if (running) {
-      running = false;
-      clearInterval(timerHandle);
-      timerHandle = null;
-    }
-    applyInterval();
-    setStatus("off");
-    breakStartBtn.disabled = false;
-    breakPauseBtn.disabled = true;
-    // If it was running, auto-restart with new interval
-    if (wasRunning) breakStartBtn.click();
-  });
-
-  breakToastClose.addEventListener("click", dismissBreakToast);
-
-  // --- Init ---
-  applyInterval();
-  breakPauseBtn.disabled = true;
-})();
-
-
-
-// ==========================================================================
-// ASSIGNMENT TRACKER
-// ==========================================================================
-
-(function () {
-  // ---- Storage key ----
-  const ASGN_KEY = "taskquest_assignments";
-
-  // ---- State ----
-  let assignments = [];
-  let asgnFilter  = "all";
-  let asgnSortBy  = "deadline";
-  let asgnSearch  = "";
-  let notifiedIds = new Set(); // track already-notified assignments
-  let dlToastHandle = null;
-
-  // ---- Load / Save ----
-  function loadAssignments() {
-    try { assignments = JSON.parse(localStorage.getItem(ASGN_KEY)) || []; }
-    catch (_) { assignments = []; }
-  }
-  function saveAssignments() {
-    localStorage.setItem(ASGN_KEY, JSON.stringify(assignments));
-  }
-
-  // ---- Helpers ----
-  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
-
-  function getStatus(asgn) {
-    if (asgn.done) return "done";
-    const diff = new Date(asgn.due) - Date.now();
-    if (diff < 0) return "overdue";
-    if (diff <= 48 * 60 * 60 * 1000) return "upcoming"; // ≤ 48 h
-    return "pending";
-  }
-
-  function formatCountdown(asgn) {
-    if (asgn.done) return { label: "✔ Done", cls: "done" };
-    const diff = new Date(asgn.due) - Date.now();
-    if (diff < 0) {
-      const h = Math.floor(-diff / 3600000);
-      const d = Math.floor(h / 24);
-      return { label: d > 0 ? `${d}d overdue` : `${h}h overdue`, cls: "overdue" };
-    }
-    const h = Math.floor(diff / 3600000);
-    const d = Math.floor(h / 24);
-    const m = Math.floor((diff % 3600000) / 60000);
-    if (d > 0) return { label: `${d}d ${h % 24}h left`, cls: d <= 2 ? "due-soon" : "ok" };
-    return { label: `${h}h ${m}m left`, cls: h <= 24 ? "due-soon" : "ok" };
-  }
-
-  function formatDueDate(iso) {
-    const d = new Date(iso);
-    return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-  }
-
-  const PRIORITY_ORDER = { High: 0, Medium: 1, Low: 2 };
-
-  function sortedFiltered() {
-    let list = assignments.slice();
-
-    // Filter
-    if (asgnFilter !== "all") {
-      list = list.filter(a => {
-        const s = getStatus(a);
-        if (asgnFilter === "pending")  return s === "pending";
-        if (asgnFilter === "upcoming") return s === "upcoming";
-        if (asgnFilter === "overdue")  return s === "overdue";
-        if (asgnFilter === "done")     return s === "done";
-        return true;
-      });
-    }
-
-    // Search
-    if (asgnSearch.trim()) {
-      const q = asgnSearch.toLowerCase();
-      list = list.filter(a =>
-        a.title.toLowerCase().includes(q) || a.subject.toLowerCase().includes(q)
-      );
-    }
-
-    // Sort
-    list.sort((a, b) => {
-      if (asgnSortBy === "deadline") return new Date(a.due) - new Date(b.due);
-      if (asgnSortBy === "priority") return PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
-      if (asgnSortBy === "subject")  return a.subject.localeCompare(b.subject);
-      if (asgnSortBy === "added")    return b.addedAt - a.addedAt;
-      return 0;
-    });
-
-    return list;
-  }
-
-  // ---- Render Cards ----
-  function renderAssignments() {
-    const list = sortedFiltered();
-    const container = document.getElementById("asgnList");
-    if (!container) return;
-
-    updateStats();
-    renderTimeline();
-
-    if (list.length === 0) {
-      container.innerHTML = `
-        <div class="asgn-empty">
-          <i class="ri-calendar-check-line"></i>
-          <h3>No assignments here</h3>
-          <p>Add one above or change the active filter.</p>
-        </div>`;
-      return;
-    }
-
-    container.innerHTML = "";
-    list.forEach(asgn => {
-      const status   = getStatus(asgn);
-      const cd       = formatCountdown(asgn);
-      const dueStr   = formatDueDate(asgn.due);
-
-      const card = document.createElement("div");
-      card.className = `asgn-card priority-${asgn.priority} status-${status}`;
-      card.dataset.id = asgn.id;
-
-      const dueIconCls = status === "overdue" ? "overdue"
-                       : status === "upcoming" ? "due-soon" : "ok";
-
-      card.innerHTML = `
-        <div class="asgn-check${asgn.done ? " checked" : ""}" role="checkbox"
-             aria-checked="${asgn.done}" tabindex="0" data-check="${asgn.id}"
-             title="${asgn.done ? "Mark incomplete" : "Mark complete"}">
-          ${asgn.done ? '<i class="ri-check-line"></i>' : ""}
-        </div>
-        <div class="asgn-card-body">
-          <div class="asgn-subject-tag"><i class="ri-book-open-line"></i> ${escapeHtml(asgn.subject)}</div>
-          <div class="asgn-title">${escapeHtml(asgn.title)}</div>
-          <div class="asgn-meta-row">
-            <span class="asgn-due-label ${dueIconCls}">
-              <i class="ri-time-line"></i> ${dueStr}
-            </span>
-            <span class="asgn-countdown ${cd.cls}">${cd.label}</span>
-            <span class="asgn-priority-pill ${asgn.priority}">${asgn.priority}</span>
-          </div>
-          ${asgn.notes ? `<p class="asgn-notes-text">${escapeHtml(asgn.notes)}</p>` : ""}
-        </div>
-        <div class="asgn-card-actions">
-          <button class="asgn-action-btn del-btn" data-del="${asgn.id}" aria-label="Delete assignment" title="Delete">
-            <i class="ri-delete-bin-6-line"></i>
-          </button>
-        </div>`;
-
-      // Checkbox click
-      card.querySelector(`[data-check="${asgn.id}"]`).addEventListener("click", () => toggleDone(asgn.id));
-      card.querySelector(`[data-check="${asgn.id}"]`).addEventListener("keydown", e => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleDone(asgn.id); }
-      });
-      // Delete click
-      card.querySelector(`[data-del="${asgn.id}"]`).addEventListener("click", () => deleteAssignment(asgn.id));
-
-      container.appendChild(card);
-    });
-  }
-
-  // ---- Stats ----
-  function updateStats() {
-    const total    = assignments.length;
-    const done     = assignments.filter(a => a.done).length;
-    const upcoming = assignments.filter(a => getStatus(a) === "upcoming").length;
-    const overdue  = assignments.filter(a => getStatus(a) === "overdue").length;
-
-    const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-    setEl("asgnTotal",    total);
-    setEl("asgnDone",     done);
-    setEl("asgnUpcoming", upcoming);
-    setEl("asgnOverdue",  overdue);
-  }
-
-  // ---- Timeline ----
-  function renderTimeline() {
-    const grid = document.getElementById("asgnTimelineGrid");
-    const rangeEl = document.getElementById("asgnTimelineRange");
-    if (!grid) return;
-
-    const today = new Date();
-    today.setHours(0,0,0,0);
-
-    const days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      return d;
-    });
-
-    const DAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-    const todayNum = today.getDate();
-
-    if (rangeEl) {
-      const last = days[days.length - 1];
-      rangeEl.textContent = `${today.toLocaleDateString("en-IN",{day:"numeric",month:"short"})} – ${last.toLocaleDateString("en-IN",{day:"numeric",month:"short"})}`;
-    }
-
-    grid.innerHTML = "";
-    days.forEach(day => {
-      const dayStart = new Date(day); dayStart.setHours(0,0,0,0);
-      const dayEnd   = new Date(day); dayEnd.setHours(23,59,59,999);
-      const isToday  = day.getDate() === todayNum && day.getMonth() === today.getMonth();
-
-      const dayAsgns = assignments.filter(a => {
-        const d = new Date(a.due);
-        return d >= dayStart && d <= dayEnd;
-      });
-
-      const cell = document.createElement("div");
-      cell.className = `asgn-tl-day${isToday ? " today" : ""}`;
-
-      let dots = dayAsgns.map(a => {
-        const cls = getStatus(a);
-        return `<div class="asgn-tl-dot ${cls === "upcoming" ? "due-soon" : cls}" title="${escapeHtml(a.title)}"></div>`;
-      }).join("");
-
-      cell.innerHTML = `
-        <span class="asgn-tl-day-name">${DAY_NAMES[day.getDay()]}</span>
-        <span class="asgn-tl-day-num">${day.getDate()}</span>
-        ${dots}
-        ${dayAsgns.length > 0 ? `<span class="asgn-tl-count">${dayAsgns.length} due</span>` : ""}`;
-
-      grid.appendChild(cell);
-    });
-  }
-
-  // ---- CRUD ----
-  function addAssignment() {
-    const titleEl    = document.getElementById("asgnTitle");
-    const subjectEl  = document.getElementById("asgnSubject");
-    const dueEl      = document.getElementById("asgnDue");
-    const priorityEl = document.getElementById("asgnPriority");
-    const notesEl    = document.getElementById("asgnNotes");
-
-    const title   = titleEl?.value.trim();
-    const subject = subjectEl?.value.trim();
-    const due     = dueEl?.value;
-    const priority= priorityEl?.value || "Medium";
-    const notes   = notesEl?.value.trim();
-
-    if (!title)   { titleEl?.focus();   return showAsgnError(titleEl,   "Enter assignment title"); }
-    if (!subject) { subjectEl?.focus(); return showAsgnError(subjectEl, "Enter subject"); }
-    if (!due)     { dueEl?.focus();     return showAsgnError(dueEl,     "Select due date"); }
-
-    assignments.unshift({
-      id: uid(), title, subject, due, priority, notes,
-      done: false, addedAt: Date.now()
-    });
-    saveAssignments();
-    renderAssignments();
-
-    // Reset form
-    if (titleEl)    titleEl.value   = "";
-    if (subjectEl)  subjectEl.value = "";
-    if (dueEl)      dueEl.value     = "";
-    if (notesEl)    notesEl.value   = "";
-    if (priorityEl) priorityEl.value = "Medium";
-
-    announce(`Assignment "${title}" added.`);
-  }
-
-  function showAsgnError(el, msg) {
-    if (!el) return;
-    el.style.borderColor = "#ef4444";
-    el.placeholder = msg;
-    setTimeout(() => { el.style.borderColor = ""; }, 1500);
-  }
-
-  function toggleDone(id) {
-    const asgn = assignments.find(a => a.id === id);
-    if (!asgn) return;
-    asgn.done = !asgn.done;
-    if (asgn.done) triggerConfetti();
-    saveAssignments();
-    renderAssignments();
-    announce(`Assignment "${asgn.title}" marked ${asgn.done ? "complete" : "incomplete"}.`);
-  }
-
-  function deleteAssignment(id) {
-    const asgn = assignments.find(a => a.id === id);
-    if (!asgn) return;
-    assignments = assignments.filter(a => a.id !== id);
-    saveAssignments();
-    renderAssignments();
-    announce(`Assignment "${asgn.title}" deleted.`);
-  }
-
-  // ---- Deadline Reminder Toast ----
-  const dlToast     = document.getElementById("asgnDeadlineToast");
-  const dlToastMsg  = document.getElementById("asgnDlToastMsg");
-  const dlToastTitle= document.getElementById("asgnDlToastTitle");
-  const dlProgress  = document.getElementById("asgnDlProgress");
-  const dlClose     = document.getElementById("asgnDlToastClose");
-
-  function showDeadlineToast(asgn) {
-    if (!dlToast) return;
-    const cd = formatCountdown(asgn);
-    if (dlToastTitle) dlToastTitle.textContent = asgn.priority === "High" ? "🔴 Urgent Deadline!" : "📅 Assignment Due Soon!";
-    if (dlToastMsg)   dlToastMsg.textContent   = `"${asgn.title}" (${asgn.subject}) — ${cd.label}.`;
-
-    dlToast.classList.add("show");
-
-    const AUTO = 7000;
-    if (dlProgress) {
-      dlProgress.style.transition = "none";
-      dlProgress.style.transform  = "scaleX(1)";
-      dlProgress.offsetHeight; // reflow
-      dlProgress.style.transition = `transform ${AUTO}ms linear`;
-      dlProgress.style.transform  = "scaleX(0)";
-    }
-
-    clearTimeout(dlToastHandle);
-    dlToastHandle = setTimeout(() => dlToast.classList.remove("show"), AUTO);
-  }
-
-  if (dlClose) dlClose.addEventListener("click", () => {
-    dlToast?.classList.remove("show");
-    clearTimeout(dlToastHandle);
-  });
-
-  // Check for upcoming deadlines every minute
-  function checkDeadlines() {
-    const now = Date.now();
-    assignments.forEach(asgn => {
-      if (asgn.done || notifiedIds.has(asgn.id)) return;
-      const diff = new Date(asgn.due) - now;
-      // Notify if ≤ 2 hours away or overdue within last 10 min
-      if (diff <= 2 * 60 * 60 * 1000 && diff > -10 * 60 * 1000) {
-        notifiedIds.add(asgn.id);
-        showDeadlineToast(asgn);
-      }
-    });
-  }
-
-  // ---- Countdown refresh ----
-  function refreshCountdowns() {
-    const cards = document.querySelectorAll(".asgn-card[data-id]");
-    cards.forEach(card => {
-      const id   = card.dataset.id;
-      const asgn = assignments.find(a => a.id === id);
-      if (!asgn) return;
-      const cdEl = card.querySelector(".asgn-countdown");
-      if (cdEl) {
-        const cd = formatCountdown(asgn);
-        cdEl.textContent = cd.label;
-        cdEl.className   = `asgn-countdown ${cd.cls}`;
-      }
-    });
-  }
-
-  // ---- Form collapse toggle ----
-  const formToggleBtn = document.getElementById("asgnFormToggle");
-  const formBody      = document.getElementById("asgnFormBody");
-  const formHeader    = document.querySelector(".asgn-form-header");
-
-  function toggleForm() {
-    if (!formBody) return;
-    const isCollapsed = formBody.classList.contains("collapsed");
-    formBody.classList.toggle("collapsed", !isCollapsed);
-    if (formToggleBtn) formToggleBtn.classList.toggle("collapsed", !isCollapsed);
-  }
-
-  if (formToggleBtn) formToggleBtn.addEventListener("click", e => { e.stopPropagation(); toggleForm(); });
-  if (formHeader)    formHeader.addEventListener("click", () => toggleForm());
-
-  // ---- Wire up events ----
-  document.getElementById("asgnAddBtn")?.addEventListener("click", addAssignment);
-
-  document.getElementById("asgnTitle")?.addEventListener("keydown", e => {
-    if (e.key === "Enter") addAssignment();
-  });
-
-  document.querySelectorAll(".asgn-filter-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".asgn-filter-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      asgnFilter = btn.dataset.asgnFilter;
-      renderAssignments();
-    });
-  });
-
-  document.getElementById("asgnSort")?.addEventListener("change", e => {
-    asgnSortBy = e.target.value;
-    renderAssignments();
-  });
-
-  document.getElementById("asgnSearch")?.addEventListener("input", e => {
-    asgnSearch = e.target.value;
-    renderAssignments();
-  });
-
-  // --- Weekly Performance Summary Logic ---
-  const wsToggle = document.getElementById("weeklySummaryToggle");
-  const wsBody = document.getElementById("weeklySummaryBody");
-  
-  if (wsToggle && wsBody) {
-    wsToggle.addEventListener("click", () => {
-      wsBody.classList.toggle("collapsed");
-      wsToggle.classList.toggle("collapsed");
-    });
-  }
-
-  let wsChartInstance = null;
-
-  function renderWeeklySummary() {
-    // 1. Calculate Score & Stats
-    const questsDone = typeof analyticsData !== 'undefined' ? (analyticsData.questsCompleted || 0) : 0;
-    const asgnDone = assignments.filter(a => a.status === "done").length;
-    const studyHoursRaw = typeof analyticsData !== 'undefined' ? (analyticsData.totalStudyTime || 0) : 0;
-    const studyHours = (studyHoursRaw / 60).toFixed(1);
-    const streak = typeof analyticsData !== 'undefined' ? (analyticsData.streak || 0) : 0;
-
-    // Productivity Score Logic
-    const score = Math.min(100, Math.round((questsDone * 5) + (asgnDone * 15) + (parseFloat(studyHours) * 10) + (streak * 2)));
-
-    const scoreEl = document.getElementById("wsProductivityScore");
-    if (scoreEl) scoreEl.textContent = score;
-    const qEl = document.getElementById("wsQuestsCompleted");
-    if (qEl) qEl.textContent = questsDone;
-    const aEl = document.getElementById("wsAsgnCompleted");
-    if (aEl) aEl.textContent = asgnDone;
-    const sEl = document.getElementById("wsStudyHours");
-    if (sEl) sEl.textContent = studyHours + "h";
-    const stEl = document.getElementById("wsStreak");
-    if (stEl) stEl.textContent = streak;
-
-    const circle = document.getElementById("wsScoreCircle");
-    if (circle) {
-      circle.setAttribute("stroke-dasharray", `${score}, 100`);
-      // Change color based on score
-      if (score < 40) circle.style.stroke = "var(--danger)";
-      else if (score < 70) circle.style.stroke = "var(--secondary)";
-      else circle.style.stroke = "var(--success)";
-    }
-
-    // 2. Subject Analysis
-    const subjectStats = {};
-    assignments.forEach(a => {
-      if (!subjectStats[a.subject]) subjectStats[a.subject] = { total: 0, done: 0 };
-      subjectStats[a.subject].total++;
-      if (a.status === "done") subjectStats[a.subject].done++;
-    });
-
-    const saContainer = document.getElementById("wsSubjectAnalysis");
-    if (saContainer) {
-      saContainer.innerHTML = "";
-      const subjects = Object.keys(subjectStats);
-      if (subjects.length === 0) {
-        saContainer.innerHTML = `<div style="color:var(--text-light); padding:10px;">No subjects tracked yet</div>`;
-      } else {
-        subjects.forEach(subj => {
-          const stats = subjectStats[subj];
-          const pct = Math.round((stats.done / stats.total) * 100);
-          saContainer.innerHTML += `
-            <div class="ws-subject-card">
-              <h5>${subj}</h5>
-              <div class="sub-score">${pct}%</div>
-              <div style="font-size:10px; color:var(--text-light)">${stats.done}/${stats.total} Done</div>
-            </div>
-          `;
-        });
-      }
-    }
-
-    // 3. Weekly Progress Chart
-    const ctx = document.getElementById("weeklyProgressChart");
-    if (!ctx) return;
-
-    // Use simulated data for the week using the score context
-    const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    
-    if (wsChartInstance) wsChartInstance.destroy();
-    
-    wsChartInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Productivity Points',
-          data: [10, 25, 15, 30, 20, 45, score > 0 ? score : 50],
-          backgroundColor: 'rgba(139, 92, 246, 0.5)',
-          borderColor: 'rgba(139, 92, 246, 1)',
-          borderWidth: 1,
-          borderRadius: 4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
-          x: { grid: { display: false } }
-        },
-        plugins: {
-          legend: { display: false }
-        }
-      }
-    });
-  }
-
-  // ---- Init ----
-  loadAssignments();
-  renderAssignments();
-  renderWeeklySummary();
-  checkDeadlines();
-
-  // Re-render when tab is activated
-  document.addEventListener("asgnTabActive", () => {
-    renderAssignments();
-    renderWeeklySummary();
-  });
-
-  setInterval(refreshCountdowns, 30000);   // refresh countdowns every 30 sec
-  setInterval(checkDeadlines, 60000);      // check deadlines every 1 min
-
-})();
+};
