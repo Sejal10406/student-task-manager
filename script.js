@@ -272,6 +272,13 @@ function getFormattedDate(date) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+function getFormattedDateTime(date) {
+  const d = getFormattedDate(date);
+  const hh = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  return `${d} ${hh}:${min}`;
+}
+
 // Helper to check if theme is currently light
 function isLightTheme() {
   return document.body.classList.contains("light");
@@ -550,7 +557,7 @@ function addTask() {
     category,
     priority,
     completed: false,
-    createdAt: getFormattedDate(new Date()),
+    createdAt: getFormattedDateTime(new Date()),
     deadline: deadline || null
   };
 
@@ -602,6 +609,7 @@ function createTaskEl(task) {
         <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px; flex-wrap: wrap;">
           <p class="task-category" style="margin: 0;">${catEmoji} ${task.category}</p>
           <span class="priority-pill priority-${pri.toLowerCase()}">${pri}</span>
+          <span class="task-timestamp" style="font-size: 11px; color: var(--text-light); opacity: 0.8;"><i class="ri-history-line"></i> ${task.createdAt}</span>
         </div>
       </div>
     </div>
@@ -960,7 +968,7 @@ function updateStats() {
 
 function updateDailyQuest() {
   const today = getFormattedDate(new Date());
-  const completedToday = tasks.filter(t => t.completed && t.createdAt === today).length;
+  const completedToday = tasks.filter(t => t.completed && t.createdAt && t.createdAt.startsWith(today)).length;
   const questText = document.getElementById("questText");
   if (questText) {
     questText.textContent = `${completedToday} / 5`;
@@ -1011,7 +1019,7 @@ function updateGamification() {
 }
 
 function updateDailyQuest() {
-  const completedToday = tasks.filter(t => t.completed && t.createdAt === getFormattedDate(new Date())).length;
+  const completedToday = tasks.filter(t => t.completed && t.createdAt && t.createdAt.startsWith(getFormattedDate(new Date()))).length;
   const questText = document.getElementById("questText");
   if (questText) {
     questText.textContent = `${completedToday} / 5`;
@@ -2108,7 +2116,7 @@ if (mobileAddTaskBtn) {
       category,
       priority,
       completed: false,
-      createdAt: getFormattedDate(new Date())
+      createdAt: getFormattedDateTime(new Date())
     };
 
     tasks.push(task);
