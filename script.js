@@ -176,6 +176,12 @@ function loadData() {
   if (savedTasks) {
     try {
       tasks = JSON.parse(savedTasks);
+      // Ensure all loaded tasks have the penaltyApplied property
+      tasks.forEach(task => {
+        if (task.penaltyApplied === undefined) {
+          task.penaltyApplied = false;
+        }
+      });
     } catch (e) {
       tasks = [];
     }
@@ -560,7 +566,8 @@ function addTask() {
     priority,
     completed: false,
     createdAt: getFormattedDateTime(new Date()),
-    deadline: deadline || null
+    deadline: deadline || null,
+    penaltyApplied: false
   };
 
   tasks.push(task);
@@ -1993,10 +2000,41 @@ function sortByDeadline() {
   renderTasks();
 }
 
+/**
+ * Automatically deducts 10 points (coins) for tasks that pass their deadline 
+ * without being completed.
+ */
+function checkOverduePenalties() {
+  const now = Date.now();
+  let changed = false;
+
+  tasks.forEach(task => {
+    // Only penalize if it has a deadline, isn't done, and hasn't been penalized yet
+    if (task.deadline && !task.completed && !task.penaltyApplied) {
+      const deadlineTime = new Date(task.deadline).getTime();
+      
+      if (now > deadlineTime) {
+        coins = Math.max(0, coins - 10);
+        task.penaltyApplied = true;
+        changed = true;
+        
+        showTaskPopup(`DEADLINE MISSED: -10 PTS FOR "${task.text.toUpperCase()}"`);
+        announce(`Deadline missed for task ${task.text}. 10 points deducted.`);
+      }
+    }
+  });
+
+  if (changed) {
+    saveData();
+    updateGamification();
+  }
+}
+
 // Initialize deadline update interval
 function initDeadlineUpdater() {
   updateDeadlineAlerts();
   setInterval(() => {
+    checkOverduePenalties();
     updateDeadlineAlerts();
     renderTasks();
   }, 60000); // Update every minute
@@ -2074,6 +2112,9 @@ if (mobileAddTaskBtn) {
     const mobilePrioritySelect = document.getElementById("mobilePrioritySelect");
     const priority = mobilePrioritySelect ? mobilePrioritySelect.value : "Medium";
 
+    const mobileDeadlineInput = document.getElementById("mobileDeadlineInput");
+    const deadline = mobileDeadlineInput ? mobileDeadlineInput.value : "";
+
     if (text === "") {
       mobileTaskInput.classList.add("input-invalid");
       mobileTaskInput.setAttribute("aria-invalid", "true");
@@ -2092,11 +2133,14 @@ if (mobileAddTaskBtn) {
       category,
       priority,
       completed: false,
-      createdAt: getFormattedDateTime(new Date())
+      createdAt: getFormattedDateTime(new Date()),
+      deadline: deadline || null,
+      penaltyApplied: false
     };
 
     tasks.push(task);
     mobileTaskInput.value = "";
+    if (mobileDeadlineInput) mobileDeadlineInput.value = "";
 
     if (!analyticsData.categoryStats[category]) {
       analyticsData.categoryStats[category] = { created: 0, completed: 0 };
@@ -2259,6 +2303,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateDisplay();
   renderProfile();
 
+  checkOverduePenalties();
   initDeadlineUpdater();
 
 
