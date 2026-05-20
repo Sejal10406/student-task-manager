@@ -172,6 +172,12 @@
         <button class="tab-btn" id="tabBtnAssignments" data-tab="assignments" role="tab" aria-selected="false" aria-controls="assignments-tab">
           <i class="ri-calendar-check-line"></i> Assignments
         </button>
+        <button class="tab-btn" id="tabBtnVault" data-tab="vault" role="tab" aria-selected="false" aria-controls="vault-tab">
+          <i class="ri-folder-open-line"></i> Files Vault
+        </button>
+        <button class="tab-btn" id="tabBtnBookmarks" data-tab="bookmarks" role="tab" aria-selected="false" aria-controls="bookmarks-tab">
+          <i class="ri-bookmark-3-line"></i> Bookmarks
+        </button>
       </div>
       
       <!-- TAB 1: QUESTS & TIMER -->
@@ -374,6 +380,85 @@
           </div>
         </div>
         
+        <!-- ====================================================== -->
+        <!-- DAILY GOALS SECTION -->
+        <!-- ====================================================== -->
+        <div class="daily-goals-card glass" id="dailyGoalsCard">
+          <div class="daily-goals-header">
+            <div class="daily-goals-title-wrap">
+              <i class="ri-sun-line"></i>
+              <div>
+                <h3>Daily Goals</h3>
+                <p class="daily-goals-date" id="dailyGoalsDate">Today</p>
+              </div>
+            </div>
+            <div class="daily-goals-header-right">
+              <div class="daily-goals-streak" id="dailyGoalStreak" title="Daily goals streak">
+                <i class="ri-fire-fill"></i>
+                <span id="dailyGoalStreakNum">0</span>
+              </div>
+              <button class="daily-goals-reset-btn" id="dailyGoalsResetBtn" title="Reset all goals for today">
+                <i class="ri-refresh-line"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Progress Ring & Stats -->
+          <div class="daily-goals-progress-wrap">
+            <div class="daily-goals-ring-container">
+              <svg class="daily-goals-ring" viewBox="0 0 80 80">
+                <circle class="dg-ring-bg" cx="40" cy="40" r="34"/>
+                <circle class="dg-ring-fill" id="dgRingFill" cx="40" cy="40" r="34"/>
+              </svg>
+              <div class="daily-goals-ring-text">
+                <span id="dgPercent">0%</span>
+                <span class="dg-ring-label">done</span>
+              </div>
+            </div>
+            <div class="daily-goals-stats">
+              <div class="dg-stat">
+                <span class="dg-stat-num" id="dgTotalCount">0</span>
+                <span class="dg-stat-label">Total</span>
+              </div>
+              <div class="dg-stat">
+                <span class="dg-stat-num" id="dgDoneCount">0</span>
+                <span class="dg-stat-label">Done</span>
+              </div>
+              <div class="dg-stat">
+                <span class="dg-stat-num" id="dgLeftCount">0</span>
+                <span class="dg-stat-label">Left</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Motivational message -->
+          <div class="dg-motivation" id="dgMotivation">
+            <i class="ri-seedling-line"></i>
+            <span>Set your first goal for today!</span>
+          </div>
+
+          <!-- Add Goal Input -->
+          <div class="daily-goals-add-wrap">
+            <div class="daily-goals-priority-wrap">
+              <select id="dgPrioritySelect" class="dg-priority-select" aria-label="Goal priority">
+                <option value="high">🔴 High</option>
+                <option value="medium" selected>🟡 Medium</option>
+                <option value="low">🟢 Low</option>
+              </select>
+            </div>
+            <input type="text" id="dgGoalInput" class="daily-goals-input" placeholder="Add a daily goal..." maxlength="80">
+            <button class="daily-goals-add-btn" id="dgAddBtn" aria-label="Add daily goal">
+              <i class="ri-add-line"></i>
+            </button>
+          </div>
+
+          <!-- Goals List -->
+          <ul class="daily-goals-list" id="dailyGoalsList">
+            <!-- Populated by JS -->
+          </ul>
+
+        </div>
+
         <!-- QUICK BRAIN DUMP SCRATCHPAD -->
         <div class="scratchpad-card glass">
           <div class="scratchpad-header">
@@ -390,6 +475,46 @@
 
       <!-- TAB 3: ASSIGNMENT TRACKER -->
       <div id="assignments-tab" class="tab-content" role="tabpanel" aria-labelledby="tabBtnAssignments">
+
+        <!-- EXAM COUNTDOWN WIDGET -->
+        <div class="exam-countdown-widget glass" id="examCountdownWidget">
+          <div class="asgn-form-header">
+            <div class="asgn-form-title"><i class="ri-timer-flash-line"></i> Exam Countdown</div>
+            <button class="asgn-form-toggle-btn" id="examFormToggle" aria-label="Toggle Exam Form"><i class="ri-add-line"></i></button>
+          </div>
+          
+          <!-- Add Exam Form (Hidden by default) -->
+          <div class="exam-form-body collapsed" id="examFormBody">
+            <div class="asgn-form-grid">
+              <div class="asgn-field">
+                <label for="examTitle">Exam Title *</label>
+                <input type="text" id="examTitle" placeholder="e.g. Final Mathematics Exam" />
+              </div>
+              <div class="asgn-field">
+                <label for="examSubject">Subject *</label>
+                <input type="text" id="examSubject" placeholder="e.g. Mathematics" list="subjectSuggestions"/>
+              </div>
+              <div class="asgn-field">
+                <label for="examDate">Exam Date & Time *</label>
+                <input type="datetime-local" id="examDate" />
+              </div>
+              <div class="asgn-field asgn-field-full">
+                <label for="examNotes">Notes (Optional)</label>
+                <input type="text" id="examNotes" placeholder="e.g. Bring calculator, chapters 1-5" />
+              </div>
+            </div>
+            <button class="asgn-add-btn" id="addExamBtn"><i class="ri-add-line"></i> Track Exam</button>
+          </div>
+
+          <!-- Exams Grid -->
+          <div class="exams-grid" id="examsGrid">
+            <!-- Dynamically populated by JS -->
+            <div class="exam-empty-state" id="examEmptyState">
+              <i class="ri-calendar-event-line"></i>
+              <p>No upcoming exams. You're all clear!</p>
+            </div>
+          </div>
+        </div>
 
         <!-- Weekly Performance Summary -->
         <div class="asgn-weekly-summary glass" id="weeklySummaryCard">
@@ -554,6 +679,50 @@
           </div>
           <div class="asgn-timeline-grid" id="asgnTimelineGrid">
             <!-- Populated by JS -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 4: FILES VAULT -->
+      <div id="vault-tab" class="tab-content" role="tabpanel" aria-labelledby="tabBtnVault">
+        
+        <div class="vault-header">
+          <div class="vault-title-area">
+            <h2><i class="ri-folder-lock-line"></i> Secure File Vault</h2>
+            <p>Upload and manage study materials, notes, and resources.</p>
+          </div>
+          <div class="vault-storage-info">
+            <div class="storage-bar"><div class="storage-fill" id="storageFill"></div></div>
+            <p id="storageText">0 KB / 5 MB LocalStorage used</p>
+          </div>
+        </div>
+
+        <!-- Drag & Drop Zone -->
+        <div class="vault-drop-zone glass" id="vaultDropZone">
+          <input type="file" id="vaultFileInput" multiple accept=".pdf,image/*,.txt,.doc,.docx" class="hidden-file-input">
+          <div class="drop-zone-content">
+            <i class="ri-upload-cloud-2-line drop-icon"></i>
+            <h3>Drag & Drop Files Here</h3>
+            <p>or <button class="browse-btn" id="vaultBrowseBtn">browse from device</button></p>
+            <span class="size-limit-note">Max size: 500KB per file (due to browser storage limits)</span>
+          </div>
+        </div>
+
+        <!-- Filter/Sort bar for files -->
+        <div class="asgn-controls-bar" style="margin-top: 20px;">
+          <div class="asgn-search-wrap" style="flex: 1; max-width: none;">
+            <i class="ri-search-line"></i>
+            <input type="text" id="vaultSearch" placeholder="Search files by name..." />
+          </div>
+        </div>
+
+        <!-- Files Grid -->
+        <div class="vault-files-grid" id="vaultFilesGrid">
+          <!-- Dynamically populated -->
+          <div class="vault-empty-state" id="vaultEmptyState">
+            <i class="ri-file-damage-line"></i>
+            <p>Your vault is empty. Upload some study materials!</p>
           </div>
         </div>
 
@@ -766,6 +935,260 @@
             </div>
           </div>
         </div>
+
+        <!-- ============================================== -->
+        <!-- MASTER PROJECTS & SUBTASKS TRACKER -->
+        <!-- ============================================== -->
+        <div class="projects-tracker-section">
+          <div class="vault-header" style="margin-top: 30px; margin-bottom: 20px;">
+            <div class="vault-title-area">
+              <h2><i class="ri-list-check-3"></i> Master Projects & Milestones</h2>
+              <p>Break down your major goals into smaller, manageable subtasks.</p>
+            </div>
+            <button class="add-project-btn" id="addProjectBtn">
+              <i class="ri-add-line"></i> New Project
+            </button>
+          </div>
+
+          <!-- Quick Add Project Form (hidden by default) -->
+          <div class="glass" id="projectFormBody" style="display: none; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+              <input type="text" id="newProjectTitle" placeholder="Project Name (e.g. Finals Prep)" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text);">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+              <button class="toggle-btn" id="cancelProjectBtn" style="padding: 8px 16px;">Cancel</button>
+              <button class="toggle-btn active" id="saveProjectBtn" style="padding: 8px 16px;">Create Project</button>
+            </div>
+          </div>
+
+          <!-- Projects Grid -->
+          <div class="projects-grid" id="projectsGrid">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- STUDY SESSION TRACKER -->
+        <!-- ============================================================ -->
+        <div class="vault-header" style="margin-top: 40px; margin-bottom: 20px;">
+          <div class="vault-title-area">
+            <h2><i class="ri-focus-3-line"></i> Study Session Tracker</h2>
+            <p>Track your focused study sessions with subject tagging and session history.</p>
+          </div>
+        </div>
+
+        <div class="study-session-layout">
+
+          <!-- LEFT: Active Session Panel -->
+          <div class="ss-active-panel glass">
+            <!-- Subject selector -->
+            <div class="ss-subject-row">
+              <label class="ss-label"><i class="ri-book-open-line"></i> Subject</label>
+              <select id="ssSubjectSelect" class="ss-select">
+                <option value="Mathematics">📐 Mathematics</option>
+                <option value="Physics">⚛️ Physics</option>
+                <option value="Chemistry">🧪 Chemistry</option>
+                <option value="Biology">🌿 Biology</option>
+                <option value="History">📜 History</option>
+                <option value="English">✍️ English</option>
+                <option value="Computer Science">💻 Computer Science</option>
+                <option value="Other">📚 Other</option>
+              </select>
+            </div>
+
+            <!-- Mode: Pomodoro / Free -->
+            <div class="ss-mode-toggle">
+              <button class="ss-mode-btn active" id="ssModePomodoro" data-mode="pomodoro">
+                <i class="ri-timer-2-line"></i> Pomodoro
+              </button>
+              <button class="ss-mode-btn" id="ssModeFree" data-mode="free">
+                <i class="ri-timer-line"></i> Free Track
+              </button>
+            </div>
+
+            <!-- Timer Display -->
+            <div class="ss-timer-wrap">
+              <svg class="ss-ring" viewBox="0 0 160 160">
+                <defs>
+                  <linearGradient id="ssGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#6366f1"/>
+                    <stop offset="100%" stop-color="#06b6d4"/>
+                  </linearGradient>
+                </defs>
+                <circle class="ss-ring-bg" cx="80" cy="80" r="70"/>
+                <circle class="ss-ring-fill" id="ssRingFill" cx="80" cy="80" r="70"/>
+              </svg>
+              <div class="ss-timer-inner">
+                <div class="ss-timer-display" id="ssTimerDisplay">25:00</div>
+                <div class="ss-timer-label" id="ssTimerLabel">Study Time</div>
+              </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="ss-controls">
+              <button class="ss-ctrl-btn ss-start" id="ssStartBtn" aria-label="Start Session">
+                <i class="ri-play-fill"></i>
+              </button>
+              <button class="ss-ctrl-btn ss-pause" id="ssPauseBtn" aria-label="Pause" disabled>
+                <i class="ri-pause-fill"></i>
+              </button>
+              <button class="ss-ctrl-btn ss-stop" id="ssStopBtn" aria-label="End & Save Session">
+                <i class="ri-stop-fill"></i>
+              </button>
+            </div>
+
+            <!-- Stats row -->
+            <div class="ss-stats-row">
+              <div class="ss-mini-stat">
+                <span id="ssTodayTotal">0m</span>
+                <span>Today</span>
+              </div>
+              <div class="ss-mini-stat">
+                <span id="ssWeekTotal">0m</span>
+                <span>This Week</span>
+              </div>
+              <div class="ss-mini-stat">
+                <span id="ssFocusScore">0</span>
+                <span>Focus Score</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Session History & Reports -->
+          <div class="ss-right-col">
+
+            <!-- Report pills -->
+            <div class="ss-report-cards">
+              <div class="ss-report-pill glass">
+                <div class="ss-report-icon blue"><i class="ri-bar-chart-2-fill"></i></div>
+                <div>
+                  <div class="ss-report-val" id="ssAvgSession">0m</div>
+                  <div class="ss-report-label">Avg Session</div>
+                </div>
+              </div>
+              <div class="ss-report-pill glass">
+                <div class="ss-report-icon green"><i class="ri-trophy-fill"></i></div>
+                <div>
+                  <div class="ss-report-val" id="ssBestSession">0m</div>
+                  <div class="ss-report-label">Best Session</div>
+                </div>
+              </div>
+              <div class="ss-report-pill glass">
+                <div class="ss-report-icon orange"><i class="ri-calendar-fill"></i></div>
+                <div>
+                  <div class="ss-report-val" id="ssTotalSessions">0</div>
+                  <div class="ss-report-label">Total Sessions</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Session History Log -->
+            <div class="chart-card glass" style="flex: 1;">
+              <div class="chart-header">
+                <div class="header-left">
+                  <i class="ri-history-line"></i>
+                  <h3>Session History</h3>
+                </div>
+                <button class="toggle-btn" id="ssClearHistoryBtn" style="font-size: 12px; padding: 4px 10px;">Clear All</button>
+              </div>
+              <div class="ss-history-list" id="ssHistoryList">
+                <div class="ss-history-empty">
+                  <i class="ri-focus-3-line"></i>
+                  <p>No sessions yet. Start your first focus session!</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 5: BOOKMARKS MANAGER -->
+      <div id="bookmarks-tab" class="tab-content" role="tabpanel" aria-labelledby="tabBtnBookmarks">
+        <div class="vault-header">
+          <div class="vault-title-area">
+            <h2><i class="ri-bookmark-3-line"></i> Saved Resources</h2>
+            <p>Your curated collection of useful study links, references, and PDFs.</p>
+          </div>
+          <button class="add-project-btn" id="addBookmarkBtn">
+            <i class="ri-add-line"></i> Add Bookmark
+          </button>
+        </div>
+
+        <div class="asgn-controls-bar">
+          <div class="asgn-search-wrap">
+            <i class="ri-search-line"></i>
+            <input type="text" placeholder="Search bookmarks..." />
+          </div>
+          <div class="filters" style="margin-left: 10px;">
+            <button class="filter-btn active">All</button>
+            <button class="filter-btn">Favorites</button>
+            <button class="filter-btn">Videos</button>
+            <button class="filter-btn">Articles</button>
+          </div>
+        </div>
+
+        <div class="bookmarks-grid">
+          
+          <!-- Static Bookmark Card 1 -->
+          <div class="bookmark-card glass">
+            <div class="bookmark-icon blue">
+              <i class="ri-youtube-fill"></i>
+            </div>
+            <div class="bookmark-content">
+              <h4>Calculus 101 - Limits & Continuity</h4>
+              <p>Professor Leonard's full lecture on Limits.</p>
+              <div class="bookmark-tags">
+                <span class="bookmark-tag">Math</span>
+                <span class="bookmark-tag">Video</span>
+              </div>
+            </div>
+            <div class="bookmark-actions">
+              <button class="pin-btn active"><i class="ri-pushpin-fill"></i></button>
+              <button class="open-btn"><i class="ri-external-link-line"></i></button>
+            </div>
+          </div>
+
+          <!-- Static Bookmark Card 2 -->
+          <div class="bookmark-card glass">
+            <div class="bookmark-icon green">
+              <i class="ri-file-paper-2-line"></i>
+            </div>
+            <div class="bookmark-content">
+              <h4>Physics Cheat Sheet</h4>
+              <p>Formulas for Kinematics and Dynamics.</p>
+              <div class="bookmark-tags">
+                <span class="bookmark-tag">Physics</span>
+                <span class="bookmark-tag">PDF</span>
+              </div>
+            </div>
+            <div class="bookmark-actions">
+              <button class="pin-btn"><i class="ri-pushpin-line"></i></button>
+              <button class="open-btn"><i class="ri-external-link-line"></i></button>
+            </div>
+          </div>
+
+          <!-- Static Bookmark Card 3 -->
+          <div class="bookmark-card glass">
+            <div class="bookmark-icon orange">
+              <i class="ri-article-line"></i>
+            </div>
+            <div class="bookmark-content">
+              <h4>History of the Roman Empire</h4>
+              <p>Comprehensive timeline from Wikipedia.</p>
+              <div class="bookmark-tags">
+                <span class="bookmark-tag">History</span>
+                <span class="bookmark-tag">Article</span>
+              </div>
+            </div>
+            <div class="bookmark-actions">
+              <button class="pin-btn"><i class="ri-pushpin-line"></i></button>
+              <button class="open-btn"><i class="ri-external-link-line"></i></button>
+            </div>
+          </div>
+
+        </div>
       </div>
 
       <!-- APP FOOTER -->
@@ -814,9 +1237,19 @@
       <i class="ri-add-line"></i>
     </button>
     
+    <button class="dock-btn" id="dockBtnVaultMobile" data-tab="vault" role="tab" aria-selected="false" aria-controls="vault-tab" aria-label="Open Files Vault">
+      <i class="ri-folder-open-line"></i>
+      <span>Vault</span>
+    </button>
+    
     <button class="dock-btn" id="dockBtnAnalytics" data-tab="analytics" role="tab" aria-selected="false" aria-controls="analytics-tab" aria-label="Open Stats dashboard">
       <i class="ri-bar-chart-2-line"></i>
       <span>Stats</span>
+    </button>
+    
+    <button class="dock-btn" id="dockBtnBookmarksMobile" data-tab="bookmarks" role="tab" aria-selected="false" aria-controls="bookmarks-tab" aria-label="Open Bookmarks">
+      <i class="ri-bookmark-3-line"></i>
+      <span>Marks</span>
     </button>
   </div>
 
