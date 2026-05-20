@@ -639,34 +639,6 @@ function createTaskEl(task) {
       streak += 1;
       xp += 20;
 
-
-
-    div.innerHTML = `
-      <div class="task-left">
-        <div class="check-btn" tabindex="0" aria-label="Toggle completed task"></div>
-        <div>
-          <h3 class="task-title">${escapeHtml(task.text)}</h3>
-
-          <p class="task-category">${getCategoryEmoji(task.category)} ${task.category}</p>
-
-          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
-            <span class="priority-badge ${(task.priority || 'Medium').toLowerCase()}">${task.priority || 'Medium'}</span>
-            <p class="task-category" style="margin: 0;">${getCategoryEmoji(task.category)} ${task.category}</p>
-          </div>
-
-          ${task.deadline ? `<p class="task-deadline ${getDeadlineUrgency(task.deadline)}"><i class="ri-time-line"></i> ${formatDeadlineDisplay(task.deadline)}</p>` : ''}
-        </div>
-      </div>
-      <div class="task-actions">
-        <button class="icon-btn edit-btn" aria-label="Edit Quest">
-          <i class="ri-edit-line"></i>
-        </button>
-        <button class="icon-btn delete-btn" aria-label="Delete Quest">
-          <i class="ri-delete-bin-6-line"></i>
-        </button>
-      </div>
-    `;
-
       analyticsData.completedTasksPerDay[todayStr] = (analyticsData.completedTasksPerDay[todayStr] || 0) + 1;
       analyticsData.categoryStats[task.category].completed = (analyticsData.categoryStats[task.category].completed || 0) + 1;
       updateAnalyticsStreak(todayStr);
@@ -674,8 +646,6 @@ function createTaskEl(task) {
       coins = Math.max(0, coins - 10);
       streak = Math.max(0, streak - 1);
       xp = Math.max(0, xp - 20);
->>>>>>> main
-
 
       if (analyticsData.completedTasksPerDay[todayStr]) {
         analyticsData.completedTasksPerDay[todayStr] = Math.max(0, analyticsData.completedTasksPerDay[todayStr] - 1);

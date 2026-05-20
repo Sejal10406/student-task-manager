@@ -135,39 +135,9 @@
     <!-- MAIN CONTENT -->
     <section class="main-content">
 
-
-
-      <!-- TOP BAR -->
-      <div class="topbar">
-
-        <div>
-          <h2>Dashboard</h2>
-          <p>Conquer your goals one task at a time ✨</p>
-        </div>
-
-        <button id="themeToggle">
-          <i class="ri-moon-clear-fill"></i>
-        </button>
-
-      </div>
-
-    <!-- MAIN CONTENT -->
-    <section class="main-content">
-
       <!-- TOP BAR -->
       <div class="topbar">
         <div class="topbar-left">
-          <h2>Dashboard</h2>
-          <p>Conquer your goals one task at a time ✨</p>
-
-
-      <!-- TOP BAR -->
-      <div class="topbar">
-        <div class="topbar-left">
-
-          <h2>Dashboard</h2>
-          <p>Conquer your goals one task at a time ✨</p>
-
           <button class="burger-btn" id="mobileSidebarToggle" aria-label="Toggle Sidebar Menu">
             <i class="ri-menu-line"></i>
           </button>
@@ -178,7 +148,6 @@
               <p class="mobile-hidden">Conquer your goals one task at a time ✨</p>
             </div>
           </div>
-
         </div>
 
         <div class="topbar-right">
@@ -192,20 +161,15 @@
       </div>
 
       <!-- TAB NAVIGATION -->
-
-      <div class="nav-tabs">
-        <button class="tab-btn active" data-tab="quests">
-
       <div class="nav-tabs" role="tablist">
         <button class="tab-btn active" id="tabBtnQuests" data-tab="quests" role="tab" aria-selected="true" aria-controls="quests-tab">
-
           <i class="ri-checkbox-multiple-line"></i> Quests & Workspace
         </button>
         <button class="tab-btn" id="tabBtnAnalytics" data-tab="analytics" role="tab" aria-selected="false" aria-controls="analytics-tab">
           <i class="ri-bar-chart-2-line"></i> Analytics Hub
         </button>
       </div>
-
+      
       <!-- TAB 1: QUESTS & TIMER -->
       <div id="quests-tab" class="tab-content active" role="tabpanel" aria-labelledby="tabBtnQuests">
         <div class="workspace-layout">
@@ -218,34 +182,22 @@
                 id="taskInput"
                 placeholder="Enter your next task..."
               />
-              <select id="categorySelect">
+              <select id="categorySelect" aria-label="Task category">
                 <option value="Theory">📘 Theory</option>
                 <option value="Practical">🧪 Practical</option>
                 <option value="Assignment">📝 Assignment</option>
                 <option value="Revision">📖 Revision</option>
               </select>
-
-
-
-              <select id="prioritySelect" title="Select priority level">
-                <option value="High">🚩 High</option>
-                <option value="Medium" selected>🔸 Medium</option>
-                <option value="Low">🔹 Low</option>
-              </select>
-
-              <input
-                type="datetime-local"
-                id="deadlineInput"
-                title="Set deadline for this task"
-              />
-              <button id="addTaskBtn">
-                <i class="ri-add-line"></i> Add Task
-
               <select id="prioritySelect" aria-label="Task priority">
                 <option value="High">🔴 High</option>
                 <option value="Medium" selected>🟡 Medium</option>
                 <option value="Low">🟢 Low</option>
               </select>
+              <input
+                type="datetime-local"
+                id="deadlineInput"
+                title="Set deadline for this task"
+              />
               <button id="addTaskBtn">
                 <i class="ri-add-line"></i> Add Task
               </button>
@@ -750,20 +702,20 @@
     <h2>Edit Profile</h2>
     <p class="popup-sub">Customize your details</p>
     
-    <div class="profile-form" style="text-align: left; margin-top: 15px;">
-      <div class="form-group" style="margin-bottom: 18px;">
-        <label for="profileInputName" style="display: block; font-size: 13px; color: var(--text-light); margin-bottom: 8px; font-weight: 500;">Name</label>
-        <input type="text" id="profileInputName" placeholder="Enter your name" style="width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); padding: 12px 16px; border-radius: 14px; color: var(--text); outline: none; font-size: 14px;" />
+    <div class="profile-form">
+      <div class="form-group">
+        <label for="profileInputName">Name</label>
+        <input type="text" id="profileInputName" placeholder="Enter your name" />
       </div>
       
-      <div class="form-group" style="margin-bottom: 18px;">
-        <label for="profileInputClass" style="display: block; font-size: 13px; color: var(--text-light); margin-bottom: 8px; font-weight: 500;">Class / Grade</label>
-        <input type="text" id="profileInputClass" placeholder="e.g. Class 10" style="width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); padding: 12px 16px; border-radius: 14px; color: var(--text); outline: none; font-size: 14px;" />
+      <div class="form-group">
+        <label for="profileInputClass">Class / Grade</label>
+        <input type="text" id="profileInputClass" placeholder="e.g. Class 10" />
       </div>
       
-      <div class="form-group" style="margin-bottom: 24px;">
-        <label for="profileInputGender" style="display: block; font-size: 13px; color: var(--text-light); margin-bottom: 8px; font-weight: 500;">Gender</label>
-        <select id="profileInputGender" style="width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); padding: 12px 16px; border-radius: 14px; color: var(--text); outline: none; font-size: 14px; font-family: inherit;">
+      <div class="form-group dropdown-group">
+        <label for="profileInputGender">Gender</label>
+        <select id="profileInputGender">
           <option value="Male">Male ♂️</option>
           <option value="Female">Female ♀️</option>
         </select>
