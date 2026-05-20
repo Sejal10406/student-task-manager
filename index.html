@@ -172,6 +172,9 @@
         <button class="tab-btn" id="tabBtnAssignments" data-tab="assignments" role="tab" aria-selected="false" aria-controls="assignments-tab">
           <i class="ri-calendar-check-line"></i> Assignments
         </button>
+        <button class="tab-btn" id="tabBtnVault" data-tab="vault" role="tab" aria-selected="false" aria-controls="vault-tab">
+          <i class="ri-folder-open-line"></i> Files Vault
+        </button>
       </div>
       
       <!-- TAB 1: QUESTS & TIMER -->
@@ -391,6 +394,46 @@
       <!-- TAB 3: ASSIGNMENT TRACKER -->
       <div id="assignments-tab" class="tab-content" role="tabpanel" aria-labelledby="tabBtnAssignments">
 
+        <!-- EXAM COUNTDOWN WIDGET -->
+        <div class="exam-countdown-widget glass" id="examCountdownWidget">
+          <div class="asgn-form-header">
+            <div class="asgn-form-title"><i class="ri-timer-flash-line"></i> Exam Countdown</div>
+            <button class="asgn-form-toggle-btn" id="examFormToggle" aria-label="Toggle Exam Form"><i class="ri-add-line"></i></button>
+          </div>
+          
+          <!-- Add Exam Form (Hidden by default) -->
+          <div class="exam-form-body collapsed" id="examFormBody">
+            <div class="asgn-form-grid">
+              <div class="asgn-field">
+                <label for="examTitle">Exam Title *</label>
+                <input type="text" id="examTitle" placeholder="e.g. Final Mathematics Exam" />
+              </div>
+              <div class="asgn-field">
+                <label for="examSubject">Subject *</label>
+                <input type="text" id="examSubject" placeholder="e.g. Mathematics" list="subjectSuggestions"/>
+              </div>
+              <div class="asgn-field">
+                <label for="examDate">Exam Date & Time *</label>
+                <input type="datetime-local" id="examDate" />
+              </div>
+              <div class="asgn-field asgn-field-full">
+                <label for="examNotes">Notes (Optional)</label>
+                <input type="text" id="examNotes" placeholder="e.g. Bring calculator, chapters 1-5" />
+              </div>
+            </div>
+            <button class="asgn-add-btn" id="addExamBtn"><i class="ri-add-line"></i> Track Exam</button>
+          </div>
+
+          <!-- Exams Grid -->
+          <div class="exams-grid" id="examsGrid">
+            <!-- Dynamically populated by JS -->
+            <div class="exam-empty-state" id="examEmptyState">
+              <i class="ri-calendar-event-line"></i>
+              <p>No upcoming exams. You're all clear!</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Weekly Performance Summary -->
         <div class="asgn-weekly-summary glass" id="weeklySummaryCard">
           <div class="asgn-form-header">
@@ -554,6 +597,50 @@
           </div>
           <div class="asgn-timeline-grid" id="asgnTimelineGrid">
             <!-- Populated by JS -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 4: FILES VAULT -->
+      <div id="vault-tab" class="tab-content" role="tabpanel" aria-labelledby="tabBtnVault">
+        
+        <div class="vault-header">
+          <div class="vault-title-area">
+            <h2><i class="ri-folder-lock-line"></i> Secure File Vault</h2>
+            <p>Upload and manage study materials, notes, and resources.</p>
+          </div>
+          <div class="vault-storage-info">
+            <div class="storage-bar"><div class="storage-fill" id="storageFill"></div></div>
+            <p id="storageText">0 KB / 5 MB LocalStorage used</p>
+          </div>
+        </div>
+
+        <!-- Drag & Drop Zone -->
+        <div class="vault-drop-zone glass" id="vaultDropZone">
+          <input type="file" id="vaultFileInput" multiple accept=".pdf,image/*,.txt,.doc,.docx" class="hidden-file-input">
+          <div class="drop-zone-content">
+            <i class="ri-upload-cloud-2-line drop-icon"></i>
+            <h3>Drag & Drop Files Here</h3>
+            <p>or <button class="browse-btn" id="vaultBrowseBtn">browse from device</button></p>
+            <span class="size-limit-note">Max size: 500KB per file (due to browser storage limits)</span>
+          </div>
+        </div>
+
+        <!-- Filter/Sort bar for files -->
+        <div class="asgn-controls-bar" style="margin-top: 20px;">
+          <div class="asgn-search-wrap" style="flex: 1; max-width: none;">
+            <i class="ri-search-line"></i>
+            <input type="text" id="vaultSearch" placeholder="Search files by name..." />
+          </div>
+        </div>
+
+        <!-- Files Grid -->
+        <div class="vault-files-grid" id="vaultFilesGrid">
+          <!-- Dynamically populated -->
+          <div class="vault-empty-state" id="vaultEmptyState">
+            <i class="ri-file-damage-line"></i>
+            <p>Your vault is empty. Upload some study materials!</p>
           </div>
         </div>
 
@@ -766,6 +853,38 @@
             </div>
           </div>
         </div>
+
+        <!-- ============================================== -->
+        <!-- MASTER PROJECTS & SUBTASKS TRACKER -->
+        <!-- ============================================== -->
+        <div class="projects-tracker-section">
+          <div class="vault-header" style="margin-top: 30px; margin-bottom: 20px;">
+            <div class="vault-title-area">
+              <h2><i class="ri-list-check-3"></i> Master Projects & Milestones</h2>
+              <p>Break down your major goals into smaller, manageable subtasks.</p>
+            </div>
+            <button class="add-project-btn" id="addProjectBtn">
+              <i class="ri-add-line"></i> New Project
+            </button>
+          </div>
+
+          <!-- Quick Add Project Form (hidden by default) -->
+          <div class="glass" id="projectFormBody" style="display: none; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+              <input type="text" id="newProjectTitle" placeholder="Project Name (e.g. Finals Prep)" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text);">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+              <button class="toggle-btn" id="cancelProjectBtn" style="padding: 8px 16px;">Cancel</button>
+              <button class="toggle-btn active" id="saveProjectBtn" style="padding: 8px 16px;">Create Project</button>
+            </div>
+          </div>
+
+          <!-- Projects Grid -->
+          <div class="projects-grid" id="projectsGrid">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
       </div>
 
       <!-- APP FOOTER -->
@@ -812,6 +931,11 @@
     
     <button class="dock-btn-quick" id="mobileQuickAddBtn" aria-label="Quick Add Quest">
       <i class="ri-add-line"></i>
+    </button>
+    
+    <button class="dock-btn" id="dockBtnVaultMobile" data-tab="vault" role="tab" aria-selected="false" aria-controls="vault-tab" aria-label="Open Files Vault">
+      <i class="ri-folder-open-line"></i>
+      <span>Vault</span>
     </button>
     
     <button class="dock-btn" id="dockBtnAnalytics" data-tab="analytics" role="tab" aria-selected="false" aria-controls="analytics-tab" aria-label="Open Stats dashboard">

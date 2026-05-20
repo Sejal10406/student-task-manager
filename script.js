@@ -20,6 +20,9 @@ const sortBtns = document.querySelectorAll(".filters .filter-btn[data-sort]");
 
 // Global states (Removed duplicates)
 let tasks = [];
+let exams = [];
+let vaultFiles = [];
+let projects = [];
 let currentFilter = "All";
 let currentSort = "default";
 let searchQuery = "";
@@ -181,6 +184,36 @@ function loadData() {
     }
   }
 
+  // Load exams
+  const savedExams = localStorage.getItem("quests_exams");
+  if (savedExams) {
+    try {
+      exams = JSON.parse(savedExams);
+    } catch (e) {
+      exams = [];
+    }
+  }
+
+  // Load vault files
+  const savedVault = localStorage.getItem("quests_vault");
+  if (savedVault) {
+    try {
+      vaultFiles = JSON.parse(savedVault);
+    } catch (e) {
+      vaultFiles = [];
+    }
+  }
+
+  // Load projects
+  const savedProjects = localStorage.getItem("quests_projects");
+  if (savedProjects) {
+    try {
+      projects = JSON.parse(savedProjects);
+    } catch (e) {
+      projects = [];
+    }
+  }
+
   // Load gamification points
   coins = parseInt(localStorage.getItem("coins")) || 0;
   streak = parseInt(localStorage.getItem("streak")) || 0;
@@ -219,6 +252,9 @@ function loadData() {
 
 function saveData() {
   localStorage.setItem("quests", JSON.stringify(tasks));
+  localStorage.setItem("quests_exams", JSON.stringify(exams));
+  localStorage.setItem("quests_vault", JSON.stringify(vaultFiles));
+  localStorage.setItem("quests_projects", JSON.stringify(projects));
   localStorage.setItem("coins", coins);
   localStorage.setItem("streak", streak);
   localStorage.setItem("xp", xp);
@@ -2463,4 +2499,679 @@ function showTaskPopup(message) {
     popup.classList.remove("show");
     setTimeout(() => popup.remove(), 600);
   }, 3500);
+}
+
+// ==========================================================================
+// 8. EXAM COUNTDOWN FEATURE
+// ==========================================================================
+
+const examFormToggle = document.getElementById("examFormToggle");
+const examFormBody = document.getElementById("examFormBody");
+const addExamBtn = document.getElementById("addExamBtn");
+const examsGrid = document.getElementById("examsGrid");
+const examEmptyState = document.getElementById("examEmptyState");
+
+let examTimerInterval = null;
+const notifiedExams = new Set(); // Keep track of exams we already notified for in this session
+
+if (examFormToggle) {
+  examFormToggle.addEventListener("click", () => {
+    examFormBody.classList.toggle("collapsed");
+    const icon = examFormToggle.querySelector("i");
+    if (examFormBody.classList.contains("collapsed")) {
+      icon.classList.replace("ri-subtract-line", "ri-add-line");
+    } else {
+      icon.classList.replace("ri-add-line", "ri-subtract-line");
+    }
+  });
+}
+
+if (addExamBtn) {
+  addExamBtn.addEventListener("click", () => {
+    const title = document.getElementById("examTitle").value.trim();
+    const subject = document.getElementById("examSubject").value.trim();
+    const dateStr = document.getElementById("examDate").value;
+    const notes = document.getElementById("examNotes").value.trim();
+
+    if (!title || !subject || !dateStr) {
+      announce("Please fill in Title, Subject, and Date to add an exam.");
+      showTaskPopup("Missing exam details! 🚨");
+      return;
+    }
+
+    const exam = {
+      id: Date.now(),
+      title,
+      subject,
+      date: new Date(dateStr).getTime(),
+      notes,
+      createdAt: Date.now()
+    };
+
+    exams.push(exam);
+    // Sort exams chronologically
+    exams.sort((a, b) => a.date - b.date);
+
+    saveData();
+    renderExams();
+    announce(`Added exam: ${title}`);
+
+    // Clear form
+    document.getElementById("examTitle").value = "";
+    document.getElementById("examSubject").value = "";
+    document.getElementById("examDate").value = "";
+    document.getElementById("examNotes").value = "";
+
+    // Collapse form
+    examFormBody.classList.add("collapsed");
+    examFormToggle.querySelector("i").classList.replace("ri-subtract-line", "ri-add-line");
+  });
+}
+
+function deleteExam(id) {
+  exams = exams.filter(e => e.id !== id);
+  saveData();
+  renderExams();
+}
+
+function updateExamsCountdown() {
+  const cards = examsGrid.querySelectorAll(".exam-card");
+  const now = Date.now();
+
+  cards.forEach(card => {
+    const examId = parseInt(card.dataset.id);
+    const exam = exams.find(e => e.id === examId);
+    if (!exam) return;
+
+    const timeDiff = exam.date - now;
+    
+    const dEl = card.querySelector(".cd-d");
+    const hEl = card.querySelector(".cd-h");
+    const mEl = card.querySelector(".cd-m");
+    const sEl = card.querySelector(".cd-s");
+
+    if (timeDiff <= 0) {
+      dEl.textContent = "00";
+      hEl.textContent = "00";
+      mEl.textContent = "00";
+      sEl.textContent = "00";
+      card.className = "exam-card urgency-red"; // Completed or missed
+      return;
+    }
+
+    // Time calculations
+    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeDiff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((timeDiff / 1000 / 60) % 60);
+    const seconds = Math.floor((timeDiff / 1000) % 60);
+
+    dEl.textContent = String(days).padStart(2, "0");
+    hEl.textContent = String(hours).padStart(2, "0");
+    mEl.textContent = String(minutes).padStart(2, "0");
+    sEl.textContent = String(seconds).padStart(2, "0");
+
+    // Dynamic Urgency Coloring & Progress Bar
+    const totalDuration = exam.date - exam.createdAt;
+    let progressPercent = totalDuration > 0 ? ((now - exam.createdAt) / totalDuration) * 100 : 100;
+    progressPercent = Math.max(0, Math.min(100, progressPercent)); // clamp 0-100
+
+    const progressFill = card.querySelector(".exam-progress-fill");
+    if (progressFill) progressFill.style.width = `${progressPercent}%`;
+
+    let urgencyClass = "urgency-green";
+    if (timeDiff < 24 * 60 * 60 * 1000) {
+      urgencyClass = "urgency-red";
+      // Trigger notification once if < 24h
+      if (!notifiedExams.has(exam.id)) {
+        sendNotification("Urgent Exam!", `${exam.title} is in less than 24 hours!`);
+        notifiedExams.add(exam.id);
+      }
+    } else if (timeDiff < 3 * 24 * 60 * 60 * 1000) {
+      urgencyClass = "urgency-orange";
+    }
+
+    // Update class efficiently
+    card.className = `exam-card ${urgencyClass}`;
+  });
+}
+
+function renderExams() {
+  if (!examsGrid) return;
+
+  // Clear existing interval if any
+  if (examTimerInterval) clearInterval(examTimerInterval);
+
+  // Clear grid (keep empty state)
+  const existingCards = examsGrid.querySelectorAll(".exam-card");
+  existingCards.forEach(c => c.remove());
+
+  // Show/hide empty state
+  if (exams.length === 0) {
+    if (examEmptyState) examEmptyState.style.display = "block";
+    return;
+  }
+  
+  if (examEmptyState) examEmptyState.style.display = "none";
+
+  // Render cards
+  exams.forEach(exam => {
+    const card = document.createElement("div");
+    card.className = "exam-card";
+    card.dataset.id = exam.id;
+    
+    // Format date string for display (e.g., Nov 24, 2026 - 10:00 AM)
+    const dateObj = new Date(exam.date);
+    const dateOptions = { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' };
+    const dateStr = dateObj.toLocaleDateString(undefined, dateOptions);
+
+    card.innerHTML = `
+      <div class="exam-header">
+        <div class="exam-info">
+          <h4>${escapeHtml(exam.title)}</h4>
+          <p><i class="ri-book-read-line"></i> ${escapeHtml(exam.subject)}</p>
+          <p style="margin-top: 2px;"><i class="ri-calendar-line"></i> ${dateStr}</p>
+        </div>
+        <button class="exam-delete-btn" aria-label="Delete Exam" onclick="deleteExam(${exam.id})">
+          <i class="ri-delete-bin-line"></i>
+        </button>
+      </div>
+
+      <div class="exam-countdown-display">
+        <div class="cd-box"><span class="cd-num cd-d">00</span><span class="cd-lbl">Days</span></div>
+        <div class="cd-box"><span class="cd-num cd-h">00</span><span class="cd-lbl">Hours</span></div>
+        <div class="cd-box"><span class="cd-num cd-m">00</span><span class="cd-lbl">Mins</span></div>
+        <div class="cd-box"><span class="cd-num cd-s">00</span><span class="cd-lbl">Secs</span></div>
+      </div>
+
+      <div class="exam-progress-wrap">
+        <div class="exam-progress-bar">
+          <div class="exam-progress-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+      
+      ${exam.notes ? `<div class="exam-footer-notes"><i class="ri-information-line"></i> ${escapeHtml(exam.notes)}</div>` : ''}
+    `;
+    examsGrid.appendChild(card);
+  });
+
+}
+
+
+
+}
+
+// Call renderExams once data is loaded (add to window.onload block)
+window.addEventListener('load', () => {
+  renderExams();
+  renderVault();
+  renderProjects();
+});
+
+// ==========================================================================
+// 10. MASTER PROJECTS & SUBTASKS FEATURE
+// ==========================================================================
+
+const addProjectBtn = document.getElementById("addProjectBtn");
+const projectFormBody = document.getElementById("projectFormBody");
+const cancelProjectBtn = document.getElementById("cancelProjectBtn");
+const saveProjectBtn = document.getElementById("saveProjectBtn");
+const newProjectTitleInput = document.getElementById("newProjectTitle");
+const projectsGrid = document.getElementById("projectsGrid");
+
+// Global dragging state
+let draggedSubtask = null;
+let draggedSubtaskParentId = null;
+
+if (addProjectBtn && projectFormBody) {
+  addProjectBtn.addEventListener("click", () => {
+    projectFormBody.style.display = "block";
+    newProjectTitleInput.focus();
+  });
+
+  cancelProjectBtn.addEventListener("click", () => {
+    projectFormBody.style.display = "none";
+    newProjectTitleInput.value = "";
+  });
+
+  saveProjectBtn.addEventListener("click", () => {
+    const title = newProjectTitleInput.value.trim();
+    if (!title) {
+      announce("Please enter a project name.");
+      return;
+    }
+
+    const newProject = {
+      id: Date.now(),
+      title: title,
+      subtasks: []
+    };
+
+    projects.push(newProject);
+    saveData();
+    renderProjects();
+    
+    projectFormBody.style.display = "none";
+    newProjectTitleInput.value = "";
+    announce(`Created project: ${title}`);
+  });
+}
+
+function calculateProjectProgress(subtasks) {
+  if (subtasks.length === 0) return 0;
+  const completed = subtasks.filter(st => st.completed).length;
+  return Math.round((completed / subtasks.length) * 100);
+}
+
+function toggleSubtask(projectId, subtaskId) {
+  const proj = projects.find(p => p.id === projectId);
+  if (!proj) return;
+  
+  const st = proj.subtasks.find(s => s.id === subtaskId);
+  if (!st) return;
+
+  st.completed = !st.completed;
+  saveData();
+  renderProjects();
+
+  if (st.completed) {
+    showTaskPopup("Subtask Completed! ✨");
+    announce("Subtask completed.");
+  } else {
+    announce("Subtask unchecked.");
+  }
+}
+
+function addSubtask(projectId) {
+  const inputEl = document.getElementById(`newSubtaskInput-${projectId}`);
+  if (!inputEl) return;
+  
+  const text = inputEl.value.trim();
+  if (!text) return;
+
+  const proj = projects.find(p => p.id === projectId);
+  if (!proj) return;
+
+  proj.subtasks.push({
+    id: Date.now() + Math.random().toString(36).substr(2, 5),
+    text: text,
+    completed: false
+  });
+
+  saveData();
+  renderProjects();
+}
+
+function deleteSubtask(projectId, subtaskId) {
+  const proj = projects.find(p => p.id === projectId);
+  if (!proj) return;
+
+  proj.subtasks = proj.subtasks.filter(s => s.id !== subtaskId);
+  saveData();
+  renderProjects();
+}
+
+function deleteProject(projectId) {
+  if (confirm("Are you sure you want to delete this master project?")) {
+    projects = projects.filter(p => p.id !== projectId);
+    saveData();
+    renderProjects();
+  }
+}
+
+// Drag & Drop specific to Subtasks
+function handleSubtaskDragStart(e, projectId, subtaskId) {
+  draggedSubtask = subtaskId;
+  draggedSubtaskParentId = projectId;
+  e.target.classList.add('dragging');
+  // Required for Firefox
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', subtaskId);
+}
+
+function handleSubtaskDragEnd(e) {
+  e.target.classList.remove('dragging');
+  draggedSubtask = null;
+  draggedSubtaskParentId = null;
+  
+  // Clean up any remaining drop indicators if necessary
+  const allContainers = document.querySelectorAll('.subtasks-list');
+  allContainers.forEach(c => c.style.border = "");
+}
+
+function handleSubtaskDragOver(e, projectId) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  
+  // Only allow reordering within the SAME project to prevent bugs
+  if (draggedSubtaskParentId !== projectId) return;
+
+  const container = document.getElementById(`subtaskList-${projectId}`);
+  const draggingItem = document.querySelector('.subtask-item.dragging');
+  if (!container || !draggingItem) return;
+
+  const afterElement = getDragAfterElement(container, e.clientY, '.subtask-item:not(.dragging)');
+  if (afterElement == null) {
+    container.appendChild(draggingItem);
+  } else {
+    container.insertBefore(draggingItem, afterElement);
+  }
+}
+
+function handleSubtaskDrop(e, projectId) {
+  e.preventDefault();
+  if (draggedSubtaskParentId !== projectId) return;
+
+  // Re-calculate the array order based on DOM
+  const container = document.getElementById(`subtaskList-${projectId}`);
+  if (!container) return;
+
+  const proj = projects.find(p => p.id === projectId);
+  if (!proj) return;
+
+  const newOrderIds = Array.from(container.querySelectorAll('.subtask-item')).map(item => item.dataset.subtaskId);
+  
+  // Rebuild the subtasks array based on the new order
+  const newSubtasksArray = [];
+  newOrderIds.forEach(id => {
+    const st = proj.subtasks.find(s => s.id === id);
+    if (st) newSubtasksArray.push(st);
+  });
+
+  proj.subtasks = newSubtasksArray;
+  saveData();
+  // No need to re-render immediately as the DOM is already visually updated, 
+  // but rendering ensures progress bars etc stay perfectly synced.
+  renderProjects();
+}
+
+function renderProjects() {
+  if (!projectsGrid) return;
+  projectsGrid.innerHTML = '';
+
+  if (projects.length === 0) {
+    projectsGrid.innerHTML = `
+      <div style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: 30px;">
+        <i class="ri-rocket-2-line" style="font-size: 3rem; opacity: 0.3;"></i>
+        <p style="margin-top: 10px;">No master projects yet. Break down a big goal today!</p>
+      </div>
+    `;
+    return;
+  }
+
+  projects.forEach(proj => {
+    const progress = calculateProjectProgress(proj.subtasks);
+    
+    const card = document.createElement("div");
+    card.className = "project-card";
+    
+    // Header & Progress
+    let html = `
+      <div class="project-header">
+        <h3>${escapeHtml(proj.title)}</h3>
+        <button class="subtask-delete-btn" style="opacity: 1;" onclick="deleteProject(${proj.id})" aria-label="Delete Project">
+          <i class="ri-delete-bin-line"></i>
+        </button>
+      </div>
+      <div class="project-progress-wrap">
+        <div class="project-progress-text">
+          <span>Progress</span>
+          <span style="font-weight: 600; color: ${progress === 100 ? '#10b981' : 'var(--text)'};">${progress}%</span>
+        </div>
+        <div class="project-progress-bar">
+          <div class="project-progress-fill" style="width: ${progress}%;"></div>
+        </div>
+      </div>
+      <div class="subtasks-list" id="subtaskList-${proj.id}">
+    `;
+
+    // Subtasks Array
+    proj.subtasks.forEach(st => {
+      html += `
+        <div class="subtask-item" data-subtask-id="${st.id}" draggable="true" 
+             ondragstart="handleSubtaskDragStart(event, ${proj.id}, '${st.id}')"
+             ondragend="handleSubtaskDragEnd(event)">
+          <i class="ri-draggable subtask-drag-handle"></i>
+          <input type="checkbox" class="subtask-checkbox" ${st.completed ? 'checked' : ''} onclick="toggleSubtask(${proj.id}, '${st.id}')">
+          <span class="subtask-text">${escapeHtml(st.text)}</span>
+          <button class="subtask-delete-btn" onclick="deleteSubtask(${proj.id}, '${st.id}')">
+            <i class="ri-close-line"></i>
+          </button>
+        </div>
+      `;
+    });
+
+    html += `
+      </div>
+      <div class="add-subtask-form">
+        <input type="text" class="add-subtask-input" id="newSubtaskInput-${proj.id}" placeholder="Add a subtask..." onkeypress="if(event.key === 'Enter') addSubtask(${proj.id})">
+        <button class="add-subtask-btn" onclick="addSubtask(${proj.id})"><i class="ri-add-line"></i></button>
+      </div>
+    `;
+
+    card.innerHTML = html;
+
+    // Attach dragover/drop to the subtask list container dynamically
+    const listContainer = card.querySelector(`#subtaskList-${proj.id}`);
+    if (listContainer) {
+      listContainer.addEventListener('dragover', (e) => handleSubtaskDragOver(e, proj.id));
+      listContainer.addEventListener('drop', (e) => handleSubtaskDrop(e, proj.id));
+    }
+
+    projectsGrid.appendChild(card);
+  });
+}
+
+// ==========================================================================
+// 9. FILES VAULT FEATURE (ATTACHMENTS & STORAGE)
+// ==========================================================================
+
+const vaultDropZone = document.getElementById("vaultDropZone");
+const vaultFileInput = document.getElementById("vaultFileInput");
+const vaultBrowseBtn = document.getElementById("vaultBrowseBtn");
+const vaultFilesGrid = document.getElementById("vaultFilesGrid");
+const vaultEmptyState = document.getElementById("vaultEmptyState");
+const vaultSearch = document.getElementById("vaultSearch");
+const storageFill = document.getElementById("storageFill");
+const storageText = document.getElementById("storageText");
+
+const MAX_FILE_SIZE = 500 * 1024; // 500 KB limit per file due to LocalStorage
+const MAX_STORAGE_QUOTA = 5 * 1024 * 1024; // 5 MB total quota estimate
+
+// Initialize search listener
+if (vaultSearch) {
+  vaultSearch.addEventListener("input", renderVault);
+}
+
+// Drag & Drop Handlers
+if (vaultDropZone) {
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    vaultDropZone.addEventListener(eventName, preventDefaults, false);
+  });
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    vaultDropZone.addEventListener(eventName, () => {
+      vaultDropZone.classList.add('drag-active');
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    vaultDropZone.addEventListener(eventName, () => {
+      vaultDropZone.classList.remove('drag-active');
+    }, false);
+  });
+
+  vaultDropZone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    handleFiles(files);
+  }, false);
+
+  vaultBrowseBtn.addEventListener('click', () => {
+    vaultFileInput.click();
+  });
+
+  vaultFileInput.addEventListener('change', function() {
+    handleFiles(this.files);
+    // Reset input so same file can be selected again
+    this.value = '';
+  });
+}
+
+function getStorageUsed() {
+  let totalBytes = 0;
+  for (let key in localStorage) {
+    if (localStorage.hasOwnProperty(key)) {
+      totalBytes += ((localStorage[key].length + key.length) * 2); // rough estimate in bytes
+    }
+  }
+  return totalBytes;
+}
+
+function updateStorageUI() {
+  if (!storageFill || !storageText) return;
+  const usedBytes = getStorageUsed();
+  let percent = (usedBytes / MAX_STORAGE_QUOTA) * 100;
+  percent = Math.min(100, percent);
+  
+  storageFill.style.width = `${percent}%`;
+  
+  if (percent > 90) {
+    storageFill.style.background = "#ef4444"; // Red if almost full
+  } else if (percent > 75) {
+    storageFill.style.background = "#f59e0b"; // Orange
+  } else {
+    storageFill.style.background = "linear-gradient(90deg, var(--primary), var(--secondary))";
+  }
+
+  storageText.textContent = `${(usedBytes / 1024).toFixed(1)} KB / ${(MAX_STORAGE_QUOTA / 1024 / 1024).toFixed(1)} MB Used`;
+}
+
+function formatBytes(bytes, decimals = 2) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+function handleFiles(files) {
+  const filesArray = Array.from(files);
+  let filesAdded = 0;
+
+  filesArray.forEach(file => {
+    if (file.size > MAX_FILE_SIZE) {
+      announce(`File "${file.name}" is too large! Max size is 500KB.`);
+      showTaskPopup(`"${file.name}" too large! 🚨`);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64Data = e.target.result;
+      
+      const newFileObj = {
+        id: Date.now() + Math.random().toString(36).substr(2, 5),
+        name: file.name,
+        type: file.type || 'application/octet-stream',
+        size: file.size,
+        data: base64Data,
+        addedAt: Date.now()
+      };
+
+      vaultFiles.push(newFileObj);
+      filesAdded++;
+
+      // Check if this is the last file to process
+      if (filesAdded === filesArray.length) {
+        saveData();
+        renderVault();
+        announce(`Uploaded ${filesAdded} file(s) to vault.`);
+        showTaskPopup("Files securely vaulted! 🛡️");
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function deleteVaultFile(id) {
+  vaultFiles = vaultFiles.filter(f => f.id !== id);
+  saveData();
+  renderVault();
+  announce("File deleted from vault.");
+}
+
+function downloadVaultFile(id) {
+  const file = vaultFiles.find(f => f.id === id);
+  if (!file) return;
+
+  const a = document.createElement("a");
+  a.href = file.data;
+  a.download = file.name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function renderVault() {
+  if (!vaultFilesGrid) return;
+  updateStorageUI();
+
+  // Clear existing cards
+  const existingCards = vaultFilesGrid.querySelectorAll(".vault-card");
+  existingCards.forEach(c => c.remove());
+
+  const searchTerm = vaultSearch ? vaultSearch.value.toLowerCase() : "";
+  const filteredFiles = vaultFiles.filter(f => f.name.toLowerCase().includes(searchTerm));
+
+  if (filteredFiles.length === 0) {
+    if (vaultEmptyState) vaultEmptyState.style.display = "block";
+    return;
+  }
+  
+  if (vaultEmptyState) vaultEmptyState.style.display = "none";
+
+  // Sort by newest first
+  filteredFiles.sort((a, b) => b.addedAt - a.addedAt);
+
+  filteredFiles.forEach(file => {
+    const card = document.createElement("div");
+    card.className = "vault-card";
+
+    let previewHtml = "";
+    if (file.type.startsWith("image/")) {
+      previewHtml = `<img src="${file.data}" alt="${file.name}" loading="lazy" />`;
+    } else if (file.type === "application/pdf") {
+      previewHtml = `<i class="ri-file-pdf-2-fill" style="color: #ef4444;"></i>`;
+    } else if (file.type.includes("text")) {
+      previewHtml = `<i class="ri-file-text-fill" style="color: var(--secondary);"></i>`;
+    } else {
+      previewHtml = `<i class="ri-file-fill" style="color: var(--text-light);"></i>`;
+    }
+
+    card.innerHTML = `
+      <div class="vault-card-preview">
+        ${previewHtml}
+      </div>
+      <div class="vault-card-info">
+        <div class="vault-card-name" title="${file.name}">${file.name}</div>
+        <div class="vault-card-size">${formatBytes(file.size)}</div>
+        <div class="vault-card-actions">
+          <button class="vault-action-btn" onclick="downloadVaultFile('${file.id}')" aria-label="Download ${file.name}">
+            <i class="ri-download-2-line"></i> Download
+          </button>
+          <button class="vault-action-btn delete" onclick="deleteVaultFile('${file.id}')" aria-label="Delete ${file.name}">
+            <i class="ri-delete-bin-line"></i>
+          </button>
+        </div>
+      </div>
+    `;
+
+    vaultFilesGrid.appendChild(card);
+  });
 }
