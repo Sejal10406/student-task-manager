@@ -6,8 +6,8 @@
 
 :root {
   --bg: #070b1d;
-  --card: rgba(255, 255, 255, 0.06);
-  --border: rgba(255, 255, 255, 0.08);
+  --card: rgba(255, 255, 255, 0.03); /* More transparent for cleaner glass effect */
+  --border: rgba(255, 255, 255, 0.05); /* Softer borders */
   --text: #ffffff;
   --text-light: #9ca3af;
 
@@ -17,9 +17,10 @@
   --success: #22c55e;
   --danger: #ef4444;
 
-  --shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-  --shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 30px 60px rgba(0, 0, 0, 0.6);
+  /* Minimalist soft shadows */
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  --shadow-sm: 0 4px 10px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.25);
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -53,6 +54,7 @@ body {
   width: 350px;
   height: 350px;
   background: #8b5cf6;
+  opacity: 0.6; /* Subtler blur */
   top: -120px;
   left: -120px;
 }
@@ -61,6 +63,7 @@ body {
   width: 350px;
   height: 350px;
   background: #06b6d4;
+  opacity: 0.6; /* Subtler blur */
   right: -120px;
   bottom: -120px;
 }
@@ -70,8 +73,8 @@ body {
   inset: 0;
 
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px), /* Fainter grid */
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
 
   background-size: 40px 40px;
 
