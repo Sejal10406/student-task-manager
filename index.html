@@ -391,6 +391,46 @@
       <!-- TAB 3: ASSIGNMENT TRACKER -->
       <div id="assignments-tab" class="tab-content" role="tabpanel" aria-labelledby="tabBtnAssignments">
 
+        <!-- EXAM COUNTDOWN WIDGET -->
+        <div class="exam-countdown-widget glass" id="examCountdownWidget">
+          <div class="asgn-form-header">
+            <div class="asgn-form-title"><i class="ri-timer-flash-line"></i> Exam Countdown</div>
+            <button class="asgn-form-toggle-btn" id="examFormToggle" aria-label="Toggle Exam Form"><i class="ri-add-line"></i></button>
+          </div>
+          
+          <!-- Add Exam Form (Hidden by default) -->
+          <div class="exam-form-body collapsed" id="examFormBody">
+            <div class="asgn-form-grid">
+              <div class="asgn-field">
+                <label for="examTitle">Exam Title *</label>
+                <input type="text" id="examTitle" placeholder="e.g. Final Mathematics Exam" />
+              </div>
+              <div class="asgn-field">
+                <label for="examSubject">Subject *</label>
+                <input type="text" id="examSubject" placeholder="e.g. Mathematics" list="subjectSuggestions"/>
+              </div>
+              <div class="asgn-field">
+                <label for="examDate">Exam Date & Time *</label>
+                <input type="datetime-local" id="examDate" />
+              </div>
+              <div class="asgn-field asgn-field-full">
+                <label for="examNotes">Notes (Optional)</label>
+                <input type="text" id="examNotes" placeholder="e.g. Bring calculator, chapters 1-5" />
+              </div>
+            </div>
+            <button class="asgn-add-btn" id="addExamBtn"><i class="ri-add-line"></i> Track Exam</button>
+          </div>
+
+          <!-- Exams Grid -->
+          <div class="exams-grid" id="examsGrid">
+            <!-- Dynamically populated by JS -->
+            <div class="exam-empty-state" id="examEmptyState">
+              <i class="ri-calendar-event-line"></i>
+              <p>No upcoming exams. You're all clear!</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Weekly Performance Summary -->
         <div class="asgn-weekly-summary glass" id="weeklySummaryCard">
           <div class="asgn-form-header">

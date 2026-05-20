@@ -20,6 +20,7 @@ const sortBtns = document.querySelectorAll(".filters .filter-btn[data-sort]");
 
 // Global states (Removed duplicates)
 let tasks = [];
+let exams = [];
 let currentFilter = "All";
 let currentSort = "default";
 let searchQuery = "";
@@ -181,6 +182,16 @@ function loadData() {
     }
   }
 
+  // Load exams
+  const savedExams = localStorage.getItem("quests_exams");
+  if (savedExams) {
+    try {
+      exams = JSON.parse(savedExams);
+    } catch (e) {
+      exams = [];
+    }
+  }
+
   // Load gamification points
   coins = parseInt(localStorage.getItem("coins")) || 0;
   streak = parseInt(localStorage.getItem("streak")) || 0;
@@ -219,6 +230,7 @@ function loadData() {
 
 function saveData() {
   localStorage.setItem("quests", JSON.stringify(tasks));
+  localStorage.setItem("quests_exams", JSON.stringify(exams));
   localStorage.setItem("coins", coins);
   localStorage.setItem("streak", streak);
   localStorage.setItem("xp", xp);
@@ -2464,3 +2476,206 @@ function showTaskPopup(message) {
     setTimeout(() => popup.remove(), 600);
   }, 3500);
 }
+
+// ==========================================================================
+// 8. EXAM COUNTDOWN FEATURE
+// ==========================================================================
+
+const examFormToggle = document.getElementById("examFormToggle");
+const examFormBody = document.getElementById("examFormBody");
+const addExamBtn = document.getElementById("addExamBtn");
+const examsGrid = document.getElementById("examsGrid");
+const examEmptyState = document.getElementById("examEmptyState");
+
+let examTimerInterval = null;
+const notifiedExams = new Set(); // Keep track of exams we already notified for in this session
+
+if (examFormToggle) {
+  examFormToggle.addEventListener("click", () => {
+    examFormBody.classList.toggle("collapsed");
+    const icon = examFormToggle.querySelector("i");
+    if (examFormBody.classList.contains("collapsed")) {
+      icon.classList.replace("ri-subtract-line", "ri-add-line");
+    } else {
+      icon.classList.replace("ri-add-line", "ri-subtract-line");
+    }
+  });
+}
+
+if (addExamBtn) {
+  addExamBtn.addEventListener("click", () => {
+    const title = document.getElementById("examTitle").value.trim();
+    const subject = document.getElementById("examSubject").value.trim();
+    const dateStr = document.getElementById("examDate").value;
+    const notes = document.getElementById("examNotes").value.trim();
+
+    if (!title || !subject || !dateStr) {
+      announce("Please fill in Title, Subject, and Date to add an exam.");
+      showTaskPopup("Missing exam details! 🚨");
+      return;
+    }
+
+    const exam = {
+      id: Date.now(),
+      title,
+      subject,
+      date: new Date(dateStr).getTime(),
+      notes,
+      createdAt: Date.now()
+    };
+
+    exams.push(exam);
+    // Sort exams chronologically
+    exams.sort((a, b) => a.date - b.date);
+
+    saveData();
+    renderExams();
+    announce(`Added exam: ${title}`);
+
+    // Clear form
+    document.getElementById("examTitle").value = "";
+    document.getElementById("examSubject").value = "";
+    document.getElementById("examDate").value = "";
+    document.getElementById("examNotes").value = "";
+
+    // Collapse form
+    examFormBody.classList.add("collapsed");
+    examFormToggle.querySelector("i").classList.replace("ri-subtract-line", "ri-add-line");
+  });
+}
+
+function deleteExam(id) {
+  exams = exams.filter(e => e.id !== id);
+  saveData();
+  renderExams();
+}
+
+function updateExamsCountdown() {
+  const cards = examsGrid.querySelectorAll(".exam-card");
+  const now = Date.now();
+
+  cards.forEach(card => {
+    const examId = parseInt(card.dataset.id);
+    const exam = exams.find(e => e.id === examId);
+    if (!exam) return;
+
+    const timeDiff = exam.date - now;
+    
+    const dEl = card.querySelector(".cd-d");
+    const hEl = card.querySelector(".cd-h");
+    const mEl = card.querySelector(".cd-m");
+    const sEl = card.querySelector(".cd-s");
+
+    if (timeDiff <= 0) {
+      dEl.textContent = "00";
+      hEl.textContent = "00";
+      mEl.textContent = "00";
+      sEl.textContent = "00";
+      card.className = "exam-card urgency-red"; // Completed or missed
+      return;
+    }
+
+    // Time calculations
+    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeDiff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((timeDiff / 1000 / 60) % 60);
+    const seconds = Math.floor((timeDiff / 1000) % 60);
+
+    dEl.textContent = String(days).padStart(2, "0");
+    hEl.textContent = String(hours).padStart(2, "0");
+    mEl.textContent = String(minutes).padStart(2, "0");
+    sEl.textContent = String(seconds).padStart(2, "0");
+
+    // Dynamic Urgency Coloring & Progress Bar
+    const totalDuration = exam.date - exam.createdAt;
+    let progressPercent = totalDuration > 0 ? ((now - exam.createdAt) / totalDuration) * 100 : 100;
+    progressPercent = Math.max(0, Math.min(100, progressPercent)); // clamp 0-100
+
+    const progressFill = card.querySelector(".exam-progress-fill");
+    if (progressFill) progressFill.style.width = `${progressPercent}%`;
+
+    let urgencyClass = "urgency-green";
+    if (timeDiff < 24 * 60 * 60 * 1000) {
+      urgencyClass = "urgency-red";
+      // Trigger notification once if < 24h
+      if (!notifiedExams.has(exam.id)) {
+        sendNotification("Urgent Exam!", `${exam.title} is in less than 24 hours!`);
+        notifiedExams.add(exam.id);
+      }
+    } else if (timeDiff < 3 * 24 * 60 * 60 * 1000) {
+      urgencyClass = "urgency-orange";
+    }
+
+    // Update class efficiently
+    card.className = `exam-card ${urgencyClass}`;
+  });
+}
+
+function renderExams() {
+  if (!examsGrid) return;
+
+  // Clear existing interval if any
+  if (examTimerInterval) clearInterval(examTimerInterval);
+
+  // Clear grid (keep empty state)
+  const existingCards = examsGrid.querySelectorAll(".exam-card");
+  existingCards.forEach(c => c.remove());
+
+  // Show/hide empty state
+  if (exams.length === 0) {
+    if (examEmptyState) examEmptyState.style.display = "block";
+    return;
+  }
+  
+  if (examEmptyState) examEmptyState.style.display = "none";
+
+  // Render cards
+  exams.forEach(exam => {
+    const card = document.createElement("div");
+    card.className = "exam-card";
+    card.dataset.id = exam.id;
+    
+    // Format date string for display (e.g., Nov 24, 2026 - 10:00 AM)
+    const dateObj = new Date(exam.date);
+    const dateOptions = { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' };
+    const dateStr = dateObj.toLocaleDateString(undefined, dateOptions);
+
+    card.innerHTML = `
+      <div class="exam-header">
+        <div class="exam-info">
+          <h4>${escapeHtml(exam.title)}</h4>
+          <p><i class="ri-book-read-line"></i> ${escapeHtml(exam.subject)}</p>
+          <p style="margin-top: 2px;"><i class="ri-calendar-line"></i> ${dateStr}</p>
+        </div>
+        <button class="exam-delete-btn" aria-label="Delete Exam" onclick="deleteExam(${exam.id})">
+          <i class="ri-delete-bin-line"></i>
+        </button>
+      </div>
+
+      <div class="exam-countdown-display">
+        <div class="cd-box"><span class="cd-num cd-d">00</span><span class="cd-lbl">Days</span></div>
+        <div class="cd-box"><span class="cd-num cd-h">00</span><span class="cd-lbl">Hours</span></div>
+        <div class="cd-box"><span class="cd-num cd-m">00</span><span class="cd-lbl">Mins</span></div>
+        <div class="cd-box"><span class="cd-num cd-s">00</span><span class="cd-lbl">Secs</span></div>
+      </div>
+
+      <div class="exam-progress-wrap">
+        <div class="exam-progress-bar">
+          <div class="exam-progress-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+      
+      ${exam.notes ? `<div class="exam-footer-notes"><i class="ri-information-line"></i> ${escapeHtml(exam.notes)}</div>` : ''}
+    `;
+    examsGrid.appendChild(card);
+  });
+
+  // Run immediate update then set interval
+  updateExamsCountdown();
+  examTimerInterval = setInterval(updateExamsCountdown, 1000);
+}
+
+// Call renderExams once data is loaded (add to window.onload block)
+window.addEventListener('load', () => {
+  renderExams();
+});
