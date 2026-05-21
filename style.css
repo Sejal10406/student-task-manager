@@ -1399,6 +1399,7 @@ body.light .topbar-left h2 {
   grid-template-columns: 1fr 340px;
   gap: 30px;
   align-items: start;
+  margin-bottom: 20px; /* ensure separation between the workspace and following cards (e.g., Daily Goals) */
 }
 
 .workspace-main {
