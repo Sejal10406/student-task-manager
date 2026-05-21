@@ -175,6 +175,9 @@
         <button class="tab-btn" id="tabBtnVault" data-tab="vault" role="tab" aria-selected="false" aria-controls="vault-tab">
           <i class="ri-folder-open-line"></i> Files Vault
         </button>
+        <button class="tab-btn" id="tabBtnBookmarks" data-tab="bookmarks" role="tab" aria-selected="false" aria-controls="bookmarks-tab">
+          <i class="ri-bookmark-3-line"></i> Bookmarks
+        </button>
       </div>
       
       <!-- TAB 1: QUESTS & TIMER -->
@@ -887,6 +890,93 @@
 
       </div>
 
+      <!-- TAB 5: BOOKMARKS MANAGER -->
+      <div id="bookmarks-tab" class="tab-content" role="tabpanel" aria-labelledby="tabBtnBookmarks">
+        <div class="vault-header">
+          <div class="vault-title-area">
+            <h2><i class="ri-bookmark-3-line"></i> Saved Resources</h2>
+            <p>Your curated collection of useful study links, references, and PDFs.</p>
+          </div>
+          <button class="add-project-btn" id="addBookmarkBtn">
+            <i class="ri-add-line"></i> Add Bookmark
+          </button>
+        </div>
+
+        <div class="asgn-controls-bar">
+          <div class="asgn-search-wrap">
+            <i class="ri-search-line"></i>
+            <input type="text" placeholder="Search bookmarks..." />
+          </div>
+          <div class="filters" style="margin-left: 10px;">
+            <button class="filter-btn active">All</button>
+            <button class="filter-btn">Favorites</button>
+            <button class="filter-btn">Videos</button>
+            <button class="filter-btn">Articles</button>
+          </div>
+        </div>
+
+        <div class="bookmarks-grid">
+          
+          <!-- Static Bookmark Card 1 -->
+          <div class="bookmark-card glass">
+            <div class="bookmark-icon blue">
+              <i class="ri-youtube-fill"></i>
+            </div>
+            <div class="bookmark-content">
+              <h4>Calculus 101 - Limits & Continuity</h4>
+              <p>Professor Leonard's full lecture on Limits.</p>
+              <div class="bookmark-tags">
+                <span class="bookmark-tag">Math</span>
+                <span class="bookmark-tag">Video</span>
+              </div>
+            </div>
+            <div class="bookmark-actions">
+              <button class="pin-btn active"><i class="ri-pushpin-fill"></i></button>
+              <button class="open-btn"><i class="ri-external-link-line"></i></button>
+            </div>
+          </div>
+
+          <!-- Static Bookmark Card 2 -->
+          <div class="bookmark-card glass">
+            <div class="bookmark-icon green">
+              <i class="ri-file-paper-2-line"></i>
+            </div>
+            <div class="bookmark-content">
+              <h4>Physics Cheat Sheet</h4>
+              <p>Formulas for Kinematics and Dynamics.</p>
+              <div class="bookmark-tags">
+                <span class="bookmark-tag">Physics</span>
+                <span class="bookmark-tag">PDF</span>
+              </div>
+            </div>
+            <div class="bookmark-actions">
+              <button class="pin-btn"><i class="ri-pushpin-line"></i></button>
+              <button class="open-btn"><i class="ri-external-link-line"></i></button>
+            </div>
+          </div>
+
+          <!-- Static Bookmark Card 3 -->
+          <div class="bookmark-card glass">
+            <div class="bookmark-icon orange">
+              <i class="ri-article-line"></i>
+            </div>
+            <div class="bookmark-content">
+              <h4>History of the Roman Empire</h4>
+              <p>Comprehensive timeline from Wikipedia.</p>
+              <div class="bookmark-tags">
+                <span class="bookmark-tag">History</span>
+                <span class="bookmark-tag">Article</span>
+              </div>
+            </div>
+            <div class="bookmark-actions">
+              <button class="pin-btn"><i class="ri-pushpin-line"></i></button>
+              <button class="open-btn"><i class="ri-external-link-line"></i></button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       <!-- APP FOOTER -->
       <footer class="app-footer">
         <div class="footer-content">
@@ -941,6 +1031,11 @@
     <button class="dock-btn" id="dockBtnAnalytics" data-tab="analytics" role="tab" aria-selected="false" aria-controls="analytics-tab" aria-label="Open Stats dashboard">
       <i class="ri-bar-chart-2-line"></i>
       <span>Stats</span>
+    </button>
+    
+    <button class="dock-btn" id="dockBtnBookmarksMobile" data-tab="bookmarks" role="tab" aria-selected="false" aria-controls="bookmarks-tab" aria-label="Open Bookmarks">
+      <i class="ri-bookmark-3-line"></i>
+      <span>Marks</span>
     </button>
   </div>
 
