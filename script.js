@@ -664,20 +664,31 @@ function createTaskEl(task) {
   checkBtn.setAttribute("role", "checkbox");
   checkBtn.setAttribute("aria-checked", task.completed ? "true" : "false");
 
-  const handleToggle = () => {
+  const handleToggle = (e) => {
     const oldXp = xp;
     task.completed = !task.completed;
     checkBtn.setAttribute("aria-checked", task.completed ? "true" : "false");
     const todayStr = getFormattedDate(new Date());
 
     if (task.completed) {
-      coins += 10;
+      // Dynamic rewards based on priority
+      let coinReward = 10;
+      let xpReward = 20;
+      if (task.priority === "High") { coinReward = 30; xpReward = 60; }
+      else if (task.priority === "Medium") { coinReward = 20; xpReward = 40; }
+
+      coins += coinReward;
       streak += 1;
-      xp += 20;
+      xp += xpReward;
 
       analyticsData.completedTasksPerDay[todayStr] = (analyticsData.completedTasksPerDay[todayStr] || 0) + 1;
       analyticsData.categoryStats[task.category].completed = (analyticsData.categoryStats[task.category].completed || 0) + 1;
       updateAnalyticsStreak(todayStr);
+
+      // Visual Feedback and Rewards
+      triggerConfetti();
+      if (e) triggerCoinExplosion(e);
+      showTaskPopup(`QUEST CONQUERED! Gained +${coinReward} Coins & +${xpReward} XP 🏆`);
     } else {
       coins = Math.max(0, coins - 10);
       streak = Math.max(0, streak - 1);
@@ -701,11 +712,11 @@ function createTaskEl(task) {
     renderWeeklyStreak();
   };
 
-  checkBtn.addEventListener("click", handleToggle);
+  checkBtn.addEventListener("click", (e) => handleToggle(e));
   checkBtn.addEventListener("keydown", e => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      handleToggle();
+      handleToggle(e);
     }
   });
 
