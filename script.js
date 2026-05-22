@@ -3102,6 +3102,9 @@ function showTaskPopup(message) {
     popup.classList.remove("show");
     setTimeout(() => popup.remove(), 600);
   }, 3500);
+
+}
+
 }
 
 // ==========================================================================
@@ -3792,3 +3795,4 @@ function renderVault() {
     vaultFilesGrid.appendChild(card);
   });
 }
+

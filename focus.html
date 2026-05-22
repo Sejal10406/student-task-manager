@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FocusZone</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg1:#0a0a14;--bg2:#10101e;--card:#16162a;--border:#2a2a4a;
+  --accent:#7c6dfa;--accent2:#5ee7b7;--text1:#f0efff;--text2:#9b9bc0;
+  --danger:#fa6d7c;--warn:#f7c948;
+}
+body{background:var(--bg1);color:var(--text1);font-family:system-ui,sans-serif;min-height:100vh}
+.hub{max-width:700px;margin:0 auto;padding:1.5rem 1rem 2rem}
+
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.logo{font-size:18px;font-weight:600;letter-spacing:-0.3px;color:var(--text1)}
+.logo span{color:var(--accent)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#3a3a5e;transition:background .4s}
+.status-dot.active{background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
+
+.section-label{font-size:11px;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;color:var(--text2);margin-bottom:.7rem}
+.themes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.2rem}
+.theme-btn{border:1.5px solid var(--border);border-radius:12px;padding:10px 8px;cursor:pointer;text-align:center;background:var(--card);transition:all .2s;color:var(--text2);font-size:12px;font-weight:500}
+.theme-btn .t-icon{font-size:22px;display:block;margin-bottom:4px}
+.theme-btn:hover{border-color:var(--accent);color:var(--text1)}
+.theme-btn.active{border-color:var(--accent);background:rgba(124,109,250,0.12);color:var(--accent)}
+
+.stage{border-radius:20px;border:1.5px solid var(--border);background:var(--card);overflow:hidden;margin-bottom:1rem;position:relative;min-height:300px;transition:background .6s,border-color .4s}
+.stage-vis{height:220px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+
+.wave-canvas{width:100%;height:70px;position:absolute;bottom:0;left:0;opacity:0;transition:opacity .6s;z-index:3}
+
+.play-zone{padding:1.2rem 1.4rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:14px}
+.play-btn{width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--accent);color:#fff;transition:transform .15s,box-shadow .3s;flex-shrink:0}
+.play-btn:hover{transform:scale(1.07);box-shadow:0 0 20px rgba(124,109,250,0.5)}
+.play-btn.playing{box-shadow:0 0 28px rgba(124,109,250,0.6);animation:pulse-ring 2s infinite}
+@keyframes pulse-ring{0%,100%{box-shadow:0 0 0 0 rgba(124,109,250,0.4)}50%{box-shadow:0 0 0 10px rgba(124,109,250,0)}}
+.play-info{flex:1}
+.play-title{font-size:14px;font-weight:500;color:var(--text1);margin-bottom:2px}
+.play-sub{font-size:12px;color:var(--text2)}
+.volume-wrap{display:flex;align-items:center;gap:8px}
+.vol-icon{font-size:16px;color:var(--text2)}
+input[type=range].vol{width:72px;accent-color:var(--accent)}
+
+.prog-bar{height:3px;background:rgba(255,255,255,0.08);margin:0 1.4rem .8rem;border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width .5s linear}
+
+.motivate-zone{border-radius:20px;border:1.5px solid var(--border);background:var(--card);overflow:hidden;margin-bottom:1rem}
+.motivate-top{padding:1rem 1.4rem;display:flex;align-items:center;justify-content:space-between}
+.motivate-btn{border:1.5px solid var(--accent);color:var(--accent);background:rgba(124,109,250,0.1);border-radius:10px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.3px}
+.motivate-btn:hover{background:rgba(124,109,250,0.22);transform:translateY(-1px)}
+.motivate-btn:active{transform:scale(.97)}
+.img-stage{display:none;position:relative;height:260px;background:#0a0a14;overflow:hidden}
+.img-stage.open{display:block}
+.mimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1s}
+.mimg.show{opacity:1}
+.mimg-caption{position:absolute;bottom:0;left:0;right:0;padding:1.2rem 1.4rem;background:linear-gradient(transparent,rgba(0,0,0,0.75));font-size:15px;font-weight:500;color:#fff;transform:translateY(8px);transition:transform .6s,opacity .6s;opacity:0}
+.mimg-caption.show{transform:translateY(0);opacity:1}
+.img-dots{position:absolute;bottom:56px;left:50%;transform:translateX(-50%);display:flex;gap:6px}
+.img-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.3);transition:background .3s,transform .3s}
+.img-dot.active{background:#fff;transform:scale(1.3)}
+.img-timer{position:absolute;top:12px;right:14px;font-size:11px;color:rgba(255,255,255,0.6);background:rgba(0,0,0,0.45);padding:3px 8px;border-radius:20px}
+
+.sounds{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.2rem}
+.snd-btn{border:1.5px solid var(--border);border-radius:12px;padding:10px 6px;cursor:pointer;text-align:center;background:var(--card);transition:all .2s;color:var(--text2);font-size:11px;font-weight:500;position:relative}
+.snd-btn .s-icon{font-size:24px;display:block;margin-bottom:4px}
+.snd-btn:hover{border-color:var(--accent2);color:var(--text1)}
+.snd-btn.active{border-color:var(--accent2);background:rgba(94,231,183,0.1);color:var(--accent2)}
+.snd-btn .snd-vol{position:absolute;bottom:4px;left:6px;right:6px;height:2px;background:rgba(94,231,183,0.2);border-radius:1px}
+.snd-vol-fill{height:100%;width:0;border-radius:1px;background:var(--accent2)}
+@keyframes snd-pulse{0%,100%{width:40%}50%{width:85%}}
+
+.timer-zone{display:flex;gap:10px;margin-bottom:1.2rem}
+.timer-card{flex:1;border-radius:14px;border:1.5px solid var(--border);background:var(--card);padding:1rem;text-align:center}
+.timer-num{font-size:32px;font-weight:600;letter-spacing:1px;color:var(--text1);font-variant-numeric:tabular-nums}
+.timer-label{font-size:11px;color:var(--text2);margin-top:2px}
+.timer-controls{display:flex;gap:8px;justify-content:center;margin-top:.8rem}
+.t-ctrl{border:1px solid var(--border);background:transparent;color:var(--text2);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;transition:all .2s}
+.t-ctrl:hover{border-color:var(--accent);color:var(--accent)}
+.t-ctrl.run{background:var(--accent);border-color:var(--accent);color:#fff}
+
+.dfree-toggle{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:.85rem 1.1rem;margin-bottom:1.2rem;cursor:pointer;transition:border-color .2s}
+.dfree-toggle:hover{border-color:var(--accent)}
+.toggle-sw{width:38px;height:22px;border-radius:11px;background:var(--border);transition:background .3s;position:relative}
+.toggle-sw.on{background:var(--accent)}
+.toggle-knob{width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;transition:transform .3s}
+.toggle-sw.on .toggle-knob{transform:translateX(16px)}
+
+.dfree-overlay{display:none;position:fixed;inset:0;background:#0a0a14;z-index:1000;flex-direction:column;align-items:center;justify-content:center}
+.dfree-overlay.open{display:flex}
+.dfree-close{position:absolute;top:20px;right:20px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px;transition:all .2s}
+.dfree-close:hover{border-color:var(--accent);color:var(--text1)}
+.dfree-timer-big{font-size:80px;font-weight:700;letter-spacing:4px;color:var(--text1);font-variant-numeric:tabular-nums;margin-bottom:.5rem;text-align:center}
+.dfree-msg{font-size:16px;color:var(--text2);max-width:300px;line-height:1.6;text-align:center}
+
+.quote-ticker{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:.85rem 1.1rem;margin-bottom:1.2rem;overflow:hidden}
+.quote-text{font-size:13px;color:var(--text2);font-style:italic;line-height:1.5;transition:opacity .5s}
+.quote-author{font-size:11px;color:var(--accent);margin-top:4px;font-style:normal;font-weight:500}
+
+</style>
+</head>
+<body>
+
+<div class="hub">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">Focus<span>Zone</span></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:12px;color:var(--text2)" id="status-label">Idle</span>
+      <div class="status-dot" id="status-dot"></div>
+    </div>
+  </div>
+
+  <!-- THEME SELECTOR -->
+  <p class="section-label">Environment theme</p>
+  <div class="themes" id="themes">
+    <button class="theme-btn active" data-theme="cosmos" onclick="setTheme(this)">
+      <span class="t-icon">🌌</span>Cosmos
+    </button>
+    <button class="theme-btn" data-theme="forest" onclick="setTheme(this)">
+      <span class="t-icon">🌿</span>Forest
+    </button>
+    <button class="theme-btn" data-theme="ocean" onclick="setTheme(this)">
+      <span class="t-icon">🌊</span>Ocean
+    </button>
+    <button class="theme-btn" data-theme="fire" onclick="setTheme(this)">
+      <span class="t-icon">🔥</span>Focus
+    </button>
+  </div>
+
+  <!-- MAIN STAGE -->
+  <div class="stage" id="stage">
+    <div class="stage-vis" id="stage-vis">
+      <canvas id="ambient-canvas" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+      <div id="playing-label" style="position:relative;z-index:2;text-align:center;transition:opacity .5s">
+        <div style="font-size:42px;margin-bottom:8px" id="stage-emoji">🌌</div>
+        <div style="font-size:13px;color:var(--text2);letter-spacing:.5px">Select a theme and press play</div>
+      </div>
+      <canvas class="wave-canvas" id="wave-canvas"></canvas>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+    <div class="play-zone">
+      <button class="play-btn" id="play-btn" onclick="togglePlay()" aria-label="Play peaceful music">
+        <i class="ti ti-player-play" id="play-icon"></i>
+      </button>
+      <div class="play-info">
+        <div class="play-title" id="play-title">Peaceful Cosmos</div>
+        <div class="play-sub" id="play-sub">432 Hz · Binaural · Deep focus</div>
+      </div>
+      <div class="volume-wrap">
+        <i class="ti ti-volume" style="font-size:16px;color:var(--text2)"></i>
+        <input type="range" class="vol" min="0" max="100" value="70" id="vol-slider" oninput="setVolume(this.value)" step="1">
+      </div>
+    </div>
+  </div>
+
+  <!-- AMBIENT SOUNDS -->
+  <p class="section-label">Ambient layers</p>
+  <div class="sounds">
+    <button class="snd-btn" data-snd="rain" onclick="toggleSound(this)">
+      <span class="s-icon">🌧️</span>Rain
+      <div class="snd-vol"><div class="snd-vol-fill"></div></div>
+    </button>
+    <button class="snd-btn" data-snd="wind" onclick="toggleSound(this)">
+      <span class="s-icon">💨</span>Wind
+      <div class="snd-vol"><div class="snd-vol-fill"></div></div>
+    </button>
+    <button class="snd-btn" data-snd="fire" onclick="toggleSound(this)">
+      <span class="s-icon">🕯️</span>Fire
+      <div class="snd-vol"><div class="snd-vol-fill"></div></div>
+    </button>
+    <button class="snd-btn" data-snd="birds" onclick="toggleSound(this)">
+      <span class="s-icon">🐦</span>Birds
+      <div class="snd-vol"><div class="snd-vol-fill"></div></div>
+    </button>
+  </div>
+
+  <!-- MOTIVATE ME -->
+  <div class="motivate-zone">
+    <div class="motivate-top">
+      <div>
+        <div style="font-size:15px;font-weight:500;color:var(--text1);margin-bottom:2px">Motivational boost</div>
+        <div style="font-size:12px;color:var(--text2)">Visual fuel for your session</div>
+      </div>
+      <button class="motivate-btn" onclick="startMotivate()" id="mot-btn">✦ Motivate me</button>
+    </div>
+    <div class="img-stage" id="img-stage">
+      <img class="mimg" id="mimg0" src="" alt="motivational 1">
+      <img class="mimg" id="mimg1" src="" alt="motivational 2">
+      <img class="mimg" id="mimg2" src="" alt="motivational 3">
+      <img class="mimg" id="mimg3" src="" alt="motivational 4">
+      <div class="mimg-caption" id="mimg-cap"></div>
+      <div class="img-dots" id="img-dots"></div>
+      <div class="img-timer" id="img-timer"></div>
+    </div>
+  </div>
+
+  <!-- QUOTE TICKER -->
+  <div class="quote-ticker">
+    <div class="quote-text" id="q-text">"The secret of getting ahead is getting started."</div>
+    <div class="quote-author" id="q-author">— Mark Twain</div>
+  </div>
+
+  <!-- FOCUS TIMER -->
+  <p class="section-label">Pomodoro timer</p>
+  <div class="timer-zone">
+    <div class="timer-card">
+      <div class="timer-num" id="timer-disp">25:00</div>
+      <div class="timer-label">Focus session</div>
+      <div class="timer-controls">
+        <button class="t-ctrl" onclick="setTimer(25)">25m</button>
+        <button class="t-ctrl" onclick="setTimer(45)">45m</button>
+        <button class="t-ctrl" onclick="setTimer(60)">60m</button>
+        <button class="t-ctrl run" id="timer-run-btn" onclick="toggleTimer()">Start</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISTRACTION FREE TOGGLE -->
+  <div class="dfree-toggle" onclick="toggleDFree()">
+    <div>
+      <div style="font-size:14px;font-weight:500;color:var(--text1)">Distraction-free mode</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:2px">Full screen · Timer only · Zero noise</div>
+    </div>
+    <div class="toggle-sw" id="dfree-sw"><div class="toggle-knob"></div></div>
+  </div>
+
+</div>
+
+<!-- DISTRACTION FREE OVERLAY -->
+<div class="dfree-overlay" id="dfree-overlay">
+  <button class="dfree-close" onclick="closeDFree()"><i class="ti ti-x"></i> Exit</button>
+  <div>
+    <div style="font-size:16px;color:var(--text2);margin-bottom:1rem;letter-spacing:3px;text-transform:uppercase;text-align:center">Deep Focus</div>
+    <div class="dfree-timer-big" id="dfree-timer-disp">25:00</div>
+    <div class="dfree-msg" id="dfree-quote">"You are capable of more than you know."</div>
+  </div>
+</div>
+
+<script>
+const THEMES = {
+  cosmos:{emoji:'🌌',title:'Peaceful Cosmos',sub:'432 Hz · Binaural · Deep focus',
+    colors:['#0a0a14','#1a0e2e','#2d1b55','#7c6dfa','#5ee7b7']},
+  forest:{emoji:'🌿',title:'Forest Sanctuary',sub:'Natural tones · Theta waves',
+    colors:['#061208','#0e2016','#1a3a20','#3fa857','#a8e6b4']},
+  ocean:{emoji:'🌊',title:'Ocean Depths',sub:'Delta waves · 528 Hz healing',
+    colors:['#050e1a','#0b1e35','#124d80','#1a8fe0','#7dd3fc']},
+  fire:{emoji:'🔥',title:'Phoenix Focus',sub:'Beta waves · High energy mode',
+    colors:['#150704','#2e0d05','#5c1a07','#d4420f','#f7a135']}
+};
+
+const QUOTES = [
+  {t:'"The secret of getting ahead is getting started."',a:'— Mark Twain'},
+  {t:'"It always seems impossible until it\'s done."',a:'— Nelson Mandela'},
+  {t:'"The only way to do great work is to love what you do."',a:'— Steve Jobs'},
+  {t:'"Believe you can and you\'re halfway there."',a:'— Theodore Roosevelt'},
+  {t:'"Focus on being productive instead of busy."',a:'— Tim Ferriss'},
+  {t:'"Small steps every day lead to massive results."',a:'— Anonymous'},
+  {t:'"You don\'t have to be great to start, but start to be great."',a:'— Zig Ziglar'},
+  {t:'"Energy and persistence conquer all things."',a:'— Benjamin Franklin'}
+];
+
+const MOT_IMGS = [
+  {url:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=700&q=80',cap:'Every summit was once a beginning. Rise.'},
+  {url:'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=700&q=80',cap:'The view from the top is worth every step.'},
+  {url:'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=700&q=80',cap:'The universe rewards those who keep going.'},
+  {url:'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=700&q=80',cap:'Greatness lives on the other side of comfort.'}
+];
+
+let currentTheme = 'cosmos';
+let isPlaying = false;
+let audioCtx = null, gainNode = null, oscillators = [];
+let waveAnim = null, progInterval = null, progVal = 0;
+let timerSec = 25*60, timerRunning = false, timerInterval = null;
+let motIndex = 0, motTimer = null, motCountdown = null, motCountSec = 4;
+let dfreeOpen = false, qIndex = 0, ambLoop = null;
+let particles = [];
+
+function setTheme(btn) {
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentTheme = btn.dataset.theme;
+  const t = THEMES[currentTheme];
+  document.getElementById('stage-emoji').textContent = t.emoji;
+  document.getElementById('play-title').textContent = t.title;
+  document.getElementById('play-sub').textContent = t.sub;
+  document.documentElement.style.setProperty('--accent', t.colors[3]);
+  document.documentElement.style.setProperty('--accent2', t.colors[4]);
+  particles = [];
+  drawAmbient();
+  if (isPlaying) { stopAudio(); startAudio(); }
+}
+
+function drawAmbient() {
+  const canvas = document.getElementById('ambient-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth || 700;
+  canvas.height = canvas.offsetHeight || 220;
+  const t = THEMES[currentTheme];
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const bg = ctx.createLinearGradient(0,0,w,h);
+  bg.addColorStop(0,t.colors[0]); bg.addColorStop(0.5,t.colors[1]); bg.addColorStop(1,t.colors[2]);
+  ctx.fillStyle = bg; ctx.fillRect(0,0,w,h);
+  if (currentTheme==='cosmos') drawStars(ctx,w,h,t);
+  if (currentTheme==='forest') drawForest(ctx,w,h,t);
+  if (currentTheme==='ocean') drawOcean(ctx,w,h,t);
+  if (currentTheme==='fire') drawFire(ctx,w,h,t);
+}
+
+function drawStars(ctx,w,h,t) {
+  if (!particles.length || particles[0].type!=='star') {
+    particles = Array.from({length:80},()=>({type:'star',x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.8+.3,phase:Math.random()*Math.PI*2,speed:Math.random()*.02+.005}));
+  }
+  particles.forEach(p=>{
+    p.phase+=p.speed;
+    const a=0.4+0.6*Math.sin(p.phase);
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,255,255,${a})`; ctx.fill();
+  });
+}
+function drawForest(ctx,w,h,t) {
+  for(let i=0;i<7;i++){
+    ctx.beginPath();
+    const x=w*(.08+i*.14), ht=h*(.35+Math.sin(i*1.3)*.2);
+    ctx.moveTo(x,h); ctx.lineTo(x-25,h-ht); ctx.lineTo(x+25,h-ht); ctx.closePath();
+    ctx.fillStyle=`rgba(20,70,30,${.15+i*.04})`; ctx.fill();
+  }
+}
+function drawOcean(ctx,w,h,t) {
+  for(let i=0;i<4;i++){
+    ctx.beginPath();
+    ctx.moveTo(0,h*(0.38+i*0.16));
+    for(let x=0;x<=w;x+=8) ctx.lineTo(x,h*(0.38+i*0.16)+Math.sin(x/55+i)*15);
+    ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath();
+    ctx.fillStyle=`rgba(26,143,224,${0.07+i*.05})`; ctx.fill();
+  }
+}
+function drawFire(ctx,w,h,t) {
+  const grd=ctx.createRadialGradient(w/2,h,5,w/2,h,h*.7);
+  grd.addColorStop(0,'rgba(212,66,15,0.3)'); grd.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=grd; ctx.fillRect(0,0,w,h);
+}
+
+function startAmbientLoop() {
+  clearInterval(ambLoop);
+  ambLoop = setInterval(()=>drawAmbient(),100);
+}
+function stopAmbientLoop() { clearInterval(ambLoop); }
+
+function drawWave() {
+  const canvas = document.getElementById('wave-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth||700;
+  canvas.height = 70;
+  const w=canvas.width, h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const t=THEMES[currentTheme];
+  const now=Date.now()/1000;
+  ctx.beginPath();
+  for(let x=0;x<=w;x+=2){
+    const y=h*.6+Math.sin(x/30+now*2)*12+Math.sin(x/15+now*3)*6+Math.sin(x/8+now*5)*4;
+    x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle=t.colors[4]; ctx.lineWidth=2;
+  ctx.shadowColor=t.colors[4]; ctx.shadowBlur=8;
+  ctx.stroke();
+  if(isPlaying) waveAnim=requestAnimationFrame(drawWave);
+}
+
+function startAudio() {
+  try{
+    if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    gainNode=audioCtx.createGain();
+    gainNode.gain.value=document.getElementById('vol-slider').value/200;
+    gainNode.connect(audioCtx.destination);
+    oscillators=[];
+    const freqMap={cosmos:[432,528,639],forest:[174,285,396],ocean:[285,396,528],fire:[417,528,741]};
+    const freqs=freqMap[currentTheme]||[432,528,639];
+    freqs.forEach((f,i)=>{
+      const osc=audioCtx.createOscillator();
+      const lfoGain=audioCtx.createGain();
+      const lfo=audioCtx.createOscillator();
+      lfo.frequency.value=0.05+i*0.03; lfoGain.gain.value=0.003;
+      lfo.connect(lfoGain); lfoGain.connect(osc.frequency);
+      osc.type=i%2===0?'sine':'triangle'; osc.frequency.value=f;
+      const g=audioCtx.createGain(); g.gain.value=0.06;
+      osc.connect(g); g.connect(gainNode);
+      lfo.start(); osc.start();
+      oscillators.push({osc,lfo});
+    });
+    const noise=audioCtx.createOscillator();
+    noise.type='sawtooth'; noise.frequency.value=80;
+    const ng=audioCtx.createGain(); ng.gain.value=0.01;
+    noise.connect(ng); ng.connect(gainNode); noise.start();
+    oscillators.push({osc:noise,lfo:null});
+  }catch(e){console.warn('Audio error:',e);}
+}
+
+function stopAudio() {
+  oscillators.forEach(({osc,lfo})=>{try{osc.stop();}catch(e){}try{if(lfo)lfo.stop();}catch(e){}});
+  oscillators=[];
+  if(gainNode){try{gainNode.disconnect();}catch(e){}gainNode=null;}
+}
+
+function togglePlay() {
+  isPlaying=!isPlaying;
+  const btn=document.getElementById('play-btn');
+  const icon=document.getElementById('play-icon');
+  const wc=document.getElementById('wave-canvas');
+  const dot=document.getElementById('status-dot');
+  const pl=document.getElementById('playing-label');
+  if(isPlaying){
+    startAudio(); startAmbientLoop();
+    btn.classList.add('playing');
+    icon.className='ti ti-player-pause';
+    wc.style.opacity='1';
+    dot.classList.add('active');
+    document.getElementById('status-label').textContent='Playing';
+    pl.style.opacity='0';
+    drawWave(); startProgress();
+  } else {
+    stopAudio(); stopAmbientLoop();
+    btn.classList.remove('playing');
+    icon.className='ti ti-player-play';
+    wc.style.opacity='0';
+    dot.classList.remove('active');
+    document.getElementById('status-label').textContent='Idle';
+    pl.style.opacity='1';
+    cancelAnimationFrame(waveAnim);
+    stopProgress(); drawAmbient();
+  }
+}
+
+function setVolume(v) { if(gainNode) gainNode.gain.value=v/200; }
+
+function startProgress() {
+  stopProgress(); progVal=0;
+  progInterval=setInterval(()=>{progVal=(progVal+0.05)%100;document.getElementById('prog-fill').style.width=progVal+'%';},300);
+}
+function stopProgress() {
+  clearInterval(progInterval);
+  document.getElementById('prog-fill').style.width='0%';
+}
+
+function toggleSound(btn) {
+  btn.classList.toggle('active');
+  const fill=btn.querySelector('.snd-vol-fill');
+  if(btn.classList.contains('active')){
+    fill.style.width='60%';
+    fill.style.animation='snd-pulse 2s infinite';
+  } else {
+    fill.style.width='0';
+    fill.style.animation='none';
+  }
+}
+
+function startMotivate() {
+  const stage=document.getElementById('img-stage');
+  stage.classList.add('open');
+  document.getElementById('mot-btn').textContent='⟳ Refresh';
+  document.getElementById('status-dot').classList.add('active');
+  document.getElementById('status-label').textContent='Inspired';
+  MOT_IMGS.forEach((img,i)=>{ document.getElementById('mimg'+i).src=img.url; });
+  buildDots();
+  clearTimeout(motTimer); clearInterval(motCountdown);
+  motIndex=0; showMotImg(0);
+}
+
+function buildDots() {
+  const dots=document.getElementById('img-dots');
+  dots.innerHTML='';
+  MOT_IMGS.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='img-dot'+(i===0?' active':'');
+    d.id='dot'+i; dots.appendChild(d);
+  });
+}
+
+function showMotImg(idx) {
+  MOT_IMGS.forEach((_,i)=>document.getElementById('mimg'+i).classList.remove('show'));
+  const cap=document.getElementById('mimg-cap');
+  cap.classList.remove('show');
+  document.querySelectorAll('.img-dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  clearInterval(motCountdown);
+  motCountSec=4; updateImgTimer(motCountSec);
+  setTimeout(()=>{
+    document.getElementById('mimg'+idx).classList.add('show');
+    cap.textContent=MOT_IMGS[idx].cap;
+    setTimeout(()=>cap.classList.add('show'),400);
+    motCountdown=setInterval(()=>{
+      motCountSec--;
+      updateImgTimer(motCountSec);
+      if(motCountSec<=0) clearInterval(motCountdown);
+    },1000);
+  },100);
+  motTimer=setTimeout(()=>{
+    cap.classList.remove('show');
+    motIndex=(idx+1)%MOT_IMGS.length;
+    showMotImg(motIndex);
+  },1500);
+}
+
+function updateImgTimer(s) {
+  document.getElementById('img-timer').textContent=s>0?`Next in ${s}s`:'';
+}
+
+function setTimer(min) { timerSec=min*60; updateTimerDisplay(); }
+
+function toggleTimer() {
+  timerRunning=!timerRunning;
+  const btn=document.getElementById('timer-run-btn');
+  if(timerRunning){
+    btn.textContent='Pause'; btn.style.background='var(--danger)'; btn.style.borderColor='var(--danger)';
+    timerInterval=setInterval(()=>{
+      if(timerSec>0){timerSec--;updateTimerDisplay();}
+      else{
+        clearInterval(timerInterval); timerRunning=false;
+        btn.textContent='Done!'; btn.style.background='var(--accent2)'; btn.style.borderColor='var(--accent2)';
+      }
+    },1000);
+  } else {
+    clearInterval(timerInterval);
+    btn.textContent='Resume'; btn.style.background='var(--accent)'; btn.style.borderColor='var(--accent)';
+  }
+}
+
+function updateTimerDisplay() {
+  const m=String(Math.floor(timerSec/60)).padStart(2,'0');
+  const s=String(timerSec%60).padStart(2,'0');
+  const str=`${m}:${s}`;
+  document.getElementById('timer-disp').textContent=str;
+  document.getElementById('dfree-timer-disp').textContent=str;
+}
+
+function toggleDFree() {
+  dfreeOpen=!dfreeOpen;
+  const sw=document.getElementById('dfree-sw');
+  const ov=document.getElementById('dfree-overlay');
+  if(dfreeOpen){
+    sw.classList.add('on'); ov.classList.add('open');
+    const q=QUOTES[Math.floor(Math.random()*QUOTES.length)];
+    document.getElementById('dfree-quote').textContent=q.t+' '+q.a;
+  } else {
+    sw.classList.remove('on'); ov.classList.remove('open');
+  }
+}
+function closeDFree() {
+  dfreeOpen=false;
+  document.getElementById('dfree-sw').classList.remove('on');
+  document.getElementById('dfree-overlay').classList.remove('open');
+}
+
+function rotateQuote() {
+  const qtEl=document.getElementById('q-text');
+  const qaEl=document.getElementById('q-author');
+  qtEl.style.opacity='0';
+  setTimeout(()=>{
+    qIndex=(qIndex+1)%QUOTES.length;
+    qtEl.textContent=QUOTES[qIndex].t;
+    qaEl.textContent=QUOTES[qIndex].a;
+    qtEl.style.opacity='1';
+  },500);
+}
+setInterval(rotateQuote,8000);
+
+window.addEventListener('load',()=>{
+  drawAmbient();
+  const canvas=document.getElementById('ambient-canvas');
+  if(window.ResizeObserver){ new ResizeObserver(()=>drawAmbient()).observe(canvas); }
+});
+</script>
+</body>
+</html>
