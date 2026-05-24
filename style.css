@@ -1326,6 +1326,29 @@ body.light .topbar-left h2 {
 .recurrence-pill[data-type="weekly"] { background: linear-gradient(90deg,#f59e0b,#f97316); }
 .recurrence-pill[data-type="monthly"] { background: linear-gradient(90deg,#8b5cf6,#3b82f6); }
 
+/* Timetable styles (minimal & responsive) */
+.timetable-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+.tt-column { background: rgba(255,255,255,0.02); padding:8px; border-radius:8px; min-height:60px; }
+.tt-column h4 { margin:0 0 6px 0; font-size:13px; }
+.tt-item { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px; margin-bottom:6px; border-radius:6px; color:var(--text); }
+.tt-item .tt-label { font-weight:700; font-size:13px; }
+.tt-item small { opacity:0.85; font-size:12px; color:var(--text-light); }
+.tt-actions { display:flex; gap:6px; align-items:center; }
+.tt-btn { background:transparent;border:0;color:var(--text-light);cursor:pointer;padding:4px;border-radius:4px }
+
+@media (max-width:900px) {
+  .timetable-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width:520px) {
+  .timetable-grid { grid-template-columns: 1fr; }
+  .timetable-form { flex-direction:column; align-items:stretch; }
+}
+
 /* DAILY QUEST */
 
 .daily-quest {

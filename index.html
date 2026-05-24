@@ -2171,6 +2171,26 @@
   <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
   <script src="script.js"></script>
   <script src="toast.js"></script>
+  <!-- Minimal Timetable Manager -->
+  <section id="timetable-section" class="card" style="margin:16px;">
+    <h2 style="margin:0 0 8px 0;">Timetable</h2>
+    <div class="timetable-form" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+      <input id="ttSubjectInput" placeholder="Subject (e.g., Math)" style="flex:1;min-width:160px;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);" />
+      <select id="ttDaySelect" style="padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);">
+        <option value="mon">Mon</option>
+        <option value="tue">Tue</option>
+        <option value="wed">Wed</option>
+        <option value="thu">Thu</option>
+        <option value="fri">Fri</option>
+        <option value="sat">Sat</option>
+        <option value="sun">Sun</option>
+      </select>
+      <input id="ttStartInput" type="time" style="padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);" />
+      <input id="ttEndInput" type="time" style="padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);" />
+      <button id="ttAddBtn" class="btn">Add</button>
+    </div>
+    <div id="timetableContainer" class="timetable-grid" aria-live="polite"></div>
+  </section>
   <script src="collaborative.js"></script>
 
 </body>

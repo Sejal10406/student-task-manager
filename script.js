@@ -363,6 +363,7 @@ let exams = [];
 let vaultFiles = [];
 let projects = [];
 let recurringTemplates = [];
+let timetableEntries = [];
 let currentFilter = "All";
 let currentSort = "default";
 let searchQuery = "";
@@ -669,6 +670,12 @@ function loadData() {
     const raw = localStorage.getItem('recurring_templates');
     recurringTemplates = raw ? JSON.parse(raw) : [];
   } catch (e) { recurringTemplates = []; }
+
+  // Load timetable
+  try {
+    const rawT = localStorage.getItem('timetable_entries');
+    timetableEntries = rawT ? JSON.parse(rawT) : [];
+  } catch (e) { timetableEntries = []; }
 }
 
 function saveData() {
@@ -687,6 +694,7 @@ function saveData() {
   localStorage.setItem("quests_calendar", JSON.stringify(calendarEvents));
   // persist recurring templates
   try { localStorage.setItem('recurring_templates', JSON.stringify(recurringTemplates || [])); } catch(e){}
+  try { localStorage.setItem('timetable_entries', JSON.stringify(timetableEntries || [])); } catch(e){}
 }
 
 // ==========================
@@ -4045,7 +4053,75 @@ window.addEventListener('load', () => {
   renderLabRecords && renderLabRecords();
   // generate recurring tasks on load
   generateRecurringTasks();
+  // render timetable
+  renderTimetable();
 });
+
+function getSubjectColorSafe(subject) {
+  if (typeof getSubjectColor === 'function') return getSubjectColor(subject);
+  // fallback deterministic color map
+  const colors = ['#ef4444','#f97316','#f59e0b','#10b981','#06b6d4','#3b82f6','#8b5cf6'];
+  let h = 0; for (let i=0;i<subject.length;i++) h = (h<<5)-h+subject.charCodeAt(i);
+  return colors[Math.abs(h) % colors.length];
+}
+
+function renderTimetable() {
+  const container = document.getElementById('timetableContainer');
+  if (!container) return;
+  const days = ['mon','tue','wed','thu','fri','sat','sun'];
+  container.innerHTML = '';
+  days.forEach(day => {
+    const col = document.createElement('div'); col.className = 'tt-column';
+    const title = document.createElement('h4'); title.textContent = day.toUpperCase(); col.appendChild(title);
+    const items = timetableEntries.filter(e => e.day === day).sort((a,b)=>a.startTime.localeCompare(b.startTime));
+    if (items.length === 0) {
+      const empty = document.createElement('div'); empty.style.opacity = '0.6'; empty.style.fontSize='12px'; empty.textContent = 'No classes'; col.appendChild(empty);
+    } else {
+      items.forEach(it => {
+        const el = document.createElement('div'); el.className = 'tt-item';
+        const color = getSubjectColorSafe(it.subject || '');
+        el.style.background = color;
+        el.style.color = getContrastColor ? getContrastColor(color) : '#fff';
+        const left = document.createElement('div'); left.style.display='flex'; left.style.flexDirection='column';
+        const lbl = document.createElement('div'); lbl.className='tt-label'; lbl.textContent = it.subject || 'Untitled'; left.appendChild(lbl);
+        const time = document.createElement('small'); time.textContent = `${it.startTime || ''} - ${it.endTime || ''}`; left.appendChild(time);
+        const actions = document.createElement('div'); actions.className='tt-actions';
+        const editBtn = document.createElement('button'); editBtn.className='tt-btn'; editBtn.title='Edit'; editBtn.innerHTML='✏️';
+        const delBtn = document.createElement('button'); delBtn.className='tt-btn'; delBtn.title='Delete'; delBtn.innerHTML='🗑️';
+        actions.appendChild(editBtn); actions.appendChild(delBtn);
+        el.appendChild(left); el.appendChild(actions);
+        // edit handler
+        editBtn.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          const newSub = prompt('Subject', it.subject) || it.subject;
+          const newStart = prompt('Start time (HH:MM)', it.startTime) || it.startTime;
+          const newEnd = prompt('End time (HH:MM)', it.endTime) || it.endTime;
+          it.subject = newSub; it.startTime = newStart; it.endTime = newEnd;
+          saveData(); renderTimetable();
+        });
+        delBtn.addEventListener('click',(e)=>{ e.stopPropagation(); if (confirm('Delete this entry?')) { timetableEntries = timetableEntries.filter(x=>x.id!==it.id); saveData(); renderTimetable(); } });
+        col.appendChild(el);
+      });
+    }
+    container.appendChild(col);
+  });
+}
+
+function addTimetableEntry() {
+  const subj = (document.getElementById('ttSubjectInput')||{}).value.trim();
+  const day = (document.getElementById('ttDaySelect')||{}).value;
+  const start = (document.getElementById('ttStartInput')||{}).value;
+  const end = (document.getElementById('ttEndInput')||{}).value;
+  if (!subj || !day) return alert('Please provide a subject and day.');
+  const entry = { id: Date.now()+Math.floor(Math.random()*999), subject: subj, day, startTime: start, endTime: end };
+  timetableEntries.push(entry); saveData(); renderTimetable();
+  if (window && window.showToast) window.showToast('Timetable entry added', 'success');
+  // clear inputs
+  (document.getElementById('ttSubjectInput')||{}).value='';
+}
+
+const ttAddBtnEl = document.getElementById('ttAddBtn');
+if (ttAddBtnEl) ttAddBtnEl.addEventListener('click', addTimetableEntry);
 
 function computeNextDate(dateStr, recurrence) {
   const d = dateStr ? new Date(dateStr) : new Date();
