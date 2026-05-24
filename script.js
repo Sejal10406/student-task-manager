@@ -1759,6 +1759,139 @@ function renderTasks() {
   updateStats();
 }
 
+// ==========================
+// Priority Table View
+// ==========================
+function formatDeadlineText(deadline) {
+  if (!deadline) return 'No deadline';
+  try {
+    const d = new Date(deadline);
+    if (isNaN(d.getTime())) return 'Invalid';
+    return d.toLocaleString();
+  } catch (e) { return 'Invalid'; }
+}
+
+function isOverdue(task) {
+  if (!task.deadline) return false;
+  try {
+    return new Date(task.deadline) < new Date() && !task.completed;
+  } catch (e) { return false; }
+}
+
+function renderPriorityTable(filterPriority = 'All', sortMode = 'deadline') {
+  const container = document.getElementById('priorityTableContainer');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const priorities = ['High', 'Medium', 'Low'];
+
+  priorities.forEach(pr => {
+    if (filterPriority !== 'All' && filterPriority !== pr) return;
+    const section = document.createElement('div');
+    section.className = 'priority-section';
+    const hdr = document.createElement('h4');
+    const badgeClass = pr === 'High' ? 'priority-high' : (pr === 'Medium' ? 'priority-medium' : 'priority-low');
+    hdr.innerHTML = `<span class="priority-badge ${badgeClass}"></span>${pr} <small style="color:var(--text-light); margin-left:8px; font-weight:600;">(${tasks.filter(t=>t.priority===pr).length})</small>`;
+    section.appendChild(hdr);
+
+    let list = tasks.filter(t => (t.priority === pr));
+    // Sorting
+    if (sortMode === 'deadline') {
+      list.sort((a,b) => {
+        const aD = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+        const bD = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+        return aD - bD;
+      });
+    } else if (sortMode === 'overdue') {
+      list.sort((a,b) => (isOverdue(b) ? 0 : 1) - (isOverdue(a) ? 0 : 1));
+    }
+
+    list.forEach(task => {
+      const row = document.createElement('div');
+      row.className = 'priority-row' + (isOverdue(task) ? ' priority-overdue' : '');
+      const pBadge = document.createElement('span');
+      pBadge.className = 'priority-badge ' + (task.priority === 'High' ? 'priority-high' : (task.priority === 'Medium' ? 'priority-medium' : 'priority-low'));
+      const title = document.createElement('div');
+      title.className = 'priority-title';
+      title.textContent = task.text;
+      const meta = document.createElement('div');
+      meta.className = 'priority-meta';
+      meta.textContent = `${task.category} • ${formatDeadlineText(task.deadline)}`;
+
+      row.appendChild(pBadge);
+      row.appendChild(title);
+      // small tag list
+      if (getTaskTags(task).length) {
+        const tagsEl = document.createElement('div');
+        tagsEl.style.marginLeft = '12px';
+        tagsEl.style.display = 'flex';
+        tagsEl.style.gap = '6px';
+        getTaskTags(task).forEach(tag => {
+          const t = document.createElement('span');
+          t.className = 'task-tag';
+          t.style.setProperty('--tag-color', getTagColor(tag));
+          t.style.fontSize = '11px';
+          t.style.padding = '3px 6px';
+          t.textContent = tag;
+          tagsEl.appendChild(t);
+        });
+        row.appendChild(tagsEl);
+      }
+
+      row.appendChild(meta);
+      section.appendChild(row);
+    });
+
+    container.appendChild(section);
+  });
+}
+
+function openPriorityModal() {
+  const ov = document.getElementById('priorityModalOverlay');
+  if (!ov) return;
+  ov.style.display = 'flex';
+  renderPriorityTable('All', 'deadline');
+}
+
+function closePriorityModal() {
+  const ov = document.getElementById('priorityModalOverlay');
+  if (!ov) return;
+  ov.style.display = 'none';
+}
+
+// wire priority modal controls
+document.addEventListener('DOMContentLoaded', () => {
+  const openBtn = document.getElementById('openPriorityTableBtn');
+  const closeBtn = document.getElementById('closePriorityModal');
+  if (openBtn) openBtn.addEventListener('click', (e) => { e.preventDefault(); openPriorityModal(); });
+  if (closeBtn) closeBtn.addEventListener('click', (e) => { e.preventDefault(); closePriorityModal(); });
+
+  // modal filter and sort buttons
+  document.getElementById('priorityModalOverlay')?.addEventListener('click', (ev) => {
+    if (ev.target && ev.target.id === 'priorityModalOverlay') closePriorityModal();
+  });
+
+  const priorityContainer = document.getElementById('priorityModal');
+  if (priorityContainer) {
+    priorityContainer.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('[data-priority]');
+      if (btn) {
+        const p = btn.dataset.priority;
+        renderPriorityTable(p, 'deadline');
+        return;
+      }
+      const s = ev.target.closest('[data-sort]');
+      if (s) {
+        const sortMode = s.dataset.sort;
+        // find currently selected priority filter
+        const activeFilterBtn = document.querySelector('#priorityModal .view-btn.small[data-priority].active') || document.querySelector('#priorityModal .view-btn.small[data-priority]');
+        const p = activeFilterBtn ? (activeFilterBtn.dataset.priority || 'All') : 'All';
+        renderPriorityTable(p, sortMode);
+      }
+    });
+  }
+});
+
 function updateStats() {
   const totalTasks = document.getElementById("totalTasks");
   const completedTasks = document.getElementById("completedTasks");

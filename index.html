@@ -376,6 +376,10 @@
                 <i class="ri-sort-asc"></i> A-Z
               </button>
 
+              <button class="filter-btn" id="openPriorityTableBtn" title="Open Priority Table">
+                <i class="ri-list-check-2"></i> Priority Table
+              </button>
+
               <button class="filter-btn reset-btn" id="resetTasksBtn" title="Clear all tasks from the list">
                 <i class="ri-delete-bin-line"></i> Clear All
               </button>
@@ -418,6 +422,32 @@
             </div>
 
             <!-- Syllabus Checklist Panel (below tasks, above daily quest) -->
+            <!-- Priority Table Modal -->
+            <div id="priorityModalOverlay" class="modal-overlay" style="display:none;">
+              <div id="priorityModal" class="priority-modal">
+                <div class="priority-modal-header">
+                  <h3>Priority Table</h3>
+                  <button id="closePriorityModal" class="icon-btn" aria-label="Close priority table"><i class="ri-close-line"></i></button>
+                </div>
+                <div class="priority-controls">
+                  <div>
+                    <label>Filter:</label>
+                    <button class="view-btn small" data-priority="All">All</button>
+                    <button class="view-btn small" data-priority="High">High</button>
+                    <button class="view-btn small" data-priority="Medium">Medium</button>
+                    <button class="view-btn small" data-priority="Low">Low</button>
+                  </div>
+                  <div>
+                    <label>Sort:</label>
+                    <button class="view-btn small" data-sort="deadline">Due Soon</button>
+                    <button class="view-btn small" data-sort="overdue">Overdue First</button>
+                  </div>
+                </div>
+                <div id="priorityTableContainer" class="priority-table-container">
+                  <!-- populated by JS -->
+                </div>
+              </div>
+            </div>
             <aside class="syllabus-panel glass" id="syllabusPanel" style="display: none;">
               <div class="syllabus-header">
                 <h3>Syllabus Checklist</h3>
