@@ -7841,8 +7841,4 @@ body.light .drag-handle:hover {
 .add-topic-row {
   display: flex;
   gap: 8px;
-/* Task Priority Badges */
-.priority-badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; margin-left: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-.priority-high { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.5); }
-.priority-medium { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.5); }
-.priority-low { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.5); }
+}
