@@ -13,6 +13,7 @@
 
   const elements = {
     leaderboardTable: document.getElementById("leaderboardTable"),
+    leaderboardBody: document.getElementById("leaderboardBody"),
     liveStatus: document.getElementById("liveStatus"),
     lastUpdatedText: document.getElementById("lastUpdatedText"),
     myRank: document.getElementById("myRank"),
@@ -102,15 +103,17 @@
   }
 
   function buildRow(entry, rank, highlight) {
-    const row = document.createElement("div");
+    const row = document.createElement("tr");
     row.className = `leaderboard-row${highlight ? " highlight-row" : ""}`;
     row.innerHTML = `
-      <div class="row-rank">#${rank}</div>
-      <div class="row-player">
+      <td class="row-rank">#${rank}</td>
+      <td class="row-player">
         <div class="player-name">${entry.name}</div>
         <div class="player-subtitle">Score ${entry.score} • ${entry.completedTasks} tasks • ${entry.streak}-day streak</div>
-      </div>
-      <div class="row-score">${entry.score}</div>
+      </td>
+      <td class="row-score">${entry.score}</td>
+      <td class="row-completed">${entry.completedTasks}</td>
+      <td class="row-streak">${entry.streak}</td>
     `;
     return row;
   }
@@ -127,11 +130,11 @@
     }
 
     const sorted = sortLeaderboard(merged);
-    elements.leaderboardTable.innerHTML = "";
+    elements.leaderboardBody.innerHTML = "";
 
     sorted.forEach((entry, index) => {
       const isCurrentUser = entry.id === "me";
-      elements.leaderboardTable.appendChild(buildRow(entry, index + 1, isCurrentUser));
+      elements.leaderboardBody.appendChild(buildRow(entry, index + 1, isCurrentUser));
     });
 
     const rank = sorted.findIndex(entry => entry.id === "me") + 1;
