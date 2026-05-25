@@ -3,12 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Terms of Service - Study Task Tracker</title>
+  <title>Terms of Service - TaskQuest</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .legal-content {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-top: 2rem;
+      box-shadow: var(--shadow);
+    }
+    .legal-content h2 {
+      color: var(--accent);
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .legal-content p {
+      margin-bottom: 1.5rem;
+      color: var(--text-muted, #94a3b8);
+      line-height: 1.6;
+    }
+  </style>
 </head>
 <body class="legal-page">
 
@@ -19,72 +42,49 @@
 
   <header class="site-header">
     <div class="header-inner">
-      <a href="index.html" class="view-btn" style="text-decoration: none;"><i class="ri-home-4-line"></i> Home</a>
+      <a href="index.html" class="view-btn" style="text-decoration: none;"><i class="ri-home-4-line"></i> Dashboard</a>
       <div class="header-brand">
         <h1>📄 Terms of Service</h1>
         <p class="header-subtitle">
-          <span id="headerGreeting">👋 Focus Time!</span>
-          <span class="subtitle-divider">•</span>
-          <span id="headerDate">Sun, May 17</span>
+          <span id="headerGreeting">TaskQuest Rules</span>
         </p>
       </div>
       <div class="header-controls">
         <div class="stats-pill">
-          <span class="stats-pill-label">Status</span>
-          <span class="stats-pill-value">📄 Active</span>
-        </div>
-        <div class="theme-pill">
-          <span class="theme-pill-label">Theme</span>
-          <select id="themeSwitcher" class="theme-dropdown" aria-label="Switch Theme">
-            <option value="cosmic">🌌 Cosmic</option>
-            <option value="aurora">🍃 Aurora</option>
-            <option value="cyberpunk">🌸 Cyberpunk</option>
-            <option value="sunset">🌅 Sunset</option>
-          </select>
+          <span class="stats-pill-label">Version</span>
+          <span class="stats-pill-value">v2.0</span>
         </div>
       </div>
     </div>
   </header>
 
   <main class="container">
-    <section>
-      <h2>1. Acceptance of Terms</h2>
-      <p>By using Study Task Tracker, you agree to these terms. This is a simple productivity tool designed for students.</p>
-    </section>
+    <div class="legal-content">
+      <section>
+        <h2><i class="ri-checkbox-circle-line"></i> 1. Acceptance of Terms</h2>
+        <p>By accessing or using <strong>TaskQuest</strong>, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, please discontinue use of the application.</p>
+      </section>
 
-    <section style="margin-top: 2rem;">
-      <h2>2. Use of Service</h2>
-      <p>You are responsible for maintaining the privacy of your device. Since we do not have accounts, if you lose access to your browser data, we cannot recover your tasks.</p>
-    </section>
+      <section>
+        <h2><i class="ri-sword-line"></i> 2. Use of the Gamified Platform</h2>
+        <p>This application is provided for personal productivity and educational use. You may use it to create tasks, earn XP, and unlock badges. You agree not to exploit bugs or manipulate local storage to artificially inflate your TaskQuest scores or coins.</p>
+      </section>
 
-    <section style="margin-top: 2rem;">
-      <h2>3. Disclaimer</h2>
-      <p>This application is provided "as is" without warranty of any kind. We are not responsible for any missed deadlines or data loss due to browser clearing.</p>
-    </section>
+      <section>
+        <h2><i class="ri-hard-drive-2-line"></i> 3. Local Data Storage & Loss</h2>
+        <p>All TaskQuest progress (XP, streaks, coins) is stored locally in your browser. You are fully responsible for backing up your own data using the Export functionality. We do not maintain backups, and we are not responsible for any lost progress due to cleared cache.</p>
+      </section>
 
-    <section style="margin-top: 2rem;">
-      <h2>4. Modifications</h2>
-      <p>We reserve the right to modify this application at any time to improve features and accessibility.</p>
-    </section>
+      <section>
+        <h2><i class="ri-open-source-line"></i> 4. Open Source License</h2>
+        <p>The source code, design, and assets of TaskQuest are open-source. Contributions are welcome and governed by our <strong>Contributing Guide</strong> and <strong>Code of Conduct</strong>.</p>
+      </section>
+    </div>
   </main>
 
-  <footer class="site-footer">
-    <p>&copy; 2026 Study Task Tracker. Productivity made simple.</p>
+  <footer class="site-footer" style="text-align: center; margin-top: 3rem; opacity: 0.7;">
+    <p>&copy; 2026 TaskQuest. Level Up Productivity.</p>
   </footer>
 
-  <script>
-    const themeSwitcher = document.getElementById("themeSwitcher");
-    const savedTheme = localStorage.getItem("quests_theme") || "cosmic";
-    document.body.setAttribute("data-theme", savedTheme);
-    if (savedTheme === "sunset") document.body.classList.add("light");
-    themeSwitcher.value = savedTheme;
-
-    themeSwitcher.addEventListener("change", (e) => {
-      const theme = e.target.value;
-      document.body.setAttribute("data-theme", theme);
-      if (theme === "sunset") document.body.classList.add("light"); else document.body.classList.remove("light");
-      localStorage.setItem("quests_theme", theme);
-    });
-  </script>
 </body>
 </html>

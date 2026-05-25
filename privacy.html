@@ -3,12 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy - Study Task Tracker</title>
+  <title>Privacy Policy - TaskQuest</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .legal-content {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-top: 2rem;
+      box-shadow: var(--shadow);
+    }
+    .legal-content h2 {
+      color: var(--accent);
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  </style>
 </head>
 <body class="legal-page">
 
@@ -19,13 +37,11 @@
 
   <header class="site-header">
     <div class="header-inner">
-      <a href="index.html" class="view-btn" style="text-decoration: none;"><i class="ri-home-4-line"></i> Home</a>
+      <a href="index.html" class="view-btn" style="text-decoration: none;"><i class="ri-home-4-line"></i> Dashboard</a>
       <div class="header-brand">
         <h1>🔒 Privacy Policy</h1>
         <p class="header-subtitle">
           <span id="headerGreeting">👋 Focus Time!</span>
-          <span class="subtitle-divider">•</span>
-          <span id="headerDate">Sun, May 17</span>
         </p>
       </div>
       <div class="header-controls">
@@ -33,58 +49,37 @@
           <span class="stats-pill-label">Status</span>
           <span class="stats-pill-value">🔒 Secure</span>
         </div>
-        <div class="theme-pill">
-          <span class="theme-pill-label">Theme</span>
-          <select id="themeSwitcher" class="theme-dropdown" aria-label="Switch Theme">
-            <option value="cosmic">🌌 Cosmic</option>
-            <option value="aurora">🍃 Aurora</option>
-            <option value="cyberpunk">🌸 Cyberpunk</option>
-            <option value="sunset">🌅 Sunset</option>
-          </select>
-        </div>
       </div>
     </div>
   </header>
 
   <main class="container">
-    <section>
-      <h2>1. Information We Collect</h2>
-      <p>The Study Task Tracker is a local-first application. We do not collect or store any of your personal data on our servers. All task data is stored directly in your browser's <strong>localStorage</strong>.</p>
-    </section>
+    <div class="legal-content">
+      <section>
+        <h2><i class="ri-database-2-line"></i> 1. Information We Collect</h2>
+        <p><strong>TaskQuest</strong> is a local-first application. We do not collect or store any of your personal data on external servers. All task data, XP, coins, and settings are stored locally in your browser's <strong>localStorage</strong>.</p>
+      </section>
 
-    <section style="margin-top: 2rem;">
-      <h2>2. How We Use Data</h2>
-      <p>Your task data is used solely to provide the task management features of this application. Since the data remains on your device, we have no access to your study schedules, priorities, or completion status.</p>
-    </section>
+      <section style="margin-top: 2rem;">
+        <h2><i class="ri-shield-check-line"></i> 2. How We Use Data</h2>
+        <p>Your gamification data is used solely to provide the productivity features of this application. Since the data remains on your device, we have no access to your study schedules or completion status.</p>
+      </section>
 
-    <section style="margin-top: 2rem;">
-      <h2>3. Third-Party Services</h2>
-      <p>We use <strong>canvas-confetti</strong> for celebratory animations, which is loaded via a CDN. No tracking scripts or cookies are used by this application.</p>
-    </section>
+      <section style="margin-top: 2rem;">
+        <h2><i class="ri-pie-chart-2-line"></i> 3. Third-Party Services</h2>
+        <p>We use <strong>Chart.js</strong> for analytics visualizations and <strong>jsPDF</strong> for exporting your data locally. These libraries operate entirely on the client-side. No tracking scripts or cookies are used.</p>
+      </section>
 
-    <section style="margin-top: 2rem;">
-      <h2>4. Data Security</h2>
-      <p>Your data is as secure as your browser and device. Clearing your browser cache or site data will remove your tasks permanently.</p>
-    </section>
+      <section style="margin-top: 2rem;">
+        <h2><i class="ri-lock-2-line"></i> 4. Data Security</h2>
+        <p>Your data is as secure as your browser and device. Clearing your browser cache or site data will remove your progress permanently unless you use the Export feature.</p>
+      </section>
+    </div>
   </main>
 
-  <footer class="site-footer">
-    <p>&copy; 2026 Study Task Tracker. Your data, your device.</p>
+  <footer class="site-footer" style="text-align: center; margin-top: 3rem; opacity: 0.7;">
+    <p>&copy; 2026 TaskQuest. Level Up Productivity.</p>
   </footer>
 
-  <script>
-    const themeSwitcher = document.getElementById("themeSwitcher");
-    const savedTheme = localStorage.getItem("quests_theme") || "cosmic";
-    document.body.setAttribute("data-theme", savedTheme);
-    if (savedTheme === "sunset") document.body.classList.add("light");
-    themeSwitcher.value = savedTheme;
-
-    themeSwitcher.addEventListener("change", (e) => {
-      const theme = e.target.value;
-      document.body.setAttribute("data-theme", theme);
-      if (theme === "sunset") document.body.classList.add("light"); else document.body.classList.remove("light");
-      localStorage.setItem("quests_theme", theme);
-    });
-  </script>
 </body>
 </html>

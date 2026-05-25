@@ -1,0 +1,44 @@
+# ===========================
+# Editor & IDE Files
+# ===========================
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+
+# JetBrains
+.idea/
+*.iml
+*.iws
+
+# Vim / Neovim
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# ===========================
+# Build & Dependency Output
+# ===========================
+node_modules/
+dist/
+build/
+out/
+.cache/
+npm-debug.log*
+
+# ===========================
+# Export / Analytics Temp Files
+# ===========================
+*.csv
+*.pdf
+*.png
+!favicon.png
