@@ -30,6 +30,7 @@ function getMyStats() {
     };
 }
 
+
 // Helper to fetch simulated "Global" stats for a specific user name
 function getGlobalStatsFor(name) {
     const globalLeaderboard = JSON.parse(localStorage.getItem('taskquest_leaderboard_v1') || '[]');
@@ -40,9 +41,20 @@ function getGlobalStatsFor(name) {
     if (index !== -1) {
         const p = sorted[index];
         return { ...p, rank: index + 1, level: Math.floor(p.score / 300) + 1 };
+
+// Load collaborative data on init
+function loadCollaborativeData() {
+  try {
+    const saved = window.TaskQuestStorage
+      ? window.TaskQuestStorage.getCollab()
+      : JSON.parse(localStorage.getItem('taskquest_v1.collab'));
+    if (saved) {
+      collaborativeState = saved;
+
     }
     return null;
 }
+
 
 // 1. Initialization
 document.addEventListener('DOMContentLoaded', () => {
@@ -61,6 +73,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Save collaborative data
+function saveCollaborativeData() {
+  try {
+    if (window.TaskQuestStorage) {
+      window.TaskQuestStorage.setCollab(collaborativeState);
+    } else {
+      localStorage.setItem('taskquest_v1.collab', JSON.stringify(collaborativeState));
+    }
+  } catch (e) {
+    console.error('Failed to save collaborative data:', e);
+  }
+}
+
+
 // 2. Messaging Logic
 chatForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -72,6 +98,7 @@ chatForm.addEventListener('submit', (e) => {
 document.querySelectorAll('.action-pill').forEach(btn => {
     btn.addEventListener('click', () => sendMessage(btn.dataset.msg));
 });
+
 
 function sendMessage(text) {
     const messageObj = {
@@ -100,6 +127,115 @@ function sendMessage(text) {
 studyChannel.onmessage = (event) => {
     const data = event.data;
 
+function renderFriendsList() {
+  const grid = document.getElementById('friendsListGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  if (collaborativeState.friends.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 40px;">
+        <i class="ri-user-add-line" style="font-size: 2.5rem; opacity: 0.3;"></i>
+        <h3>No study friends yet</h3>
+        <p>Add friends to study together and compete in challenges!</p>
+      </div>
+    `;
+    return;
+  }
+
+  collaborativeState.friends.forEach(friend => {
+    const card = document.createElement('div');
+    card.className = 'friend-card glass';
+    const statusColor = friend.status === 'online' ? '#10b981' : '#9ca3af';
+    const initial = escapeHtml(friend.name.charAt(0).toUpperCase());
+    card.innerHTML = `
+      <div class="friend-card-header">
+        <div class="friend-info">
+          <div class="friend-avatar">${initial}</div>
+          <div>
+            <h4>${escapeHtml(friend.name)}</h4>
+            <p class="friend-status"><span class="status-dot" style="background: ${statusColor};"></span> ${escapeHtml(friend.status)}</p>
+          </div>
+        </div>
+        <button type="button" class="icon-btn delete-btn" data-action="remove-friend" data-friend-id="${friend.id}" aria-label="Remove friend"><i class="ri-close-line"></i></button>
+      </div>
+      <div class="friend-stats">
+        <div class="stat">
+          <i class="ri-trophy-line"></i>
+          <span>${friend.score} pts</span>
+        </div>
+        <div class="stat">
+          <i class="ri-checkbox-circle-fill"></i>
+          <span>${friend.tasksCompleted} tasks</span>
+        </div>
+        <div class="stat">
+          <i class="ri-timer-line"></i>
+          <span>${friend.studyMinutes}m</span>
+        </div>
+      </div>
+      <button type="button" class="view-btn primary" style="width: 100%; margin-top: 10px;" data-action="study-friend" data-friend-id="${friend.id}">
+        <i class="ri-send-plane-line"></i> Study Together
+      </button>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ==========================================================================
+// COLLABORATIVE STUDY SESSION FUNCTIONS
+// ==========================================================================
+
+function startCollabSession() {
+  if (collaborativeState.friends.length === 0) {
+    announce('Add at least one friend first.');
+    showTaskPopup('Add a friend to study together!');
+    return;
+  }
+
+  const sessionModal = document.createElement('div');
+  sessionModal.className = 'modal-overlay';
+  const content = document.createElement('div');
+  content.className = 'modal-content';
+  content.style.maxWidth = '400px';
+
+  const title = document.createElement('h3');
+  title.textContent = 'Start Collaborative Study Session';
+  content.appendChild(title);
+
+  const hint = document.createElement('p');
+  hint.style.margin = '15px 0';
+  hint.style.color = 'var(--text-light)';
+  hint.textContent = 'Choose a study friend to partner with';
+  content.appendChild(hint);
+
+  const list = document.createElement('div');
+  list.style.cssText = 'display: grid; gap: 10px; max-height: 300px; overflow-y: auto;';
+
+  collaborativeState.friends.forEach(f => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'view-btn';
+    btn.style.cssText = 'text-align: left; padding: 12px;';
+    btn.innerHTML = `<i class="ri-user-fill"></i> ${escapeHtml(f.name)} <span style="float: right; font-size: 12px; opacity: 0.7;">${f.score} pts</span>`;
+    btn.addEventListener('click', () => selectSessionPartner(f.id, f.name));
+    list.appendChild(btn);
+  });
+  content.appendChild(list);
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'view-btn';
+  cancelBtn.style.cssText = 'width: 100%; margin-top: 15px;';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', () => sessionModal.remove());
+  content.appendChild(cancelBtn);
+
+  sessionModal.appendChild(content);
+  document.body.appendChild(sessionModal);
+  sessionModal.addEventListener('click', (e) => {
+    if (e.target === sessionModal) sessionModal.remove();
+  });
+}
     if (data.type === 'chat') {
         appendMessage(data, false);
         playNotifySound();
@@ -161,6 +297,7 @@ function updatePeerPresence(data) {
     updateLeaderboard();
 }
 
+
 function renderOnlineScholars() {
     onlineList.innerHTML = '';
     const peerIds = Object.keys(activePeers);
@@ -169,6 +306,55 @@ function renderOnlineScholars() {
         onlineList.innerHTML = '<div class="empty-state-mini">No other sessions active</div>';
         return;
     }
+
+function renderChallenges() {
+  const grid = document.getElementById('challengesGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  if (collaborativeState.challenges.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 40px;">
+        <i class="ri-trophy-line" style="font-size: 2.5rem; opacity: 0.3;"></i>
+        <h3>No challenges yet</h3>
+        <p>Create one to compete with your study friends!</p>
+      </div>
+    `;
+    return;
+  }
+
+  collaborativeState.challenges.forEach(challenge => {
+    const isJoined = collaborativeState.joinedChallenges.includes(challenge.id);
+    const daysLeft = Math.ceil((challenge.endDate - Date.now()) / 86400000);
+    const myParticipant = challenge.participants.find(p => p.id === 'me');
+
+    const card = document.createElement('div');
+    card.className = 'challenge-card glass';
+    card.innerHTML = `
+      <div class="challenge-header">
+        <div>
+          <h4>${escapeHtml(challenge.title)}</h4>
+          <p class="muted">Type: <strong>${challenge.type === 'tasks' ? 'Most Tasks' : challenge.type === 'study' ? 'Most Study Time' : challenge.type === 'score' ? 'Highest Score' : 'Longest Streak'}</strong> • ${daysLeft} days left</p>
+        </div>
+        ${isJoined ? `<button type="button" class="view-btn danger" data-action="leave-challenge" data-challenge-id="${challenge.id}">Leave</button>` : `<button type="button" class="view-btn primary" data-action="join-challenge" data-challenge-id="${challenge.id}">Join</button>`}
+      </div>
+      <div class="challenge-participants">
+        <h5>Leaderboard (${challenge.participants.length} participant${challenge.participants.length !== 1 ? 's' : ''})</h5>
+        <div class="participants-list">
+          ${challenge.participants.sort((a, b) => b.score - a.score).slice(0, 3).map((p, idx) => `
+            <div class="participant-item" ${p.id === 'me' ? 'style="background: rgba(168, 85, 247, 0.1); border-left: 3px solid var(--primary);"' : ''}>
+              <span class="rank">#${idx + 1}</span>
+              <span class="name">${escapeHtml(p.name)}</span>
+              <span class="score">${p.score}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
 
     peerIds.forEach(id => {
         const peer = activePeers[id];
@@ -194,12 +380,62 @@ function updateLeaderboard() {
     const board = document.getElementById('collabLeaderboard');
     if (!board) return;
 
+
     const myStats = getMyStats();
     
     // Build base list with "You" and active peers
     let contestants = [
         { name: myProfile.name + " (You)", xp: myStats.xp, level: myStats.level, streak: myStats.streak, isMe: true }
     ];
+
+function setupCollabDelegation() {
+  const friendsGrid = document.getElementById('friendsListGrid');
+  if (friendsGrid && !friendsGrid.dataset.delegationBound) {
+    friendsGrid.dataset.delegationBound = '1';
+    friendsGrid.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn || !friendsGrid.contains(btn)) return;
+      const friendId = Number(btn.dataset.friendId);
+      const friend = collaborativeState.friends.find(f => f.id === friendId);
+      if (!friend) return;
+      if (btn.dataset.action === 'remove-friend') removeFriend(friendId);
+      else if (btn.dataset.action === 'study-friend') inviteFriendToSession(friend.id, friend.name);
+    });
+  }
+
+  const challengesGrid = document.getElementById('challengesGrid');
+  if (challengesGrid && !challengesGrid.dataset.delegationBound) {
+    challengesGrid.dataset.delegationBound = '1';
+    challengesGrid.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn || !challengesGrid.contains(btn)) return;
+      const challengeId = Number(btn.dataset.challengeId);
+      if (btn.dataset.action === 'join-challenge') joinChallenge(challengeId);
+      else if (btn.dataset.action === 'leave-challenge') leaveChallenge(challengeId);
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadCollaborativeData();
+  setupCollabDelegation();
+
+  // Friend buttons
+  const addFriendBtn = document.getElementById('addFriendBtn');
+  const confirmAddFriendBtn = document.getElementById('confirmAddFriendBtn');
+  const cancelAddFriendBtn = document.getElementById('cancelAddFriendBtn');
+  const friendNameInput = document.getElementById('friendNameInput');
+  const addFriendForm = document.getElementById('addFriendForm');
+
+  if (addFriendBtn) {
+    addFriendBtn.addEventListener('click', () => {
+      addFriendForm.style.display = addFriendForm.style.display === 'block' ? 'none' : 'block';
+      if (addFriendForm.style.display === 'block') {
+        friendNameInput.focus();
+      }
+    });
+  }
+
 
     // Add Active Scholars (currently online tabs)
     Object.values(activePeers).forEach(p => {

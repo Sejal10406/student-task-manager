@@ -852,6 +852,7 @@ body::after{
 </style>
 </head>
 <body>
+<main>
 
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toastContainer"></div>
@@ -1122,12 +1123,14 @@ body::after{
   <i class="ri-arrow-up-s-line"></i>
 </button>
 
+<script src="storage.js"></script>
 <script>
 /* ══════════════════════════════════════════════════════════
    CONSTANTS & STATE
 ══════════════════════════════════════════════════════════ */
-const STORAGE_KEY = 'tq_reflection_draft';
-const VAULT_KEY   = 'tq_reflection_vault';
+// Use unified storage keys when available, fall back to legacy keys
+const STORAGE_KEY = window.TaskQuestStorage ? window.TaskQuestStorage.KEYS.REFLECTION_DRAFT : 'tq_reflection_draft';
+const VAULT_KEY   = window.TaskQuestStorage ? window.TaskQuestStorage.KEYS.REFLECTION_VAULT  : 'tq_reflection_vault';
 
 const PROMPTS = [
   { icon:'ri-trophy-line',   pane:'ach', text:'What was my single biggest achievement today?' },

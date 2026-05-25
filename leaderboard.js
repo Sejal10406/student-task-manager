@@ -1,10 +1,13 @@
+"use strict";
 (function() {
-  const STORAGE_KEY = "taskquest_leaderboard_v1";
-  const PROFILE_KEY = "quests_profile";
-  const COINS_KEY = "coins";
-  const TASKS_KEY = "quests";
-  const STREAK_KEY = "streak";
-  const XP_KEY = "xp";
+  // Use unified storage keys when available, fall back to legacy keys
+  const _S = window.TaskQuestStorage;
+  const STORAGE_KEY = _S ? _S.KEYS.LEADERBOARD    : "taskquest_leaderboard_v1";
+  const PROFILE_KEY = _S ? _S.KEYS.PROFILE         : "quests_profile";
+  const COINS_KEY   = _S ? _S.KEYS.COINS            : "coins";
+  const TASKS_KEY   = _S ? _S.KEYS.TASKS            : "quests";
+  const STREAK_KEY  = _S ? _S.KEYS.STREAK           : "streak";
+  const XP_KEY      = _S ? _S.KEYS.XP               : "xp";
   const REFRESH_INTERVAL = 900;
   const currentTimestamp = () => new Date().toISOString();
 

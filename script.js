@@ -1,3 +1,4 @@
+
 // Core Elements
 const taskInput = document.getElementById("taskInput");
 const addTaskBtn = document.getElementById("addTaskBtn");
@@ -3752,1024 +3753,251 @@ if (addExamBtn) {
   });
 }
 
-function deleteExam(id) {
-  exams = exams.filter(e => e.id !== id);
-  saveData();
-  renderExams();
-}
-
-function updateExamsCountdown() {
-  const cards = examsGrid.querySelectorAll(".exam-card");
-  const now = Date.now();
-
-  cards.forEach(card => {
-    const examId = parseInt(card.dataset.id);
-    const exam = exams.find(e => e.id === examId);
-    if (!exam) return;
-
-    const timeDiff = exam.date - now;
-    
-    const dEl = card.querySelector(".cd-d");
-    const hEl = card.querySelector(".cd-h");
-    const mEl = card.querySelector(".cd-m");
-    const sEl = card.querySelector(".cd-s");
-
-    if (timeDiff <= 0) {
-      dEl.textContent = "00";
-      hEl.textContent = "00";
-      mEl.textContent = "00";
-      sEl.textContent = "00";
-      card.className = "exam-card urgency-red"; // Completed or missed
-      return;
-    }
-
-    // Time calculations
-    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((timeDiff / (1000 * 60 * 60)) % 24);
-    const minutes = Math.floor((timeDiff / 1000 / 60) % 60);
-    const seconds = Math.floor((timeDiff / 1000) % 60);
-
-    dEl.textContent = String(days).padStart(2, "0");
-    hEl.textContent = String(hours).padStart(2, "0");
-    mEl.textContent = String(minutes).padStart(2, "0");
-    sEl.textContent = String(seconds).padStart(2, "0");
-
-    // Dynamic Urgency Coloring & Progress Bar
-    const totalDuration = exam.date - exam.createdAt;
-    let progressPercent = totalDuration > 0 ? ((now - exam.createdAt) / totalDuration) * 100 : 100;
-    progressPercent = Math.max(0, Math.min(100, progressPercent)); // clamp 0-100
-
-    const progressFill = card.querySelector(".exam-progress-fill");
-    if (progressFill) progressFill.style.width = `${progressPercent}%`;
-
-    let urgencyClass = "urgency-green";
-    if (timeDiff < 24 * 60 * 60 * 1000) {
-      urgencyClass = "urgency-red";
-      // Trigger notification once if < 24h
-      if (!notifiedExams.has(exam.id)) {
-        sendNotification("Urgent Exam!", `${exam.title} is in less than 24 hours!`);
-
-        addNotification({ type: 'exam', title: `Exam soon: ${exam.title}`, body: `${exam.subject} in <24 hours`, ref: `exam-urgent-${exam.id}` });
-
-        notifiedExams.add(exam.id);
-      }
-    } else if (timeDiff < 3 * 24 * 60 * 60 * 1000) {
-      urgencyClass = "urgency-orange";
-    }
-
-    // Update class efficiently
-    card.className = `exam-card ${urgencyClass}`;
-  });
-}
-
-function renderExams() {
-  if (!examsGrid) return;
-
-  // Clear existing interval if any
-  if (examTimerInterval) clearInterval(examTimerInterval);
-
-  // Clear grid (keep empty state)
-  const existingCards = examsGrid.querySelectorAll(".exam-card");
-  existingCards.forEach(c => c.remove());
-
-  // Show/hide empty state
-  if (exams.length === 0) {
-    if (examEmptyState) examEmptyState.style.display = "block";
-    return;
-  }
-  
-  if (examEmptyState) examEmptyState.style.display = "none";
-
-  // Render cards
-  exams.forEach(exam => {
-    const card = document.createElement("div");
-    card.className = "exam-card";
-    card.dataset.id = exam.id;
-    
-    // Format date string for display (e.g., Nov 24, 2026 - 10:00 AM)
-    const dateObj = new Date(exam.date);
-    const dateOptions = { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' };
-    const dateStr = dateObj.toLocaleDateString(undefined, dateOptions);
-
-    card.innerHTML = `
-      <div class="exam-header">
-        <div class="exam-info">
-          <h4>${escapeHtml(exam.title)}</h4>
-          <p><i class="ri-book-read-line"></i> ${escapeHtml(exam.subject)}</p>
-          <p style="margin-top: 2px;"><i class="ri-calendar-line"></i> ${dateStr}</p>
-        </div>
-        <button class="exam-delete-btn" aria-label="Delete Exam" onclick="deleteExam(${exam.id})">
-          <i class="ri-delete-bin-line"></i>
-        </button>
-      </div>
-
-      <div class="exam-countdown-display">
-        <div class="cd-box"><span class="cd-num cd-d">00</span><span class="cd-lbl">Days</span></div>
-        <div class="cd-box"><span class="cd-num cd-h">00</span><span class="cd-lbl">Hours</span></div>
-        <div class="cd-box"><span class="cd-num cd-m">00</span><span class="cd-lbl">Mins</span></div>
-        <div class="cd-box"><span class="cd-num cd-s">00</span><span class="cd-lbl">Secs</span></div>
-      </div>
-
-      <div class="exam-progress-wrap">
-        <div class="exam-progress-bar">
-          <div class="exam-progress-fill" style="width: 0%;"></div>
-        </div>
-      </div>
-      
-      ${exam.notes ? `<div class="exam-footer-notes"><i class="ri-information-line"></i> ${escapeHtml(exam.notes)}</div>` : ''}
-    `;
-    examsGrid.appendChild(card);
-  });
-
-}
+// --- State Management ---
+// Migrate any legacy keys to the unified taskquest_v1 namespace on first load
+if (window.TaskQuestStorage) { window.TaskQuestStorage.migrate(); }
+let tasks = (window.TaskQuestStorage ? window.TaskQuestStorage.getTasks() : JSON.parse(localStorage.getItem("tasks"))) || [];
 
 
-// Call renderExams once data is loaded (add to window.onload block)
-window.addEventListener('load', () => {
-  renderExams();
-  renderVault();
-  renderProjects();
-  renderLabRecords && renderLabRecords();
-  // generate recurring tasks on load
-  generateRecurringTasks();
-  // render timetable
-  renderTimetable();
-});
+// --- Selectors ---
+const taskForm = document.getElementById("taskForm");
+const taskInput = document.getElementById("taskInput");
+const taskList = document.getElementById("taskList");
+const taskStats = document.getElementById("taskStats");
+const errorMsg = document.getElementById("errorMsg");
+const celebration = document.getElementById("celebration");
+const themeSwitcher = document.getElementById("themeSwitcher");
 
-function getSubjectColorSafe(subject) {
-  if (typeof getSubjectColor === 'function') return getSubjectColor(subject);
-  // fallback deterministic color map
-  const colors = ['#ef4444','#f97316','#f59e0b','#10b981','#06b6d4','#3b82f6','#8b5cf6'];
-  let h = 0; for (let i=0;i<subject.length;i++) h = (h<<5)-h+subject.charCodeAt(i);
-  return colors[Math.abs(h) % colors.length];
-}
-
-function renderTimetable() {
-  const container = document.getElementById('timetableContainer');
-  if (!container) return;
-  const days = ['mon','tue','wed','thu','fri','sat','sun'];
-  container.innerHTML = '';
-  days.forEach(day => {
-    const col = document.createElement('div'); col.className = 'tt-column';
-    const title = document.createElement('h4'); title.textContent = day.toUpperCase(); col.appendChild(title);
-    const items = timetableEntries.filter(e => e.day === day).sort((a,b)=>a.startTime.localeCompare(b.startTime));
-    if (items.length === 0) {
-      const empty = document.createElement('div'); empty.style.opacity = '0.6'; empty.style.fontSize='12px'; empty.textContent = 'No classes'; col.appendChild(empty);
-    } else {
-      items.forEach(it => {
-        const el = document.createElement('div'); el.className = 'tt-item';
-        const color = getSubjectColorSafe(it.subject || '');
-        el.style.background = color;
-        el.style.color = getContrastColor ? getContrastColor(color) : '#fff';
-        const left = document.createElement('div'); left.style.display='flex'; left.style.flexDirection='column';
-        const lbl = document.createElement('div'); lbl.className='tt-label'; lbl.textContent = it.subject || 'Untitled'; left.appendChild(lbl);
-        const time = document.createElement('small'); time.textContent = `${it.startTime || ''} - ${it.endTime || ''}`; left.appendChild(time);
-        const actions = document.createElement('div'); actions.className='tt-actions';
-        const editBtn = document.createElement('button'); editBtn.className='tt-btn'; editBtn.title='Edit'; editBtn.innerHTML='✏️';
-        const delBtn = document.createElement('button'); delBtn.className='tt-btn'; delBtn.title='Delete'; delBtn.innerHTML='🗑️';
-        actions.appendChild(editBtn); actions.appendChild(delBtn);
-        el.appendChild(left); el.appendChild(actions);
-        // edit handler
-        editBtn.addEventListener('click', (e)=>{
-          e.stopPropagation();
-          const newSub = prompt('Subject', it.subject) || it.subject;
-          const newStart = prompt('Start time (HH:MM)', it.startTime) || it.startTime;
-          const newEnd = prompt('End time (HH:MM)', it.endTime) || it.endTime;
-          it.subject = newSub; it.startTime = newStart; it.endTime = newEnd;
-          saveData(); renderTimetable();
-        });
-        delBtn.addEventListener('click',(e)=>{ e.stopPropagation(); if (confirm('Delete this entry?')) { timetableEntries = timetableEntries.filter(x=>x.id!==it.id); saveData(); renderTimetable(); } });
-        col.appendChild(el);
-      });
-    }
-    container.appendChild(col);
-  });
-}
-
-function addTimetableEntry() {
-  const subj = (document.getElementById('ttSubjectInput')||{}).value.trim();
-  const day = (document.getElementById('ttDaySelect')||{}).value;
-  const start = (document.getElementById('ttStartInput')||{}).value;
-  const end = (document.getElementById('ttEndInput')||{}).value;
-  if (!subj || !day) return alert('Please provide a subject and day.');
-  const entry = { id: Date.now()+Math.floor(Math.random()*999), subject: subj, day, startTime: start, endTime: end };
-  timetableEntries.push(entry); saveData(); renderTimetable();
-  if (window && window.showToast) window.showToast('Timetable entry added', 'success');
-  // clear inputs
-  (document.getElementById('ttSubjectInput')||{}).value='';
-}
-
-const ttAddBtnEl = document.getElementById('ttAddBtn');
-if (ttAddBtnEl) ttAddBtnEl.addEventListener('click', addTimetableEntry);
-
-function computeNextDate(dateStr, recurrence) {
-  const d = dateStr ? new Date(dateStr) : new Date();
-  if (recurrence === 'daily') {
-    d.setDate(d.getDate() + 1);
-    return d;
-  }
-  if (recurrence === 'weekly') {
-    d.setDate(d.getDate() + 7);
-    return d;
-  }
-  if (recurrence === 'monthly') {
-    const m = d.getMonth();
-    d.setMonth(m + 1);
-    return d;
-  }
-  return null;
-}
-
-function generateRecurringTasks() {
-  loadData(); // ensure templates are loaded
-  const now = new Date();
-  // for each template, find latest occurrence among tasks
-  recurringTemplates.forEach(tpl => {
-    if (!tpl.active) return;
-    // find existing occurrences
-    const occurrences = tasks.filter(tsk => tsk.masterId === tpl.id).map(x => x.occurrenceDate).filter(Boolean).sort();
-    let last = occurrences.length ? new Date(occurrences[occurrences.length-1]) : null;
-    if (!last) last = tpl.startDate ? new Date(tpl.startDate) : new Date();
-
-    // generate next occurrence if within next 30 days and not already present
-    const next = computeNextDate(last.toISOString(), tpl.recurrence);
-    if (!next) return;
-    const limit = new Date(); limit.setDate(limit.getDate() + 30);
-    if (next <= limit) {
-      const nextIso = next.toISOString().split('T')[0];
-      const exists = tasks.some(tt => tt.masterId === tpl.id && tt.occurrenceDate && tt.occurrenceDate.startsWith(nextIso));
-      if (!exists) {
-        // create instance
-        const inst = {
-          id: Date.now() + Math.floor(Math.random()*1000),
-          text: tpl.text,
-          category: tpl.category,
-          priority: tpl.priority,
-          completed: false,
-          createdAt: getFormattedDateTime(new Date()),
-          deadline: next.toISOString(),
-          penaltyApplied: false,
-          tags: [],
-          masterId: tpl.id,
-          occurrenceDate: next.toISOString(),
-          recurrence: tpl.recurrence
-        };
-        tasks.push(inst);
-      }
-    }
-  });
-  saveData();
+// --- Initialization ---
+"use strict";
+document.addEventListener("DOMContentLoaded", () => {
   renderTasks();
-}
-
-// ==========================
-// Lab Records (minimal)
-// ==========================
-let labRecords = [];
-
-function loadLabRecords() {
-  try { labRecords = JSON.parse(localStorage.getItem('lab_records') || '[]'); } catch(e){ labRecords = []; }
-}
-
-function saveLabRecords() {
-  localStorage.setItem('lab_records', JSON.stringify(labRecords));
-}
-
-function renderLabRecords() {
-  loadLabRecords();
-  const list = document.getElementById('labRecordsList');
-  const filter = document.getElementById('labSubjectFilter');
-  if (!list || !filter) return;
-
-  // populate filter options from current records
-  const subjects = Array.from(new Set(labRecords.map(r => r.subject).filter(Boolean)));
-  filter.innerHTML = '<option value="All">All</option>' + subjects.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
-
-  const selected = filter.value || 'All';
-  const toRender = labRecords.filter(r => selected === 'All' || r.subject === selected).sort((a,b)=> a.deadline ? (new Date(a.deadline)-new Date(b.deadline)) : 0);
-
-  list.innerHTML = '';
-  if (labRecords.length === 0) {
-    list.innerHTML = `<div style="color:var(--text-light);">No lab records yet. Add experiments above.</div>`;
-  }
-
-  labRecords.forEach(rec => {
-    if (selected !== 'All' && rec.subject !== selected) return;
-    const el = document.createElement('div');
-    el.className = 'lab-record-item';
-    const subjectColor = getSubjectColor(rec.subject);
-    const subjectText = getContrastColor(subjectColor);
-
-    const left = document.createElement('div');
-    left.className = 'lab-record-left';
-    left.innerHTML = `
-      <div style="display:flex;flex-direction:column;">
-        <strong style="font-size:14px;">${escapeHtml(rec.title)}</strong>
-        <div class="lab-record-meta">${escapeHtml(rec.subject || '—')} • ${rec.deadline ? new Date(rec.deadline).toLocaleString() : 'No deadline'}</div>
-      </div>
-    `;
-
-    const actions = document.createElement('div');
-    actions.className = 'lab-record-actions';
-    const statusBtn = document.createElement('button');
-    statusBtn.className = 'view-btn small';
-    statusBtn.textContent = rec.submitted ? 'Submitted' : 'Pending';
-    statusBtn.addEventListener('click', () => {
-      toggleLabSubmission(rec.id);
+  initTheme();
+  const filterOverdueBtn = document.getElementById('filterOverdueBtn');
+  if (filterOverdueBtn){
+    filterOverdueBtn.addEventListener('click', ()=>{
+      const isActive = filterOverdueBtn.classList.contains('active');
+      if (isActive){
+        filterOverdueBtn.classList.remove('active'); activeFilter = 'All';
+      } else {
+        // deactivate other filters briefly if needed
+        document.querySelectorAll('.filter-btn.active')?.forEach(b=>b.classList.remove('active'));
+        filterOverdueBtn.classList.add('active'); activeFilter = 'Overdue';
+      }
+      renderTasks();
     });
-
-    const del = document.createElement('button');
-    del.className = 'view-btn small';
-    del.textContent = 'Delete';
-    del.addEventListener('click', () => { deleteLabRecord(rec.id); });
-
-    actions.appendChild(statusBtn);
-    actions.appendChild(del);
-
-    el.appendChild(left);
-    el.appendChild(actions);
-
-    list.appendChild(el);
-  });
-
-  // update progress
-  const total = labRecords.length;
-  const done = labRecords.filter(r=>r.submitted).length;
-  const pct = total === 0 ? 0 : Math.round((done/total)*100);
-  const fill = document.getElementById('labProgressFill');
-  if (fill) fill.style.width = pct + '%';
-}
-
-function addLabRecord() {
-  const title = document.getElementById('labTitleInput').value.trim();
-  const subject = document.getElementById('labSubjectInput').value.trim() || 'General';
-  const deadline = document.getElementById('labDeadlineInput').value || null;
-  if (!title) { showTaskPopup('Please enter an experiment title'); return; }
-
-  const rec = { id: Date.now(), title, subject, deadline, submitted: false, createdAt: Date.now() };
-  labRecords.push(rec);
-  saveLabRecords();
-  renderLabRecords();
-  document.getElementById('labTitleInput').value = '';
-  document.getElementById('labSubjectInput').value = '';
-  document.getElementById('labDeadlineInput').value = '';
-  showTaskPopup('Lab record added');
-}
-
-function toggleLabSubmission(id) {
-  const rec = labRecords.find(r=>r.id===id);
-  if (!rec) return;
-  rec.submitted = !rec.submitted;
-  if (rec.submitted) rec.submittedAt = Date.now(); else rec.submittedAt = null;
-  saveLabRecords();
-  renderLabRecords();
-  showTaskPopup(rec.submitted ? 'Marked submitted' : 'Marked pending');
-}
-
-function deleteLabRecord(id) {
-  labRecords = labRecords.filter(r=>r.id!==id);
-  saveLabRecords();
-  renderLabRecords();
-  showTaskPopup('Lab record deleted');
-}
-
-// Wire lab controls
-document.addEventListener('DOMContentLoaded', ()=>{
-  loadLabRecords();
-  const addBtn = document.getElementById('labAddBtn');
-  if (addBtn) addBtn.addEventListener('click', (e)=>{ e.preventDefault(); addLabRecord(); });
-  const filter = document.getElementById('labSubjectFilter');
-  if (filter) filter.addEventListener('change', renderLabRecords);
+  }
 });
 
-// ==========================================================================
-// 10. MASTER PROJECTS & SUBTASKS FEATURE
-// ==========================================================================
+// --- Core Functions ---
 
-const addProjectBtn = document.getElementById("addProjectBtn");
-const projectFormBody = document.getElementById("projectFormBody");
-const cancelProjectBtn = document.getElementById("cancelProjectBtn");
-const saveProjectBtn = document.getElementById("saveProjectBtn");
-const newProjectTitleInput = document.getElementById("newProjectTitle");
-const projectsGrid = document.getElementById("projectsGrid");
-
-// Global dragging state
-let draggedSubtask = null;
-let draggedSubtaskParentId = null;
-
-if (addProjectBtn && projectFormBody) {
-  addProjectBtn.addEventListener("click", () => {
-    projectFormBody.style.display = "block";
-    newProjectTitleInput.focus();
-  });
-
-  cancelProjectBtn.addEventListener("click", () => {
-    projectFormBody.style.display = "none";
-    newProjectTitleInput.value = "";
-  });
-
-  saveProjectBtn.addEventListener("click", () => {
-    const title = newProjectTitleInput.value.trim();
-    if (!title) {
-      announce("Please enter a project name.");
-      return;
-    }
-
-    const newProject = {
-      id: Date.now(),
-      title: title,
-      subtasks: []
-    };
-
-    projects.push(newProject);
-    saveData();
-    renderProjects();
-    
-    projectFormBody.style.display = "none";
-    newProjectTitleInput.value = "";
-    announce(`Created project: ${title}`);
-  });
-}
-
-function calculateProjectProgress(subtasks) {
-  if (subtasks.length === 0) return 0;
-  const completed = subtasks.filter(st => st.completed).length;
-  return Math.round((completed / subtasks.length) * 100);
-}
-
-function toggleSubtask(projectId, subtaskId) {
-  const proj = projects.find(p => p.id === projectId);
-  if (!proj) return;
+function addTask() {
+  const text = taskInput.value.trim();
   
-  const st = proj.subtasks.find(s => s.id === subtaskId);
-  if (!st) return;
-
-  st.completed = !st.completed;
-  saveData();
-  renderProjects();
-
-  if (st.completed) {
-    showTaskPopup("Subtask Completed! ✨");
-    announce("Subtask completed.");
-  } else {
-    announce("Subtask unchecked.");
+  if (text === "") {
+    errorMsg.textContent = "Please enter a task.";
+    return;
   }
-}
 
-function addSubtask(projectId) {
-  const inputEl = document.getElementById(`newSubtaskInput-${projectId}`);
-  if (!inputEl) return;
-  
-  const text = inputEl.value.trim();
-  if (!text) return;
+  errorMsg.textContent = "";
 
-  const proj = projects.find(p => p.id === projectId);
-  if (!proj) return;
+  const now = new Date();
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const day = dayNames[now.getDay()];
+  const date = `${now.getDate()} ${now.toLocaleString("default", { month: "long" })} ${now.getFullYear()}`;
+  const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-  proj.subtasks.push({
-    id: Date.now() + Math.random().toString(36).substr(2, 5),
+  const deadlineVal = document.getElementById('deadlineInput')?.value || null;
+  const deadlineIso = deadlineVal ? new Date(deadlineVal).toISOString() : null;
+  const dependsVal = document.getElementById('dependsSelect')?.value || '';
+  const newTask = {
+    id: Date.now(),
     text: text,
-    completed: false
-  });
+    completed: false,
+    timestamp: `(${day}, ${date} at ${time})`,
+    deadline: deadlineIso
+    , dependsOn: dependsVal ? Number(dependsVal) : null
+  };
 
-  saveData();
-  renderProjects();
+  tasks.push(newTask);
+  saveAndRender();
+  taskInput.value = "";
 }
 
-function deleteSubtask(projectId, subtaskId) {
-  const proj = projects.find(p => p.id === projectId);
-  if (!proj) return;
-
-  proj.subtasks = proj.subtasks.filter(s => s.id !== subtaskId);
-  saveData();
-  renderProjects();
+function removeTask(id) {
+  tasks = tasks.filter(task => task.id !== id);
+  saveAndRender();
 }
 
-function deleteProject(projectId) {
-  if (confirm("Are you sure you want to delete this master project?")) {
-    projects = projects.filter(p => p.id !== projectId);
-    saveData();
-    renderProjects();
-  }
-}
-
-// Drag & Drop specific to Subtasks
-function handleSubtaskDragStart(e, projectId, subtaskId) {
-  draggedSubtask = subtaskId;
-  draggedSubtaskParentId = projectId;
-  e.target.classList.add('dragging');
-  // Required for Firefox
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', subtaskId);
-}
-
-function handleSubtaskDragEnd(e) {
-  e.target.classList.remove('dragging');
-  draggedSubtask = null;
-  draggedSubtaskParentId = null;
-  
-  // Clean up any remaining drop indicators if necessary
-  const allContainers = document.querySelectorAll('.subtasks-list');
-  allContainers.forEach(c => c.style.border = "");
-}
-
-function handleSubtaskDragOver(e, projectId) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  
-  // Only allow reordering within the SAME project to prevent bugs
-  if (draggedSubtaskParentId !== projectId) return;
-
-  const container = document.getElementById(`subtaskList-${projectId}`);
-  const draggingItem = document.querySelector('.subtask-item.dragging');
-  if (!container || !draggingItem) return;
-
-  const afterElement = getDragAfterElement(container, e.clientY, '.subtask-item:not(.dragging)');
-  if (afterElement == null) {
-    container.appendChild(draggingItem);
-  } else {
-    container.insertBefore(draggingItem, afterElement);
-  }
-}
-
-function handleSubtaskDrop(e, projectId) {
-  e.preventDefault();
-  if (draggedSubtaskParentId !== projectId) return;
-
-  // Re-calculate the array order based on DOM
-  const container = document.getElementById(`subtaskList-${projectId}`);
-  if (!container) return;
-
-  const proj = projects.find(p => p.id === projectId);
-  if (!proj) return;
-
-  const newOrderIds = Array.from(container.querySelectorAll('.subtask-item')).map(item => item.dataset.subtaskId);
-  
-  // Rebuild the subtasks array based on the new order
-  const newSubtasksArray = [];
-  newOrderIds.forEach(id => {
-    const st = proj.subtasks.find(s => s.id === id);
-    if (st) newSubtasksArray.push(st);
-  });
-
-  proj.subtasks = newSubtasksArray;
-  saveData();
-  // No need to re-render immediately as the DOM is already visually updated, 
-  // but rendering ensures progress bars etc stay perfectly synced.
-  renderProjects();
-}
-
-function renderProjects() {
-  if (!projectsGrid) return;
-  projectsGrid.innerHTML = '';
-
-  if (projects.length === 0) {
-    projectsGrid.innerHTML = `
-      <div style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: 30px;">
-        <i class="ri-rocket-2-line" style="font-size: 3rem; opacity: 0.3;"></i>
-        <p style="margin-top: 10px;">No master projects yet. Break down a big goal today!</p>
-      </div>
-    `;
-    return;
-  }
-
-  projects.forEach(proj => {
-    const progress = calculateProjectProgress(proj.subtasks);
-    
-    const card = document.createElement("div");
-    card.className = "project-card";
-    
-    // Header & Progress
-    let html = `
-      <div class="project-header">
-        <h3>${escapeHtml(proj.title)}</h3>
-        <button class="subtask-delete-btn" style="opacity: 1;" onclick="deleteProject(${proj.id})" aria-label="Delete Project">
-          <i class="ri-delete-bin-line"></i>
-        </button>
-      </div>
-      <div class="project-progress-wrap">
-        <div class="project-progress-text">
-          <span>Progress</span>
-          <span style="font-weight: 600; color: ${progress === 100 ? '#10b981' : 'var(--text)'};">${progress}%</span>
-        </div>
-        <div class="project-progress-bar">
-          <div class="project-progress-fill" style="width: ${progress}%;"></div>
-        </div>
-      </div>
-      <div class="subtasks-list" id="subtaskList-${proj.id}">
-    `;
-
-    // Subtasks Array
-    proj.subtasks.forEach(st => {
-      html += `
-        <div class="subtask-item" data-subtask-id="${st.id}" draggable="true" 
-             ondragstart="handleSubtaskDragStart(event, ${proj.id}, '${st.id}')"
-             ondragend="handleSubtaskDragEnd(event)">
-          <i class="ri-draggable subtask-drag-handle"></i>
-          <input type="checkbox" class="subtask-checkbox" ${st.completed ? 'checked' : ''} onclick="toggleSubtask(${proj.id}, '${st.id}')">
-          <span class="subtask-text">${escapeHtml(st.text)}</span>
-          <button class="subtask-delete-btn" onclick="deleteSubtask(${proj.id}, '${st.id}')">
-            <i class="ri-close-line"></i>
-          </button>
-        </div>
-      `;
-    });
-
-    html += `
-      </div>
-      <div class="add-subtask-form">
-        <input type="text" class="add-subtask-input" id="newSubtaskInput-${proj.id}" placeholder="Add a subtask..." onkeypress="if(event.key === 'Enter') addSubtask(${proj.id})">
-        <button class="add-subtask-btn" onclick="addSubtask(${proj.id})"><i class="ri-add-line"></i></button>
-      </div>
-    `;
-
-    card.innerHTML = html;
-
-    // Attach dragover/drop to the subtask list container dynamically
-    const listContainer = card.querySelector(`#subtaskList-${proj.id}`);
-    if (listContainer) {
-      listContainer.addEventListener('dragover', (e) => handleSubtaskDragOver(e, proj.id));
-      listContainer.addEventListener('drop', (e) => handleSubtaskDrop(e, proj.id));
-    }
-
-    projectsGrid.appendChild(card);
-  });
-}
-
-// ==========================================================================
-// 9. FILES VAULT FEATURE (ATTACHMENTS & STORAGE)
-// ==========================================================================
-
-const vaultDropZone = document.getElementById("vaultDropZone");
-const vaultFileInput = document.getElementById("vaultFileInput");
-const vaultBrowseBtn = document.getElementById("vaultBrowseBtn");
-const vaultFilesGrid = document.getElementById("vaultFilesGrid");
-const vaultEmptyState = document.getElementById("vaultEmptyState");
-const vaultSearch = document.getElementById("vaultSearch");
-const storageFill = document.getElementById("storageFill");
-const storageText = document.getElementById("storageText");
-
-const MAX_FILE_SIZE = 500 * 1024; // 500 KB limit per file due to LocalStorage
-const MAX_STORAGE_QUOTA = 5 * 1024 * 1024; // 5 MB total quota estimate
-
-// Initialize search listener
-if (vaultSearch) {
-  vaultSearch.addEventListener("input", renderVault);
-}
-
-// Clear Vault button binding (added feature)
-const clearVaultBtn = document.getElementById("clearVaultBtn");
-if (clearVaultBtn) {
-  clearVaultBtn.addEventListener("click", clearVault);
-}
-
-// Drag & Drop Handlers
-if (vaultDropZone) {
-  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    vaultDropZone.addEventListener(eventName, preventDefaults, false);
-  });
-
-  function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-
-  ['dragenter', 'dragover'].forEach(eventName => {
-    vaultDropZone.addEventListener(eventName, () => {
-      vaultDropZone.classList.add('drag-active');
-    }, false);
-  });
-
-  ['dragleave', 'drop'].forEach(eventName => {
-    vaultDropZone.addEventListener(eventName, () => {
-      vaultDropZone.classList.remove('drag-active');
-    }, false);
-  });
-
-  vaultDropZone.addEventListener('drop', (e) => {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    handleFiles(files);
-  }, false);
-
-  vaultBrowseBtn.addEventListener('click', () => {
-    vaultFileInput.click();
-  });
-
-  vaultFileInput.addEventListener('change', function() {
-    handleFiles(this.files);
-    // Reset input so same file can be selected again
-    this.value = '';
-  });
-}
-
-function getStorageUsed() {
-  let totalBytes = 0;
-  for (let key in localStorage) {
-    if (localStorage.hasOwnProperty(key)) {
-      totalBytes += ((localStorage[key].length + key.length) * 2); // rough estimate in bytes
-    }
-  }
-  return totalBytes;
-}
-
-function updateStorageUI() {
-  if (!storageFill || !storageText) return;
-  const usedBytes = getStorageUsed();
-  let percent = (usedBytes / MAX_STORAGE_QUOTA) * 100;
-  percent = Math.min(100, percent);
-  
-  storageFill.style.width = `${percent}%`;
-  
-  if (percent > 90) {
-    storageFill.style.background = "#ef4444"; // Red if almost full
-  } else if (percent > 75) {
-    storageFill.style.background = "#f59e0b"; // Orange
-  } else {
-    storageFill.style.background = "linear-gradient(90deg, var(--primary), var(--secondary))";
-  }
-
-  storageText.textContent = `${(usedBytes / 1024).toFixed(1)} KB / ${(MAX_STORAGE_QUOTA / 1024 / 1024).toFixed(1)} MB Used`;
-}
-
-function formatBytes(bytes, decimals = 2) {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
-
-function handleFiles(files) {
-  const filesArray = Array.from(files);
-  let filesAdded = 0;
-
-  filesArray.forEach(file => {
-    if (file.size > MAX_FILE_SIZE) {
-      announce(`File "${file.name}" is too large! Max size is 500KB.`);
-      showTaskPopup(`"${file.name}" too large! 🚨`);
+function toggleTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  // Prevent completing if blocked by an incomplete prerequisite
+  if (!task.completed && task.dependsOn) {
+    const pre = tasks.find(t => t.id === task.dependsOn);
+    if (pre && !pre.completed) {
+      try { window.showToast(`Blocked — complete: ${pre.text}`, 'warning'); } catch(e){}
       return;
     }
+  }
+  tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+  saveAndRender();
+}
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const base64Data = e.target.result;
-      
-      const newFileObj = {
-        id: Date.now() + Math.random().toString(36).substr(2, 5),
-        name: file.name,
-        type: file.type || 'application/octet-stream',
-        size: file.size,
-        data: base64Data,
-        addedAt: Date.now()
-      };
+function editTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  const newText = prompt("Edit task:", task.text);
+  if (newText !== null && newText.trim() !== "") {
+    task.text = newText.trim();
+  }
+  // prompt for dependency selection (minimal UI): list tasks with index
+  const choices = tasks.filter(t => t.id !== id).map((t, i) => `${i+1}. ${t.text} (id:${t.id}${t.completed? ' ✓':''})`);
+  const sel = prompt(`Select prerequisite by number (empty = none):\n${choices.join('\n')}`);
+  if (sel !== null) {
+    const n = Number(sel);
+    if (Number.isFinite(n) && n>=1 && n<=choices.length) {
+      // map back to task id
+      const chosen = tasks.filter(t => t.id !== id)[n-1];
+      task.dependsOn = chosen ? chosen.id : null;
+    } else if (sel.trim() === '') {
+      task.dependsOn = null;
+    }
+  }
+  saveAndRender();
+}
 
-      vaultFiles.push(newFileObj);
-      filesAdded++;
+function saveAndRender() {
+  if (window.TaskQuestStorage) {
+    window.TaskQuestStorage.setTasks(tasks);
+  } else {
+    localStorage.setItem("taskquest_v1.tasks", JSON.stringify(tasks));
+  }
+  renderTasks();
+  // Notify other modules (badges, analytics) that tasks changed
+  try { document.dispatchEvent(new CustomEvent('tasksUpdated')); } catch (e) {}
+}
 
-      // Check if this is the last file to process
-      if (filesAdded === filesArray.length) {
-        saveData();
-        renderVault();
-        announce(`Uploaded ${filesAdded} file(s) to vault.`);
-        showTaskPopup("Files securely vaulted! 🛡️");
-      }
-    };
-    reader.readAsDataURL(file);
+function updateOverdueFlags(){
+  const now = Date.now();
+  tasks = tasks.map(t => {
+    const copy = { ...t };
+    copy.overdue = false;
+    if (!copy.completed && copy.deadline){
+      try{
+        const d = new Date(copy.deadline).getTime();
+        if (!isNaN(d) && d < now) copy.overdue = true;
+      }catch(e){}
+    }
+    return copy;
   });
 }
 
-function deleteVaultFile(id) {
-  vaultFiles = vaultFiles.filter(f => f.id !== id);
-  saveData();
-  renderVault();
-  announce("File deleted from vault.");
+function renderTasks() {
+  taskList.innerHTML = "";
+
+  // refresh depends select for creation
+  populateDependsSelect();
+
+  tasks.forEach(task => {
+    // apply filter
+    if (activeFilter === 'Overdue' && !task.overdue) return;
+
+    const li = document.createElement("li");
+    if (task.completed) li.classList.add("completed");
+    if (task.overdue) li.classList.add('overdue');
+
+    const deadlineLabel = task.deadline ? new Date(task.deadline).toLocaleString() : '';
+    const prereq = task.dependsOn ? tasks.find(t=>t.id===task.dependsOn) : null;
+    const depBadge = prereq ? (prereq.completed ? `<span class="dep-badge ready">Ready</span>` : `<span class="dep-badge blocked">Blocked</span>`) : '';
+    const depInfo = prereq ? `<div class="dep-info">Depends on: ${escapeHtml(prereq.text)}</div>` : '';
+    li.innerHTML = `
+      <input type="checkbox" ${task.completed ? "checked" : ""} onchange="toggleTask(${task.id})">
+      <span>
+        ${task.text}
+        ${depBadge}
+        <small style="display: block; font-size: 0.75rem; opacity: 0.7;">${task.timestamp}</small>
+        ${deadlineLabel ? `<div class="task-deadline ${task.overdue ? 'overdue' : ''}">Due: ${deadlineLabel}</div>` : ''}
+        ${depInfo}
+      </span>
+      <div style="display: flex; gap: 5px;">
+        <button onclick="editTask(${task.id})" style="padding: 0.5rem; font-size: 0.8rem;">Edit</button>
+        <button onclick="removeTask(${task.id})" style="padding: 0.5rem; font-size: 0.8rem; background: var(--error-color, #ef4444);">Remove</button>
+      </div>
+    `;
+
+    taskList.appendChild(li);
+  });
+
+  updateStats();
 }
 
-// New feature: Clear entire vault after confirmation
-function clearVault() {
-  const proceed = confirm("Are you sure you want to clear all files from the vault? This action cannot be undone.");
-  if (!proceed) return;
-  vaultFiles = [];
-  saveData();
-  renderVault();
-  announce("All files removed from vault.");
-  try { showTaskPopup("Vault cleared."); } catch (e) { /* ignore if popup not available */ }
-}
+function updateStats() {
+  const completedCount = tasks.filter(t => t.completed).length;
+  const totalCount = tasks.length;
+  const overdueCount = tasks.filter(t => t.overdue).length;
 
-function downloadVaultFile(id) {
-  const file = vaultFiles.find(f => f.id === id);
-  if (!file) return;
-
-  const a = document.createElement("a");
-  a.href = file.data;
-  a.download = file.name;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-
-function renderVault() {
-  if (!vaultFilesGrid) return;
-  updateStorageUI();
-
-  // Clear existing cards
-  const existingCards = vaultFilesGrid.querySelectorAll(".vault-card");
-  existingCards.forEach(c => c.remove());
-
-  const searchTerm = vaultSearch ? vaultSearch.value.toLowerCase() : "";
-  const filteredFiles = vaultFiles.filter(f => f.name.toLowerCase().includes(searchTerm));
-
-  if (filteredFiles.length === 0) {
-    if (vaultEmptyState) vaultEmptyState.style.display = "block";
-    return;
+  if (taskStats) {
+    taskStats.innerText = `✅ ${completedCount} / ${totalCount} completed`;
   }
-  
-  if (vaultEmptyState) vaultEmptyState.style.display = "none";
 
-  // Sort by newest first
-  filteredFiles.sort((a, b) => b.addedAt - a.addedAt);
+  const overdueEl = document.getElementById('overdueCount');
+  if (overdueEl) {
+    overdueEl.innerText = overdueCount;
+    const sc = overdueEl.closest('.stat-card');
+    if (sc) sc.classList.toggle('overdue', overdueCount>0);
+  }
 
-  filteredFiles.forEach(file => {
-    const card = document.createElement("div");
-    card.className = "vault-card";
-
-    let previewHtml = "";
-    if (file.type.startsWith("image/")) {
-      previewHtml = `<img src="${file.data}" alt="${file.name}" loading="lazy" />`;
-    } else if (file.type === "application/pdf") {
-      previewHtml = `<i class="ri-file-pdf-2-fill" style="color: #ef4444;"></i>`;
-    } else if (file.type.includes("text")) {
-      previewHtml = `<i class="ri-file-text-fill" style="color: var(--secondary);"></i>`;
+  if (celebration) {
+    if (totalCount > 0 && completedCount === totalCount) {
+      celebration.classList.remove("hidden");
+      setTimeout(() => celebration.classList.add("show"), 10);
     } else {
-      previewHtml = `<i class="ri-file-fill" style="color: var(--text-light);"></i>`;
+      celebration.classList.remove("show");
+      celebration.classList.add("hidden");
     }
-
-    card.innerHTML = `
-      <div class="vault-card-preview">
-        ${previewHtml}
-      </div>
-      <div class="vault-card-info">
-        <div class="vault-card-name" title="${file.name}">${file.name}</div>
-        <div class="vault-card-size">${formatBytes(file.size)}</div>
-        <div class="vault-card-actions">
-          <button class="vault-action-btn" onclick="downloadVaultFile('${file.id}')" aria-label="Download ${file.name}">
-            <i class="ri-download-2-line"></i> Download
-          </button>
-          <button class="vault-action-btn delete" onclick="deleteVaultFile('${file.id}')" aria-label="Delete ${file.name}">
-            <i class="ri-delete-bin-line"></i>
-          </button>
-        </div>
-      </div>
-    `;
-
-    vaultFilesGrid.appendChild(card);
-  });
+  }
 }
 
-  // ----------------------
-  // Syllabus Checklist JS
-  // ----------------------
+// --- Theme Management ---
 
-  function getSyllabusItems() {
-    try { return JSON.parse(localStorage.getItem('syllabus_items') || '[]'); }
-    catch (e) { return []; }
-  }
+function initTheme() {
+  const savedTheme = (window.TaskQuestStorage ? window.TaskQuestStorage.getTheme() : localStorage.getItem("taskquest_v1.theme")) || "cosmic";
+  document.documentElement.setAttribute("data-theme", savedTheme);
 
-  function saveSyllabusItems(items) {
-    localStorage.setItem('syllabus_items', JSON.stringify(items));
-  }
-
-  function renderSyllabus() {
-    const list = document.getElementById('syllabusList');
-    const fill = document.getElementById('syllabusProgressFill');
-    const text = document.getElementById('syllabusProgressText');
-    if (!list || !fill || !text) return;
-    const items = getSyllabusItems();
-    list.innerHTML = '';
-    if (!items || items.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'muted';
-      empty.textContent = 'No syllabus items. Add topics to track completion.';
-      list.appendChild(empty);
-      fill.style.width = '0%';
-      text.textContent = '0/0';
-      return;
-    }
-
-    let completed = 0;
-    items.forEach(item => {
-      const li = document.createElement('li');
-      li.dataset.id = item.id;
-
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.checked = !!item.completed;
-      cb.addEventListener('change', () => toggleSyllabusItem(item.id));
-
-      const label = document.createElement('div');
-      label.textContent = item.text;
-      label.style.marginLeft = '8px';
-      if (item.completed) { label.style.textDecoration = 'line-through'; label.style.opacity = '0.7'; completed++; }
-
-      const remove = document.createElement('button');
-      remove.className = 'icon-btn remove-syllabus';
-      remove.innerHTML = '<i class="ri-delete-bin-line"></i>';
-      remove.title = 'Remove';
-      remove.addEventListener('click', () => removeSyllabusItem(item.id));
-
-      li.appendChild(cb);
-      li.appendChild(label);
-      li.appendChild(remove);
-      list.appendChild(li);
-    });
-
-    const pct = items.length ? Math.round((completed / items.length) * 100) : 0;
-    fill.style.width = pct + '%';
-    text.textContent = `${completed}/${items.length}`;
-  }
-
-  function addSyllabusItem(text) {
-    if (!text || !text.trim()) return;
-    const items = getSyllabusItems();
-    items.push({ id: Date.now() + Math.floor(Math.random()*1000), text: text.trim(), completed: false });
-    saveSyllabusItems(items);
-    renderSyllabus();
-    announce('Syllabus item added.');
-  }
-
-  function toggleSyllabusItem(id) {
-    const items = getSyllabusItems();
-    const it = items.find(i => String(i.id) === String(id));
-    if (!it) return;
-    it.completed = !it.completed;
-    saveSyllabusItems(items);
-    renderSyllabus();
-    if (it.completed) { coins += 2; saveData(); }
-  }
-
-  function removeSyllabusItem(id) {
-    let items = getSyllabusItems();
-    items = items.filter(i => String(i.id) !== String(id));
-    saveSyllabusItems(items);
-    renderSyllabus();
-  }
-
-  function completeAllSyllabus() {
-    const items = getSyllabusItems().map(i => ({ ...i, completed: true }));
-    saveSyllabusItems(items);
-    renderSyllabus();
-    announce('All syllabus items marked complete.');
-  }
-
-  function clearSyllabus() {
-    localStorage.removeItem('syllabus_items');
-    renderSyllabus();
-    announce('Syllabus cleared.');
-  }
-
-  function applySyllabusToTasks() {
-    const items = getSyllabusItems();
-    if (!items || items.length === 0) { announce('No syllabus items to import.'); return; }
-    const existing = new Set(tasks.map(t => t.text.toLowerCase()));
-    let created = 0;
-    items.forEach(it => {
-      if (!existing.has(it.text.toLowerCase())) {
-        tasks.push({ id: Date.now() + Math.floor(Math.random()*1000), text: it.text, category: 'Revision', priority: 'Medium', completed: !!it.completed, createdAt: getFormattedDateTime(new Date()), deadline: null, penaltyApplied: false });
-        created++;
+  if (themeSwitcher) {
+    themeSwitcher.value = savedTheme;
+    themeSwitcher.addEventListener("change", (e) => {
+      const selectedTheme = e.target.value;
+      document.documentElement.setAttribute("data-theme", selectedTheme);
+      if (window.TaskQuestStorage) {
+        window.TaskQuestStorage.setTheme(selectedTheme);
+      } else {
+        localStorage.setItem("taskquest_v1.theme", selectedTheme);
       }
     });
-    if (created) { saveData(); renderTasks(); announce(`${created} syllabus items imported as tasks.`); }
-    else announce('No new syllabus items to import.');
   }
+}
 
-  // Init handlers
-  document.addEventListener('DOMContentLoaded', () => {
-    const addBtn = document.getElementById('addSyllabusBtn');
-    const input = document.getElementById('syllabusInput');
-    const clearBtn = document.getElementById('clearSyllabusBtn');
-    const completeAllBtn = document.getElementById('completeAllSyllabus');
-    const applyBtn = document.getElementById('applySyllabusBtn');
-    const panel = document.getElementById('syllabusPanel');
-
-    if (addBtn && input) {
-      addBtn.addEventListener('click', () => { addSyllabusItem(input.value); input.value = ''; });
-      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { addSyllabusItem(input.value); input.value = ''; } });
-    }
-    if (clearBtn) clearBtn.addEventListener('click', clearSyllabus);
-    if (completeAllBtn) completeAllBtn.addEventListener('click', completeAllSyllabus);
-    if (applyBtn) applyBtn.addEventListener('click', applySyllabusToTasks);
-
-    function updateSyllabusVisibility() {
-      const boardActive = document.getElementById('boardViewBtn')?.classList.contains('active');
-      if (panel) panel.style.display = boardActive ? 'block' : 'none';
-    }
-    renderSyllabus();
-    updateSyllabusVisibility();
-
-    const boardBtn = document.getElementById('boardViewBtn');
-    const listBtn = document.getElementById('listViewBtn');
-    if (boardBtn) boardBtn.addEventListener('click', () => setTimeout(updateSyllabusVisibility, 100));
-    if (listBtn) listBtn.addEventListener('click', () => setTimeout(updateSyllabusVisibility, 100));
+function populateDependsSelect(){
+  const sel = document.getElementById('dependsSelect');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">No prerequisite</option>';
+  tasks.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.text = `${t.text}${t.completed? ' ✓':''}`;
+    sel.appendChild(opt);
   });
+  if (prev) sel.value = prev;
+}
+
+function escapeHtml(str){
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+
+
+/* Export JSON Logic */
+document.getElementById('exportJsonBtn')?.addEventListener('click', () => { const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tasks, null, 2)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute('href', dataStr); dlAnchorElem.setAttribute('download', 'taskquest_backup.json'); dlAnchorElem.click(); });

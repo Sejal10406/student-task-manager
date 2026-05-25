@@ -232,6 +232,7 @@ function skipWord(){
   wordIdx++;
   setTimeout(showWord,1200);
 }
+"use strict";
 document.addEventListener('DOMContentLoaded',()=>{
   const wi=document.getElementById('word-input');
   if(wi)wi.addEventListener('keydown',e=>{if(e.key==='Enter')checkWord();});

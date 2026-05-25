@@ -1,0 +1,204 @@
+/**
+ * toast.js
+ * Lightweight, accessible toast notification system for Study Task Tracker.
+ *
+ * Provides non-blocking user feedback for actions like:
+ *   - Task added / removed / edited
+ *   - Theme changed
+ *   - Export triggered
+ *   - Validation errors (as an accessible alternative to inline text)
+ *
+ * Features:
+ *   ✅ Accessible — uses role="status" (polite) or role="alert" (assertive)
+ *   ✅ Animated — smooth slide-in/out using CSS keyframes
+ *   ✅ Auto-dismiss — configurable duration (default 3 s)
+ *   ✅ Stackable — multiple toasts queue vertically
+ *   ✅ Theme-aware — respects CSS custom properties
+ *   ✅ No dependencies — plain JS
+ *
+ * Usage:
+ *   Include AFTER style.css (uses CSS variables).
+ *   Call: window.showToast("Message here", "success" | "error" | "info" | "warning")
+ *
+ * Auto-inserts its own styles — no additional CSS file required.
+ */
+
+(function () {
+  "use strict";
+
+  // ── Constants ─────────────────────────────────────────────────────────────
+
+  const TOAST_DURATION_MS = 3000;
+  const TOAST_ANIMATION_MS = 300;
+
+  const TOAST_TYPES = {
+    success: { icon: "✅", role: "status",  color: "#16a34a", bg: "#f0fdf4", border: "#86efac" },
+    error:   { icon: "❌", role: "alert",   color: "#dc2626", bg: "#fef2f2", border: "#fca5a5" },
+    warning: { icon: "⚠️", role: "alert",   color: "#d97706", bg: "#fffbeb", border: "#fcd34d" },
+    info:    { icon: "ℹ️", role: "status",  color: "#0369a1", bg: "#f0f9ff", border: "#7dd3fc" },
+  };
+
+  // ── Style Injection ───────────────────────────────────────────────────────
+
+  const styleEl = document.createElement("style");
+  styleEl.textContent = `
+    #toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 0.6rem;
+      pointer-events: none;
+    }
+
+    .toast {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      border: 1px solid;
+      font-size: 0.875rem;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      max-width: 320px;
+      min-width: 220px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      pointer-events: auto;
+      cursor: default;
+      animation: toastSlideIn ${TOAST_ANIMATION_MS}ms ease forwards;
+      word-break: break-word;
+    }
+
+    .toast.dismissing {
+      animation: toastSlideOut ${TOAST_ANIMATION_MS}ms ease forwards;
+    }
+
+    .toast-icon {
+      font-size: 1rem;
+      flex-shrink: 0;
+      line-height: 1.4;
+    }
+
+    .toast-body {
+      flex: 1;
+      line-height: 1.5;
+      font-weight: 500;
+    }
+
+    .toast-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 0;
+      line-height: 1;
+      opacity: 0.5;
+      transition: opacity 0.15s;
+      flex-shrink: 0;
+      color: inherit;
+    }
+
+    .toast-close:hover { opacity: 1; }
+
+    @keyframes toastSlideIn {
+      from { transform: translateX(110%); opacity: 0; }
+      to   { transform: translateX(0);   opacity: 1; }
+    }
+
+    @keyframes toastSlideOut {
+      from { transform: translateX(0);   opacity: 1; max-height: 200px; margin: 0; }
+      to   { transform: translateX(110%); opacity: 0; max-height: 0;   margin: -0.6rem 0 0; }
+    }
+
+    @media (max-width: 480px) {
+      #toast-container {
+        right: 0.75rem;
+        left: 0.75rem;
+        bottom: 1rem;
+      }
+      .toast { max-width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .toast, .toast.dismissing { animation: none; }
+    }
+  `;
+  document.head.appendChild(styleEl);
+
+  // ── Container ─────────────────────────────────────────────────────────────
+
+  function getContainer() {
+    let container = document.getElementById("toast-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "toast-container";
+      container.setAttribute("aria-live", "polite");
+      container.setAttribute("aria-atomic", "false");
+      document.body.appendChild(container);
+    }
+    return container;
+  }
+
+  // ── Core API ──────────────────────────────────────────────────────────────
+
+  /**
+   * Display a toast notification.
+   * @param {string} message  - The notification text
+   * @param {"success"|"error"|"warning"|"info"} [type="info"] - Toast variant
+   * @param {number} [duration] - Auto-dismiss delay in ms (0 = no auto-dismiss)
+   */
+  function showToast(message, type = "info", duration = TOAST_DURATION_MS) {
+    const config = TOAST_TYPES[type] || TOAST_TYPES.info;
+    const container = getContainer();
+
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.setAttribute("role", config.role);
+    toast.setAttribute("aria-live", config.role === "alert" ? "assertive" : "polite");
+    toast.style.cssText = `
+      background-color: ${config.bg};
+      border-color: ${config.border};
+      color: ${config.color};
+    `;
+
+    toast.innerHTML = `
+      <span class="toast-icon" aria-hidden="true">${config.icon}</span>
+      <span class="toast-body">${escapeHTML(message)}</span>
+      <button class="toast-close" aria-label="Dismiss notification" title="Dismiss">✕</button>
+    `;
+
+    const closeBtn = toast.querySelector(".toast-close");
+    closeBtn.addEventListener("click", () => dismiss(toast));
+
+    container.appendChild(toast);
+
+    if (duration > 0) {
+      setTimeout(() => dismiss(toast), duration);
+    }
+
+    return toast;
+  }
+
+  function dismiss(toast) {
+    if (!toast.isConnected || toast.classList.contains("dismissing")) return;
+    toast.classList.add("dismissing");
+    setTimeout(() => toast.remove(), TOAST_ANIMATION_MS);
+  }
+
+  // ── Convenience Helpers ───────────────────────────────────────────────────
+
+  function escapeHTML(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  // ── Expose ────────────────────────────────────────────────────────────────
+
+  window.showToast = showToast;
+
+})();

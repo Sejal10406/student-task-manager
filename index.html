@@ -99,7 +99,7 @@
           </div>
         </div>
         <h2 id="profileNameDisplay">Student Hero</h2>
-        <p id="profileClassDisplay">Class 10 • Focus Warrior ⚔️</p>
+        <p id="profileClassDisplay">Class 10 • Focus Warrior <i class="ri-sword-fill"></i></p>
         <button class="view-btn" id="editProfileSidebarBtn" style="margin: 12px auto 0; font-size: 11px; padding: 5px 12px;"><i class="ri-pencil-line"></i> Edit Profile</button>
         
         <div class="xp-container">
@@ -292,11 +292,11 @@
                 <option value="Assignment">📝 Assignment</option>
                 <option value="Revision">📖 Revision</option>
               </select>
-              <select id="prioritySelect" aria-label="Task priority">
-                <option value="High">🔴 High</option>
-                <option value="Medium" selected>🟡 Medium</option>
-                <option value="Low">🟢 Low</option>
-              </select>
+            <select id="mobilePrioritySelect" aria-label="Task priority">
+  <option value="High">🔴 High Priority</option>
+  <option value="Medium" selected>🟡 Medium Priority</option>
+  <option value="Low">🟢 Low Priority</option>
+</select>
               <select id="recurrenceSelect" aria-label="Recurrence">
                 <option value="none">No Repeat</option>
                 <option value="daily">Daily</option>
@@ -1879,15 +1879,10 @@
       </select>
 
       <select id="mobilePrioritySelect" aria-label="Task priority">
-
-        <option value="High">🚩 High Priority</option>
-        <option value="Medium" selected>🔸 Medium Priority</option>
-        <option value="Low">🔹 Low Priority</option>
-
-        <option value="High">🔴 High Priority</option>
-        <option value="Medium" selected>🟡 Medium Priority</option>
-        <option value="Low">🟢 Low Priority</option>
-      </select>
+  <option value="High">🔴 High Priority</option>
+  <option value="Medium" selected>🟡 Medium Priority</option>
+  <option value="Low">🟢 Low Priority</option>
+</select>
 
       <button id="mobileAddTaskBtn">
         <i class="ri-add-line"></i>Create Quest
