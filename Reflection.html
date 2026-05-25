@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TaskQuest — Daily Reflection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css"/>
+<style>
+/* ══════════════════════════════════════════════════════════
+   TOKENS & RESET
+══════════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  /* palette — deep ink + ember gold */
+  --ink-950:#0d0d10;
+  --ink-900:#13131a;
+  --ink-800:#1c1c26;
+  --ink-700:#242432;
+  --ink-600:#2f2f42;
+  --ink-500:#3d3d56;
+  --ink-400:#5a5a7a;
+  --ink-300:#7e7e9e;
+  --ink-200:#ababc4;
+  --ink-100:#d0d0e0;
+  --ink-50:#f0f0f7;
+
+  --ember:#f5a623;
+  --ember-dim:#c4811a;
+  --ember-glow:rgba(245,166,35,0.18);
+  --ember-glow2:rgba(245,166,35,0.06);
+
+  --rose:#f56565;
+  --teal:#38d9a9;
+  --sky:#63b3ed;
+  --violet:#b794f4;
+
+  --success:#38d9a9;
+  --warning:#f5a623;
+  --danger:#f56565;
+
+  /* semantic */
+  --bg:var(--ink-950);
+  --surface:var(--ink-900);
+  --surface2:var(--ink-800);
+  --surface3:var(--ink-700);
+  --border:rgba(255,255,255,0.07);
+  --border-accent:rgba(245,166,35,0.3);
+  --text:var(--ink-50);
+  --text2:var(--ink-200);
+  --text3:var(--ink-300);
+
+  --radius-sm:10px;
+  --radius-md:16px;
+  --radius-lg:22px;
+  --radius-xl:30px;
+
+  --font-display:'Syne',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+
+  --transition:all 0.22s cubic-bezier(0.4,0,0.2,1);
+  --shadow-card:0 4px 32px rgba(0,0,0,0.45),0 1px 0 rgba(255,255,255,0.04) inset;
+  --shadow-glow:0 0 40px rgba(245,166,35,0.12);
+}
+
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:15px;
+  line-height:1.6;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* grain overlay */
+body::before{
+  content:"";
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.6;
+}
+
+/* mesh bg */
+body::after{
+  content:"";
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 60% 40% at 10% 20%, rgba(245,166,35,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 90% 80%, rgba(99,179,237,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 50% 50%, rgba(183,148,244,0.03) 0%, transparent 60%);
+  pointer-events:none;z-index:0;
+}
+
+.page{
+  position:relative;z-index:1;
+  max-width:920px;
+  margin:0 auto;
+  padding:0 24px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   HEADER / NAV
+══════════════════════════════════════════════════════════ */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:28px 0 24px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:0;
+}
+.brand{
+  display:flex;align-items:center;gap:12px;
+  text-decoration:none;
+}
+.brand-icon{
+  width:42px;height:42px;
+  border-radius:var(--radius-sm);
+  background:linear-gradient(135deg, var(--ember) 0%, var(--ember-dim) 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:#fff;
+  box-shadow:0 4px 16px rgba(245,166,35,0.35);
+  flex-shrink:0;
+}
+.brand-name{
+  font-family:var(--font-display);
+  font-size:20px;font-weight:800;
+  color:var(--text);letter-spacing:-.3px;
+  line-height:1.1;
+}
+.brand-name span{
+  display:block;font-size:11px;font-weight:400;
+  color:var(--text3);letter-spacing:.08em;text-transform:uppercase;
+  font-family:var(--font-body);margin-top:1px;
+}
+.topbar-right{
+  display:flex;align-items:center;gap:10px;
+}
+.pill{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 14px;border-radius:999px;
+  font-size:12px;font-weight:600;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  color:var(--text2);
+  letter-spacing:.02em;
+}
+.pill.gold{
+  background:var(--ember-glow);
+  border-color:var(--border-accent);
+  color:var(--ember);
+}
+.pill i{font-size:13px}
+
+/* ══════════════════════════════════════════════════════════
+   HERO BAND
+══════════════════════════════════════════════════════════ */
+.hero{
+  padding:48px 0 40px;
+  display:flex;align-items:flex-end;justify-content:space-between;
+  gap:24px;flex-wrap:wrap;
+  border-bottom:1px solid var(--border);
+  margin-bottom:40px;
+}
+.hero-left{max-width:520px}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ember);margin-bottom:16px;
+}
+.hero-eyebrow::before{
+  content:"";display:block;width:20px;height:1.5px;
+  background:var(--ember);border-radius:2px;
+}
+.hero-title{
+  font-family:var(--font-display);
+  font-size:clamp(28px,5vw,42px);
+  font-weight:800;line-height:1.1;
+  letter-spacing:-.5px;
+  color:var(--text);margin-bottom:14px;
+}
+.hero-title em{
+  font-style:normal;
+  background:linear-gradient(90deg,var(--ember),#fbbf24);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.hero-sub{
+  font-size:15px;color:var(--text3);line-height:1.65;
+  max-width:440px;
+}
+.hero-meta{
+  display:flex;flex-direction:column;align-items:flex-end;gap:6px;
+  flex-shrink:0;
+}
+.hero-date{
+  font-family:var(--font-display);
+  font-size:13px;font-weight:600;
+  color:var(--text2);letter-spacing:.02em;
+}
+.hero-time{
+  font-family:var(--font-display);
+  font-size:28px;font-weight:700;
+  color:var(--ember);letter-spacing:.02em;
+  line-height:1;
+}
+.hero-streak{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:600;
+  color:var(--text3);
+  margin-top:4px;
+}
+.hero-streak i{color:var(--ember);font-size:14px}
+
+/* ══════════════════════════════════════════════════════════
+   MOOD BAR
+══════════════════════════════════════════════════════════ */
+.mood-bar{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:18px 24px;
+  margin-bottom:24px;
+  display:flex;align-items:center;gap:20px;
+  flex-wrap:wrap;
+  animation:fadeUp .5s ease both;
+  animation-delay:.05s;
+}
+.mood-bar-label{
+  font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--text3);flex-shrink:0;
+}
+.mood-options{display:flex;gap:8px;flex-wrap:wrap}
+.mood-btn{
+  padding:6px 14px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text3);
+  font-family:var(--font-body);
+  font-size:13px;
+  cursor:pointer;
+  transition:var(--transition);
+  display:flex;align-items:center;gap:6px;
+}
+.mood-btn:hover{border-color:rgba(255,255,255,0.2);color:var(--text2);background:var(--surface2)}
+.mood-btn.active{
+  background:var(--ember-glow);
+  border-color:var(--border-accent);
+  color:var(--ember);
+  font-weight:600;
+}
+.mood-summary{
+  margin-left:auto;
+  font-size:12px;color:var(--text3);
+  flex-shrink:0;
+}
+.mood-summary strong{color:var(--ember)}
+
+/* ══════════════════════════════════════════════════════════
+   STATS ROW
+══════════════════════════════════════════════════════════ */
+.stats-row{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin-bottom:28px;
+  animation:fadeUp .5s ease both;
+  animation-delay:.1s;
+}
+.stat-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:16px 18px;
+  display:flex;flex-direction:column;gap:6px;
+  position:relative;overflow:hidden;
+  transition:var(--transition);
+}
+.stat-card::after{
+  content:"";
+  position:absolute;top:0;left:0;right:0;
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent-line,var(--ember)),transparent);
+  opacity:0;
+  transition:var(--transition);
+}
+.stat-card:hover{border-color:rgba(255,255,255,0.12);transform:translateY(-2px)}
+.stat-card:hover::after{opacity:1}
+.stat-card.c-ember{--accent-line:var(--ember)}
+.stat-card.c-teal{--accent-line:var(--teal)}
+.stat-card.c-violet{--accent-line:var(--violet)}
+.stat-card.c-sky{--accent-line:var(--sky)}
+
+.stat-icon{
+  width:32px;height:32px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;margin-bottom:4px;
+}
+.c-ember .stat-icon{background:var(--ember-glow);color:var(--ember)}
+.c-teal .stat-icon{background:rgba(56,217,169,.12);color:var(--teal)}
+.c-violet .stat-icon{background:rgba(183,148,244,.12);color:var(--violet)}
+.c-sky .stat-icon{background:rgba(99,179,237,.12);color:var(--sky)}
+
+.stat-val{
+  font-family:var(--font-display);
+  font-size:26px;font-weight:700;line-height:1;
+  color:var(--text);
+}
+.stat-label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text3)}
+
+/* ══════════════════════════════════════════════════════════
+   MAIN REFLECTION CARD
+══════════════════════════════════════════════════════════ */
+.reflection-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-xl);
+  overflow:hidden;
+  box-shadow:var(--shadow-card);
+  animation:fadeUp .5s ease both;
+  animation-delay:.15s;
+  margin-bottom:28px;
+}
+
+/* card header */
+.rc-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:22px 28px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(90deg,rgba(245,166,35,0.04),transparent);
+  flex-wrap:wrap;gap:14px;
+}
+.rc-title{
+  display:flex;align-items:center;gap:12px;
+  font-family:var(--font-display);
+  font-size:17px;font-weight:700;letter-spacing:-.2px;
+}
+.rc-title-icon{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,var(--ember),var(--ember-dim));
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;color:#fff;
+  box-shadow:0 4px 14px rgba(245,166,35,0.3);
+  flex-shrink:0;
+}
+.rc-header-actions{
+  display:flex;align-items:center;gap:10px;
+  flex-wrap:wrap;
+}
+.status-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:999px;
+  font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  background:rgba(56,217,169,.1);
+  border:1px solid rgba(56,217,169,.2);
+  color:var(--teal);
+  transition:var(--transition);
+}
+.status-badge.saving{
+  background:var(--ember-glow);
+  border-color:var(--border-accent);
+  color:var(--ember);
+}
+.status-badge.saved{
+  background:rgba(56,217,169,.12);
+  border-color:rgba(56,217,169,.25);
+  color:var(--teal);
+}
+.status-badge i{font-size:12px}
+
+.hbtn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 16px;
+  border-radius:var(--radius-sm);
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text2);
+  font-family:var(--font-body);
+  font-size:12px;font-weight:600;letter-spacing:.04em;
+  cursor:pointer;
+  transition:var(--transition);
+}
+.hbtn:hover{border-color:rgba(255,255,255,0.18);background:var(--surface2);color:var(--text)}
+.hbtn i{font-size:14px}
+.hbtn.primary{
+  background:var(--ember-glow);
+  border-color:var(--border-accent);
+  color:var(--ember);
+}
+.hbtn.primary:hover{background:rgba(245,166,35,.25);border-color:rgba(245,166,35,.5)}
+.hbtn.danger:hover{background:rgba(245,101,101,.12);border-color:rgba(245,101,101,.3);color:var(--rose)}
+.hbtn:disabled{opacity:.45;cursor:not-allowed}
+
+/* quick actions toolbar */
+.rc-toolbar{
+  display:flex;align-items:center;gap:8px;
+  padding:12px 28px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface2);
+  overflow-x:auto;
+}
+.cat-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 13px;border-radius:999px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text3);
+  font-family:var(--font-body);
+  font-size:12px;font-weight:600;
+  cursor:pointer;white-space:nowrap;
+  transition:var(--transition);
+}
+.cat-pill:hover{border-color:rgba(255,255,255,.15);color:var(--text2)}
+.cat-pill.active{
+  background:var(--ember-glow);
+  border-color:var(--border-accent);
+  color:var(--ember);
+}
+.toolbar-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 4px}
+.wc-display{
+  margin-left:auto;
+  font-size:11px;color:var(--text3);white-space:nowrap;flex-shrink:0;
+  font-weight:500;
+}
+
+/* writing areas grid */
+.rc-body{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:auto auto;
+  gap:0;
+}
+.write-pane{
+  padding:24px 28px;
+  border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  display:flex;flex-direction:column;gap:12px;
+  transition:background .2s;
+}
+.write-pane:nth-child(2n){border-right:none}
+.write-pane.full{
+  grid-column:1/-1;
+  border-right:none;
+}
+.write-pane:last-child{border-bottom:none}
+.write-pane:hover{background:rgba(255,255,255,.015)}
+
+.pane-label{
+  display:flex;align-items:center;gap:9px;
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text3);
+}
+.pane-label i{font-size:16px}
+.pane-label .lbadge{
+  margin-left:auto;
+  padding:2px 8px;border-radius:999px;
+  font-size:10px;font-weight:700;letter-spacing:.04em;
+  background:var(--surface3);color:var(--text3);
+}
+.pane-label .lbadge.has-content{
+  background:var(--ember-glow);
+  color:var(--ember);
+}
+
+.write-pane textarea{
+  width:100%;
+  flex:1;
+  min-height:150px;
+  background:transparent;
+  border:none;
+  outline:none;
+  resize:none;
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:14px;line-height:1.75;
+  caret-color:var(--ember);
+}
+.write-pane textarea::placeholder{
+  color:var(--ink-500);
+  font-style:italic;
+  font-size:13.5px;
+}
+
+/* pane char counter */
+.pane-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  padding-top:10px;
+  border-top:1px solid var(--border);
+  font-size:11px;color:var(--text3);
+}
+.pane-wc{font-weight:500}
+.pane-prompt{
+  font-size:11px;color:var(--ink-500);
+  cursor:pointer;
+  transition:color .15s;
+  display:flex;align-items:center;gap:4px;
+}
+.pane-prompt:hover{color:var(--ember)}
+
+/* ══════════════════════════════════════════════════════════
+   PROMPTS PANEL
+══════════════════════════════════════════════════════════ */
+.prompts-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+  margin-bottom:28px;
+  animation:fadeUp .5s ease both;
+  animation-delay:.2s;
+}
+.prompts-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 22px;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;
+  user-select:none;
+}
+.prompts-header-left{
+  display:flex;align-items:center;gap:10px;
+  font-size:14px;font-weight:700;color:var(--text2);
+  font-family:var(--font-display);
+}
+.prompts-header-left i{color:var(--ember)}
+.prompts-chevron{
+  font-size:18px;color:var(--text3);
+  transition:transform .25s ease;
+}
+.prompts-card.open .prompts-chevron{transform:rotate(180deg)}
+.prompts-body{
+  display:none;
+  padding:20px 22px;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:8px;
+}
+.prompts-card.open .prompts-body{display:grid}
+.prompt-item{
+  padding:10px 14px;
+  border-radius:var(--radius-sm);
+  border:1px solid var(--border);
+  background:var(--surface2);
+  font-size:13px;color:var(--text2);
+  cursor:pointer;
+  transition:var(--transition);
+  display:flex;align-items:flex-start;gap:8px;
+  line-height:1.5;
+}
+.prompt-item i{font-size:15px;color:var(--ember);margin-top:1px;flex-shrink:0}
+.prompt-item:hover{
+  background:var(--ember-glow);
+  border-color:var(--border-accent);
+  color:var(--text);
+  transform:translateX(3px);
+}
+
+/* ══════════════════════════════════════════════════════════
+   HISTORY / VAULT
+══════════════════════════════════════════════════════════ */
+.vault-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+  margin-bottom:28px;
+  animation:fadeUp .5s ease both;
+  animation-delay:.25s;
+}
+.vault-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 22px;
+  border-bottom:1px solid var(--border);
+}
+.vault-title{
+  display:flex;align-items:center;gap:10px;
+  font-size:14px;font-weight:700;color:var(--text2);
+  font-family:var(--font-display);
+}
+.vault-title i{color:var(--violet)}
+.vault-actions{display:flex;gap:8px}
+.vault-body{padding:16px 22px}
+.vault-empty{
+  text-align:center;padding:32px;color:var(--text3);
+  font-size:13px;
+}
+.vault-empty i{font-size:32px;display:block;margin-bottom:8px;opacity:.3}
+.vault-list{display:flex;flex-direction:column;gap:10px}
+.vault-entry{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:14px 16px;
+  cursor:pointer;
+  transition:var(--transition);
+  position:relative;
+  overflow:hidden;
+}
+.vault-entry::before{
+  content:"";
+  position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(var(--ember),var(--ember-dim));
+  border-radius:2px;
+}
+.vault-entry:hover{border-color:rgba(255,255,255,.12);background:var(--surface3);transform:translateX(3px)}
+.ve-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:6px;
+}
+.ve-date{
+  font-size:12px;font-weight:700;color:var(--ember);
+  font-family:var(--font-display);letter-spacing:.02em;
+}
+.ve-meta{display:flex;align-items:center;gap:8px}
+.ve-mood{font-size:14px}
+.ve-wc{font-size:11px;color:var(--text3);font-weight:500}
+.ve-delete{
+  background:none;border:none;color:var(--text3);cursor:pointer;
+  font-size:14px;padding:2px 4px;border-radius:4px;
+  transition:var(--transition);opacity:0;
+}
+.vault-entry:hover .ve-delete{opacity:1}
+.ve-delete:hover{color:var(--rose)}
+.ve-preview{
+  font-size:12px;color:var(--text3);
+  line-height:1.5;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.ve-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.ve-tag{
+  font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  padding:2px 8px;border-radius:999px;
+}
+.ve-tag.ach{background:rgba(56,217,169,.1);color:var(--teal)}
+.ve-tag.act{background:rgba(99,179,237,.1);color:var(--sky)}
+.ve-tag.ref{background:rgba(183,148,244,.1);color:var(--violet)}
+
+/* ══════════════════════════════════════════════════════════
+   WEEKLY CHART
+══════════════════════════════════════════════════════════ */
+.chart-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:22px;
+  margin-bottom:28px;
+  animation:fadeUp .5s ease both;
+  animation-delay:.3s;
+}
+.chart-title{
+  font-family:var(--font-display);
+  font-size:14px;font-weight:700;color:var(--text2);
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:18px;
+}
+.chart-title i{color:var(--ember)}
+.week-bars{
+  display:flex;align-items:flex-end;gap:10px;
+  height:64px;
+}
+.wbar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px}
+.wbar{
+  width:100%;border-radius:4px 4px 0 0;
+  background:var(--surface3);
+  transition:height .5s cubic-bezier(0.34,1.56,0.64,1);
+  min-height:4px;cursor:default;
+  position:relative;
+}
+.wbar.active{background:linear-gradient(180deg,var(--ember),var(--ember-dim))}
+.wbar.today{background:linear-gradient(180deg,#fbbf24,var(--ember));box-shadow:0 0 12px rgba(245,166,35,.4)}
+.wbar-tooltip{
+  position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);
+  background:var(--surface3);
+  border:1px solid var(--border);
+  padding:3px 8px;border-radius:6px;
+  font-size:10px;color:var(--text2);white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity .15s;
+}
+.wbar:hover .wbar-tooltip{opacity:1}
+.wbar-day{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+
+/* ══════════════════════════════════════════════════════════
+   TOAST NOTIFICATION
+══════════════════════════════════════════════════════════ */
+.toast-container{
+  position:fixed;top:24px;right:24px;z-index:1000;
+  display:flex;flex-direction:column;gap:10px;
+  pointer-events:none;
+}
+.toast{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 18px;
+  border-radius:var(--radius-md);
+  border:1px solid var(--border);
+  background:var(--surface3);
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  font-size:13px;font-weight:500;color:var(--text2);
+  min-width:240px;max-width:340px;
+  animation:toastIn .3s cubic-bezier(0.34,1.56,0.64,1) both;
+  pointer-events:auto;
+  backdrop-filter:blur(12px);
+}
+.toast.success{border-color:rgba(56,217,169,.25);background:rgba(56,217,169,.08);color:var(--teal)}
+.toast.warning{border-color:var(--border-accent);background:var(--ember-glow);color:var(--ember)}
+.toast.error{border-color:rgba(245,101,101,.25);background:rgba(245,101,101,.08);color:var(--rose)}
+.toast i{font-size:16px;flex-shrink:0}
+.toast-leave{animation:toastOut .25s ease both}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px) scale(0.95)}to{opacity:1;transform:none}}
+@keyframes toastOut{from{opacity:1;transform:none}to{opacity:0;transform:translateX(10px) scale(0.97)}}
+
+/* ══════════════════════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════════════════════ */
+.site-footer{
+  border-top:1px solid var(--border);
+  padding:40px 0 28px;
+  margin-top:8px;
+  animation:fadeUp .5s ease both;
+  animation-delay:.35s;
+}
+.footer-main{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:32px;flex-wrap:wrap;
+  margin-bottom:32px;
+}
+.footer-brand-col{max-width:300px}
+.footer-brand-col p{font-size:13px;color:var(--text3);margin-top:12px;line-height:1.6}
+.footer-cols{
+  display:flex;gap:48px;flex-wrap:wrap;
+}
+.footer-col h5{
+  font-family:var(--font-display);
+  font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:14px;
+}
+.footer-col a{
+  display:block;font-size:13px;color:var(--text3);
+  text-decoration:none;margin-bottom:8px;
+  transition:color .15s;
+}
+.footer-col a:hover{color:var(--ember)}
+.social-links{display:flex;gap:10px;margin-top:14px}
+.social-btn{
+  width:34px;height:34px;border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--surface2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;color:var(--text3);
+  text-decoration:none;
+  transition:var(--transition);
+}
+.social-btn:hover{border-color:rgba(255,255,255,.2);color:var(--ember);background:var(--ember-glow)}
+
+.newsletter-row{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:20px 24px;
+  display:flex;align-items:center;gap:20px;
+  margin-bottom:24px;
+  flex-wrap:wrap;
+  gap:16px;
+}
+.nl-text h4{
+  font-family:var(--font-display);
+  font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px;
+}
+.nl-text p{font-size:12px;color:var(--text3)}
+.nl-form{
+  display:flex;gap:8px;flex:1;min-width:200px;
+  margin-left:auto;
+}
+.nl-input{
+  flex:1;
+  padding:9px 14px;
+  border-radius:var(--radius-sm);
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--text);
+  font-family:var(--font-body);font-size:13px;
+  outline:none;transition:border-color .15s;
+}
+.nl-input:focus{border-color:var(--border-accent)}
+.nl-input::placeholder{color:var(--ink-400)}
+.nl-btn{
+  padding:9px 18px;
+  border-radius:var(--radius-sm);
+  border:none;
+  background:linear-gradient(135deg,var(--ember),var(--ember-dim));
+  color:#fff;
+  font-family:var(--font-body);font-size:13px;font-weight:600;
+  cursor:pointer;transition:opacity .15s;white-space:nowrap;
+}
+.nl-btn:hover{opacity:.85}
+.nl-msg{font-size:12px;color:var(--teal);margin-top:6px;display:none}
+
+.footer-bottom{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+  padding-top:20px;
+  border-top:1px solid var(--border);
+}
+.footer-copy{font-size:12px;color:var(--text3)}
+.footer-copy .heart{color:var(--rose)}
+.footer-legal{display:flex;gap:16px}
+.footer-legal a{font-size:12px;color:var(--text3);text-decoration:none;transition:color .15s}
+.footer-legal a:hover{color:var(--text2)}
+
+/* back to top */
+.back-to-top{
+  position:fixed;bottom:28px;right:24px;
+  width:42px;height:42px;border-radius:50%;
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--text2);
+  font-size:20px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:var(--transition);
+  opacity:0;pointer-events:none;z-index:50;
+  box-shadow:0 4px 16px rgba(0,0,0,.4);
+}
+.back-to-top.visible{opacity:1;pointer-events:auto}
+.back-to-top:hover{border-color:var(--border-accent);color:var(--ember);background:var(--ember-glow)}
+
+/* ══════════════════════════════════════════════════════════
+   ANIMATIONS
+══════════════════════════════════════════════════════════ */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════════ */
+@media(max-width:720px){
+  .rc-body{grid-template-columns:1fr}
+  .write-pane{border-right:none}
+  .write-pane.full{grid-column:1}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .hero{padding:32px 0 28px}
+  .hero-meta{display:none}
+  .rc-toolbar{padding:10px 16px}
+  .rc-header{padding:16px 20px}
+  .write-pane{padding:18px 20px}
+}
+@media(max-width:480px){
+  .stats-row{grid-template-columns:1fr 1fr}
+  .footer-cols{gap:28px}
+}
+</style>
+</head>
+<body>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="page">
+
+  <!-- ── TOPBAR ── -->
+  <nav class="topbar">
+    <a class="brand" href="#">
+      <div class="brand-icon"><i class="ri-gamepad-line"></i></div>
+      <div class="brand-name">
+        TaskQuest
+        <span>Productivity Hub</span>
+      </div>
+    </a>
+    <div class="topbar-right">
+      <div class="pill gold" id="streakPill"><i class="ri-fire-line"></i> <span id="streakVal">0</span> day streak</div>
+      <div class="pill"><i class="ri-database-2-line"></i> <span id="vaultCount">0</span> saved</div>
+    </div>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow"><i></i> Daily Workspace</div>
+      <h1 class="hero-title">Your <em>Reflection</em><br>&amp; Productivity Notes</h1>
+      <p class="hero-sub">Document your wins, log activities, and reflect on your day. Every entry builds the habit of intentional growth.</p>
+    </div>
+    <div class="hero-meta">
+      <div class="hero-date" id="heroDayDate">Loading…</div>
+      <div class="hero-time" id="heroTime">00:00</div>
+      <div class="hero-streak"><i class="ri-fire-line"></i> <span id="heroStreakLabel">—</span></div>
+    </div>
+  </div>
+
+  <!-- ── MOOD BAR ── -->
+  <div class="mood-bar">
+    <span class="mood-bar-label">Today's Energy</span>
+    <div class="mood-options">
+      <button class="mood-btn" data-mood="🔥 Fired Up" onclick="pickMood(this)">🔥 Fired Up</button>
+      <button class="mood-btn" data-mood="😊 Feeling Good" onclick="pickMood(this)">😊 Feeling Good</button>
+      <button class="mood-btn" data-mood="😐 It's Okay" onclick="pickMood(this)">😐 It's Okay</button>
+      <button class="mood-btn" data-mood="😴 Low Energy" onclick="pickMood(this)">😴 Low Energy</button>
+      <button class="mood-btn" data-mood="😤 Frustrated" onclick="pickMood(this)">😤 Frustrated</button>
+      <button class="mood-btn" data-mood="🎯 Deep Focus" onclick="pickMood(this)">🎯 Deep Focus</button>
+    </div>
+    <div class="mood-summary" id="moodSummary">Not set yet</div>
+  </div>
+
+  <!-- ── STATS ROW ── -->
+  <div class="stats-row">
+    <div class="stat-card c-ember">
+      <div class="stat-icon"><i class="ri-archive-line"></i></div>
+      <div class="stat-val" id="statTotal">0</div>
+      <div class="stat-label">Total Sessions</div>
+    </div>
+    <div class="stat-card c-teal">
+      <div class="stat-icon"><i class="ri-quill-pen-line"></i></div>
+      <div class="stat-val" id="statWords">0</div>
+      <div class="stat-label">Words Today</div>
+    </div>
+    <div class="stat-card c-violet">
+      <div class="stat-icon"><i class="ri-fire-line"></i></div>
+      <div class="stat-val" id="statStreak">0</div>
+      <div class="stat-label">Day Streak</div>
+    </div>
+    <div class="stat-card c-sky">
+      <div class="stat-icon"><i class="ri-time-line"></i></div>
+      <div class="stat-val" id="statAvg">0</div>
+      <div class="stat-label">Avg Words/Session</div>
+    </div>
+  </div>
+
+  <!-- ── REFLECTION CARD ── -->
+  <div class="reflection-card" id="reflectionCard">
+
+    <!-- header -->
+    <div class="rc-header">
+      <div class="rc-title">
+        <div class="rc-title-icon"><i class="ri-seedling-line"></i></div>
+        Daily Reflection Workspace
+      </div>
+      <div class="rc-header-actions">
+        <div class="status-badge saved" id="statusBadge">
+          <i class="ri-checkbox-circle-line" id="statusIcon"></i>
+          <span id="statusText">Ready</span>
+        </div>
+        <button class="hbtn danger" id="clearBtn" title="Clear workspace">
+          <i class="ri-delete-bin-7-line"></i> Clear
+        </button>
+        <button class="hbtn" id="exportBtn" title="Export as .txt">
+          <i class="ri-download-line"></i> Export
+        </button>
+        <button class="hbtn primary" id="saveBtn" title="Save to vault">
+          <i class="ri-save-3-line"></i> Save Session
+        </button>
+      </div>
+    </div>
+
+    <!-- toolbar -->
+    <div class="rc-toolbar">
+      <span class="toolbar-label" style="font-size:11px;color:var(--text3);font-weight:700;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0">Quick fill</span>
+      <button class="cat-pill" onclick="fillPrompt('ach','What did I accomplish today?')"><i class="ri-medal-line"></i> Win</button>
+      <button class="cat-pill" onclick="fillPrompt('act','What tasks did I complete?')"><i class="ri-list-check"></i> Task</button>
+      <button class="cat-pill" onclick="fillPrompt('ref','How was my focus and productivity?')"><i class="ri-focus-3-line"></i> Reflect</button>
+      <button class="cat-pill" onclick="fillPrompt('act','What was my top priority today?')"><i class="ri-star-line"></i> Priority</button>
+      <button class="cat-pill" onclick="fillPrompt('ref','What would I do differently?')"><i class="ri-lightbulb-line"></i> Improve</button>
+      <div class="toolbar-sep"></div>
+      <div class="wc-display"><i class="ri-text" style="font-size:12px;vertical-align:-1px;margin-right:3px"></i><span id="totalWC">0</span> words total</div>
+    </div>
+
+    <!-- writing panes -->
+    <div class="rc-body">
+
+      <!-- Achievements -->
+      <div class="write-pane" id="pane-ach">
+        <div class="pane-label">
+          <i class="ri-medal-line" style="color:var(--ember)"></i>
+          Daily Achievements
+          <span class="lbadge" id="badge-ach">Empty</span>
+        </div>
+        <textarea id="achievementsInput"
+          placeholder="What major wins did you conquer today? Completed a chapter? Hit a study goal? Crushed a deadline? No win is too small — list them all…"
+          oninput="onPaneInput('ach',this)"></textarea>
+        <div class="pane-footer">
+          <span class="pane-wc" id="wc-ach">0 words</span>
+          <span class="pane-prompt" onclick="fillPrompt('ach','I am proud that I ')"><i class="ri-magic-line"></i> Start with a prompt</span>
+        </div>
+      </div>
+
+      <!-- Activities -->
+      <div class="write-pane" id="pane-act">
+        <div class="pane-label">
+          <i class="ri-list-check" style="color:var(--sky)"></i>
+          Completed Activities
+          <span class="lbadge" id="badge-act">Empty</span>
+        </div>
+        <textarea id="activitiesInput"
+          placeholder="Log the specific tasks, study sessions, and activities you finished. Be detailed — this is your productivity receipt…"
+          oninput="onPaneInput('act',this)"></textarea>
+        <div class="pane-footer">
+          <span class="pane-wc" id="wc-act">0 words</span>
+          <span class="pane-prompt" onclick="fillPrompt('act','Today I completed: \n1. \n2. \n3. ')"><i class="ri-magic-line"></i> Use list format</span>
+        </div>
+      </div>
+
+      <!-- Reflections — full width -->
+      <div class="write-pane full" id="pane-ref">
+        <div class="pane-label">
+          <i class="ri-focus-3-line" style="color:var(--violet)"></i>
+          Productivity Reflections
+          <span class="lbadge" id="badge-ref">Empty</span>
+        </div>
+        <textarea id="reflectionsInput"
+          placeholder="How was your focus today? What went well and what can be improved? What distractions hit you? What will you do differently tomorrow? This is your thinking space — be honest…"
+          style="min-height:120px"
+          oninput="onPaneInput('ref',this)"></textarea>
+        <div class="pane-footer">
+          <span class="pane-wc" id="wc-ref">0 words</span>
+          <span class="pane-prompt" onclick="fillPrompt('ref','Tomorrow I will focus on ')"><i class="ri-magic-line"></i> Start with tomorrow</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── PROMPTS PANEL ── -->
+  <div class="prompts-card" id="promptsCard">
+    <div class="prompts-header" onclick="togglePrompts()">
+      <div class="prompts-header-left">
+        <i class="ri-lightbulb-flash-line"></i>
+        Reflection Prompts — stuck? click one to fill your workspace
+      </div>
+      <i class="ri-arrow-down-s-line prompts-chevron"></i>
+    </div>
+    <div class="prompts-body" id="promptsBody"></div>
+  </div>
+
+  <!-- ── WEEKLY CHART ── -->
+  <div class="chart-card">
+    <div class="chart-title"><i class="ri-bar-chart-2-line"></i> Weekly Writing Activity</div>
+    <div class="week-bars" id="weekBars"></div>
+  </div>
+
+  <!-- ── VAULT ── -->
+  <div class="vault-card">
+    <div class="vault-header">
+      <div class="vault-title"><i class="ri-safe-2-line"></i> Session Vault</div>
+      <div class="vault-actions">
+        <button class="hbtn" onclick="exportAll()" title="Export all sessions"><i class="ri-download-2-line"></i> Export All</button>
+        <button class="hbtn danger" onclick="clearVault()" title="Clear vault"><i class="ri-delete-bin-line"></i> Clear Vault</button>
+      </div>
+    </div>
+    <div class="vault-body">
+      <div class="vault-empty" id="vaultEmpty">
+        <i class="ri-safe-2-line"></i>
+        <p>No sessions saved yet.</p>
+        <p style="margin-top:4px;font-size:12px">Write your reflections and hit <strong style="color:var(--ember)">Save Session</strong> to store them here.</p>
+      </div>
+      <div class="vault-list hidden" id="vaultList"></div>
+    </div>
+  </div>
+
+  <!-- ── FOOTER ── -->
+  <footer class="site-footer">
+
+    <!-- Newsletter -->
+    <div class="newsletter-row">
+      <div class="nl-text">
+        <h4>Stay in the loop</h4>
+        <p>Subscribe for productivity tips and release notes.</p>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div class="nl-form">
+          <input type="email" id="footerEmail" class="nl-input" placeholder="Your email address" aria-label="Email"/>
+          <button class="nl-btn" onclick="handleSubscribe()">Subscribe</button>
+        </div>
+        <div class="nl-msg" id="subscribeMsg"></div>
+      </div>
+    </div>
+
+    <div class="footer-main">
+      <div class="footer-brand-col">
+        <a class="brand" href="#" style="margin-bottom:0">
+          <div class="brand-icon"><i class="ri-gamepad-line"></i></div>
+          <div class="brand-name">TaskQuest <span>Conquer your goals — one task at a time.</span></div>
+        </a>
+        <p>A focused productivity workspace for learners who are serious about building better habits and reaching their goals every single day.</p>
+        <div class="social-links">
+          <a class="social-btn" href="https://github.com/Sejal10406/student-task-manager" target="_blank" rel="noopener" aria-label="GitHub"><i class="ri-github-fill"></i></a>
+          <a class="social-btn" href="https://twitter.com" target="_blank" rel="noopener" aria-label="Twitter"><i class="ri-twitter-x-line"></i></a>
+          <a class="social-btn" href="https://discord.com" target="_blank" rel="noopener" aria-label="Discord"><i class="ri-discord-fill"></i></a>
+        </div>
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h5>Product</h5>
+          <a href="#">Dashboard</a>
+          <a href="#">Challenges</a>
+          <a href="#">Focus Games</a>
+          <a href="#">Reflection</a>
+        </div>
+        <div class="footer-col">
+          <h5>Legal</h5>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+          <a href="#">Cookie Policy</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer-copy">
+        © 2026 TaskQuest. All rights reserved. &nbsp;·&nbsp; Made with <span class="heart">❤</span> for learners
+      </div>
+      <div class="footer-legal">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Cookies</a>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- /page -->
+
+<!-- Back to top -->
+<button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">
+  <i class="ri-arrow-up-s-line"></i>
+</button>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   CONSTANTS & STATE
+══════════════════════════════════════════════════════════ */
+const STORAGE_KEY = 'tq_reflection_draft';
+const VAULT_KEY   = 'tq_reflection_vault';
+
+const PROMPTS = [
+  { icon:'ri-trophy-line',   pane:'ach', text:'What was my single biggest achievement today?' },
+  { icon:'ri-heart-line',    pane:'ach', text:'What am I most proud of this session?' },
+  { icon:'ri-star-line',     pane:'ach', text:'I exceeded my own expectations when I…' },
+  { icon:'ri-list-check',    pane:'act', text:'List every task I completed, from smallest to biggest:' },
+  { icon:'ri-time-line',     pane:'act', text:'How many hours did I study or work today?' },
+  { icon:'ri-book-open-line',pane:'act', text:'Which subjects or topics did I cover today?' },
+  { icon:'ri-focus-3-line',  pane:'ref', text:'My focus level today was ___ because…' },
+  { icon:'ri-lightbulb-line',pane:'ref', text:'The one thing I would do differently is…' },
+  { icon:'ri-arrow-up-line', pane:'ref', text:'Tomorrow my top 3 priorities will be:' },
+  { icon:'ri-alarm-warning-line',pane:'ref',text:'What distracted me the most today?' },
+  { icon:'ri-seedling-line', pane:'ach', text:'A small win I almost overlooked today was…' },
+  { icon:'ri-brain-line',    pane:'ref', text:'What did I learn about how I work best?' },
+];
+
+let currentMood = '';
+let autoSaveTimer = null;
+let vault = [];
+
+/* ══════════════════════════════════════════════════════════
+   CLOCK & DATE
+══════════════════════════════════════════════════════════ */
+function updateClock() {
+  const now = new Date();
+  const timeEl = document.getElementById('heroTime');
+  const dateEl = document.getElementById('heroDayDate');
+  if (timeEl) timeEl.textContent = now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  if (dateEl) dateEl.textContent = now.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ══════════════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════════════ */
+function toast(msg, type = 'success', duration = 3000) {
+  const icons = { success:'ri-checkbox-circle-line', warning:'ri-alert-line', error:'ri-close-circle-line', info:'ri-information-line' };
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<i class="ri ${icons[type]||icons.info}"></i><span>${msg}</span>`;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(() => {
+    t.classList.add('toast-leave');
+    setTimeout(() => t.remove(), 300);
+  }, duration);
+}
+
+/* ══════════════════════════════════════════════════════════
+   MOOD
+══════════════════════════════════════════════════════════ */
+function pickMood(btn) {
+  currentMood = btn.dataset.mood;
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('moodSummary').innerHTML = `Mood: <strong>${currentMood}</strong>`;
+  scheduleSave();
+}
+
+/* ══════════════════════════════════════════════════════════
+   WORD COUNT HELPERS
+══════════════════════════════════════════════════════════ */
+function countWords(str) {
+  return str.trim() ? str.trim().split(/\s+/).length : 0;
+}
+
+function updatePaneBadge(pane, val) {
+  const el = document.getElementById(`badge-${pane}`);
+  const wc = document.getElementById(`wc-${pane}`);
+  const words = countWords(val);
+  if (el) {
+    el.textContent = words > 0 ? `${words}w` : 'Empty';
+    el.className = `lbadge ${words > 0 ? 'has-content' : ''}`;
+  }
+  if (wc) wc.textContent = `${words} word${words !== 1 ? 's' : ''}`;
+  updateTotalWC();
+}
+
+function updateTotalWC() {
+  const ach = document.getElementById('achievementsInput')?.value || '';
+  const act = document.getElementById('activitiesInput')?.value || '';
+  const ref = document.getElementById('reflectionsInput')?.value || '';
+  const total = countWords(ach) + countWords(act) + countWords(ref);
+  document.getElementById('totalWC').textContent = total;
+  document.getElementById('statWords').textContent = total;
+}
+
+/* ══════════════════════════════════════════════════════════
+   PANE INPUT HANDLER
+══════════════════════════════════════════════════════════ */
+function onPaneInput(pane, ta) {
+  updatePaneBadge(pane, ta.value);
+  setStatus('saving');
+  scheduleSave();
+}
+
+/* ══════════════════════════════════════════════════════════
+   STATUS BADGE
+══════════════════════════════════════════════════════════ */
+function setStatus(state) {
+  const badge = document.getElementById('statusBadge');
+  const icon  = document.getElementById('statusIcon');
+  const text  = document.getElementById('statusText');
+  badge.className = `status-badge ${state}`;
+  if (state === 'saving') {
+    icon.className = 'ri-loader-4-line ri-spin';
+    text.textContent = 'Autosaving…';
+  } else if (state === 'saved') {
+    icon.className = 'ri-checkbox-circle-line';
+    text.textContent = 'Saved';
+  } else {
+    icon.className = 'ri-checkbox-circle-line';
+    text.textContent = 'Ready';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   AUTO SAVE (DRAFT)
+══════════════════════════════════════════════════════════ */
+function scheduleSave() {
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(saveDraft, 800);
+}
+
+function saveDraft() {
+  const draft = {
+    ach: document.getElementById('achievementsInput')?.value || '',
+    act: document.getElementById('activitiesInput')?.value || '',
+    ref: document.getElementById('reflectionsInput')?.value || '',
+    mood: currentMood,
+    ts: Date.now(),
+  };
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(draft)); } catch(e) {}
+  setStatus('saved');
+}
+
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    const ach = document.getElementById('achievementsInput');
+    const act = document.getElementById('activitiesInput');
+    const ref = document.getElementById('reflectionsInput');
+    if (ach && d.ach) { ach.value = d.ach; updatePaneBadge('ach', d.ach); }
+    if (act && d.act) { act.value = d.act; updatePaneBadge('act', d.act); }
+    if (ref && d.ref) { ref.value = d.ref; updatePaneBadge('ref', d.ref); }
+    if (d.mood) {
+      currentMood = d.mood;
+      document.querySelectorAll('.mood-btn').forEach(b => {
+        if (b.dataset.mood === d.mood) { b.classList.add('active'); }
+      });
+      document.getElementById('moodSummary').innerHTML = `Mood: <strong>${d.mood}</strong>`;
+    }
+    setStatus('saved');
+  } catch(e) {}
+}
+
+/* ══════════════════════════════════════════════════════════
+   VAULT — SAVE SESSION
+══════════════════════════════════════════════════════════ */
+function saveSession() {
+  const ach = (document.getElementById('achievementsInput')?.value || '').trim();
+  const act = (document.getElementById('activitiesInput')?.value || '').trim();
+  const ref = (document.getElementById('reflectionsInput')?.value || '').trim();
+
+  if (!ach && !act && !ref) {
+    toast('Nothing to save — write something first!', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Saving…';
+
+  setTimeout(() => {
+    const entry = { id: Date.now(), date: new Date().toISOString(), ach, act, ref, mood: currentMood,
+      words: countWords(ach) + countWords(act) + countWords(ref) };
+    vault.unshift(entry);
+    persistVault();
+    renderVault();
+    updateStats();
+
+    btn.innerHTML = '<i class="ri-save-3-line"></i> Save Session';
+    btn.disabled = false;
+    toast('Session saved to vault! 🎉', 'success');
+  }, 600);
+}
+
+function persistVault() {
+  try { localStorage.setItem(VAULT_KEY, JSON.stringify(vault)); } catch(e) {}
+}
+
+function loadVault() {
+  try {
+    const raw = localStorage.getItem(VAULT_KEY);
+    vault = raw ? JSON.parse(raw) : [];
+  } catch(e) { vault = []; }
+}
+
+function clearVault() {
+  if (!vault.length) { toast('Vault is already empty!', 'info'); return; }
+  if (!confirm('Clear all saved sessions? This cannot be undone.')) return;
+  vault = [];
+  persistVault();
+  renderVault();
+  updateStats();
+  toast('Vault cleared.', 'warning');
+}
+
+function deleteEntry(id) {
+  vault = vault.filter(e => e.id !== id);
+  persistVault();
+  renderVault();
+  updateStats();
+  toast('Entry deleted.', 'warning');
+}
+
+function renderVault() {
+  const list  = document.getElementById('vaultList');
+  const empty = document.getElementById('vaultEmpty');
+  const count = document.getElementById('vaultCount');
+  count.textContent = vault.length;
+  document.getElementById('streakVal').textContent = calcStreak();
+
+  if (!vault.length) {
+    list.classList.add('hidden');
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+  list.classList.remove('hidden');
+
+  list.innerHTML = vault.map(e => {
+    const dt   = new Date(e.date);
+    const dStr = dt.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+    const preview = (e.ach || e.act || e.ref || '').slice(0, 120).replace(/\n/g,' ');
+    const tags = [e.ach && 'ach', e.act && 'act', e.ref && 'ref'].filter(Boolean);
+    const tagLabels = { ach:'Achievement', act:'Activity', ref:'Reflection' };
+    return `
+      <div class="vault-entry" onclick="restoreEntry(${e.id})">
+        <div class="ve-header">
+          <span class="ve-date">${dStr}</span>
+          <div class="ve-meta">
+            ${e.mood ? `<span class="ve-mood">${e.mood.split(' ')[0]}</span>` : ''}
+            <span class="ve-wc">${e.words} words</span>
+            <button class="ve-delete" onclick="event.stopPropagation();deleteEntry(${e.id})" title="Delete"><i class="ri-delete-bin-line"></i></button>
+          </div>
+        </div>
+        <div class="ve-preview">${preview || '<em style="opacity:.5">No content</em>'}</div>
+        <div class="ve-tags">${tags.map(t => `<span class="ve-tag ${t}">${tagLabels[t]}</span>`).join('')}</div>
+      </div>`;
+  }).join('');
+}
+
+function restoreEntry(id) {
+  const e = vault.find(v => v.id === id);
+  if (!e) return;
+  document.getElementById('achievementsInput').value = e.ach || '';
+  document.getElementById('activitiesInput').value   = e.act || '';
+  document.getElementById('reflectionsInput').value  = e.ref || '';
+  ['ach','act','ref'].forEach(p => {
+    const el = document.getElementById(p === 'ach' ? 'achievementsInput' : p === 'act' ? 'activitiesInput' : 'reflectionsInput');
+    updatePaneBadge(p, el?.value || '');
+  });
+  if (e.mood) {
+    currentMood = e.mood;
+    document.querySelectorAll('.mood-btn').forEach(b => { b.classList.toggle('active', b.dataset.mood === e.mood); });
+    document.getElementById('moodSummary').innerHTML = `Mood: <strong>${e.mood}</strong>`;
+  }
+  toast('Session loaded into workspace ✔', 'success');
+  window.scrollTo({top: document.getElementById('reflectionCard').offsetTop - 20, behavior:'smooth'});
+}
+
+/* ══════════════════════════════════════════════════════════
+   STATS
+══════════════════════════════════════════════════════════ */
+function calcStreak() {
+  if (!vault.length) return 0;
+  const days = new Set(vault.map(e => new Date(e.date).toDateString()));
+  let streak = 0;
+  const d = new Date();
+  while (days.has(d.toDateString())) { streak++; d.setDate(d.getDate() - 1); }
+  return streak;
+}
+
+function updateStats() {
+  const streak = calcStreak();
+  document.getElementById('statTotal').textContent  = vault.length;
+  document.getElementById('statStreak').textContent = streak;
+  document.getElementById('streakVal').textContent   = streak;
+  document.getElementById('statStreak').textContent  = streak;
+  document.getElementById('heroStreakLabel').textContent = streak > 0 ? `${streak}-day reflection streak` : 'Start your streak today';
+  const avg = vault.length ? Math.round(vault.reduce((s,e) => s + e.words, 0) / vault.length) : 0;
+  document.getElementById('statAvg').textContent = avg;
+  renderWeekChart();
+}
+
+/* ══════════════════════════════════════════════════════════
+   WEEKLY CHART
+══════════════════════════════════════════════════════════ */
+function renderWeekChart() {
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const now  = new Date();
+  const bars = document.getElementById('weekBars');
+  const counts = Array(7).fill(0);
+  vault.forEach(e => {
+    const d = new Date(e.date);
+    const diff = Math.round((now - d) / 86400000);
+    if (diff >= 0 && diff < 7) counts[6 - diff]++;
+  });
+  const mx = Math.max(...counts, 1);
+  bars.innerHTML = counts.map((c, i) => {
+    const offset = 6 - i;
+    const d2 = new Date(now); d2.setDate(d2.getDate() - offset);
+    const day = days[d2.getDay()];
+    const isToday = offset === 0;
+    const h = Math.round((c / mx) * 54);
+    return `<div class="wbar-wrap">
+      <div class="wbar ${c > 0 ? 'active' : ''} ${isToday ? 'today' : ''}" style="height:${h}px">
+        <div class="wbar-tooltip">${c} session${c !== 1 ? 's' : ''}</div>
+      </div>
+      <span class="wbar-day">${day}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════
+   CLEAR WORKSPACE
+══════════════════════════════════════════════════════════ */
+function clearWorkspace() {
+  if (!confirm('Clear all current reflection notes?')) return;
+  ['achievementsInput','activitiesInput','reflectionsInput'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ['ach','act','ref'].forEach(p => updatePaneBadge(p, ''));
+  currentMood = '';
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('moodSummary').textContent = 'Not set yet';
+  saveDraft();
+  toast('Workspace cleared.', 'warning');
+}
+
+/* ══════════════════════════════════════════════════════════
+   EXPORT
+══════════════════════════════════════════════════════════ */
+function exportSession() {
+  const ach = document.getElementById('achievementsInput')?.value || '';
+  const act = document.getElementById('activitiesInput')?.value || '';
+  const ref = document.getElementById('reflectionsInput')?.value || '';
+  if (!ach && !act && !ref) { toast('Nothing to export yet!', 'warning'); return; }
+  const date = new Date().toLocaleString();
+  const txt  = `TASKQUEST — DAILY REFLECTION\n${date}${currentMood ? `\nMood: ${currentMood}` : ''}\n${'═'.repeat(50)}\n\n🏆 ACHIEVEMENTS\n${ach||'—'}\n\n✅ COMPLETED ACTIVITIES\n${act||'—'}\n\n💡 PRODUCTIVITY REFLECTIONS\n${ref||'—'}\n`;
+  const blob = new Blob([txt], {type:'text/plain'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `reflection-${new Date().toISOString().slice(0,10)}.txt`; a.click();
+  toast('Exported successfully!', 'success');
+}
+
+function exportAll() {
+  if (!vault.length) { toast('No sessions in vault!', 'warning'); return; }
+  const lines = vault.map((e, i) => {
+    const d = new Date(e.date).toLocaleString();
+    return `SESSION ${i+1} — ${d}${e.mood ? ` | ${e.mood}` : ''}\n${'─'.repeat(48)}\n🏆 ${e.ach||'—'}\n\n✅ ${e.act||'—'}\n\n💡 ${e.ref||'—'}`;
+  });
+  const blob = new Blob([`TASKQUEST — ALL SESSIONS\nExported: ${new Date().toLocaleString()}\n${'═'.repeat(50)}\n\n`+lines.join('\n\n'), {type:'text/plain'}]);
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `taskquest-all-sessions.txt`; a.click();
+  toast('All sessions exported!', 'success');
+}
+
+/* ══════════════════════════════════════════════════════════
+   PROMPTS
+══════════════════════════════════════════════════════════ */
+function renderPrompts() {
+  const body = document.getElementById('promptsBody');
+  body.innerHTML = PROMPTS.map(p => `
+    <div class="prompt-item" onclick="fillPrompt('${p.pane}',${JSON.stringify(p.text)})">
+      <i class="ri ${p.icon}"></i>${p.text}
+    </div>`).join('');
+}
+
+function togglePrompts() {
+  document.getElementById('promptsCard').classList.toggle('open');
+}
+
+function fillPrompt(pane, text) {
+  const ids = { ach:'achievementsInput', act:'activitiesInput', ref:'reflectionsInput' };
+  const el = document.getElementById(ids[pane]);
+  if (!el) return;
+  const cur = el.value.trim();
+  el.value = cur ? cur + '\n\n' + text + ' ' : text + ' ';
+  el.focus();
+  el.selectionStart = el.selectionEnd = el.value.length;
+  updatePaneBadge(pane, el.value);
+  scheduleSave();
+  // close prompts panel
+  document.getElementById('promptsCard').classList.remove('open');
+}
+
+/* ══════════════════════════════════════════════════════════
+   NEWSLETTER
+══════════════════════════════════════════════════════════ */
+function handleSubscribe() {
+  const email = document.getElementById('footerEmail')?.value.trim();
+  const msg   = document.getElementById('subscribeMsg');
+  if (!email || !/\S+@\S+\.\S+/.test(email)) {
+    toast('Please enter a valid email address.', 'error'); return;
+  }
+  msg.style.display = 'block';
+  msg.textContent = `✓ You're subscribed! We'll be in touch.`;
+  document.getElementById('footerEmail').value = '';
+  toast('Subscribed successfully! 🎉', 'success');
+}
+
+/* ══════════════════════════════════════════════════════════
+   BACK TO TOP
+══════════════════════════════════════════════════════════ */
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('backToTop');
+  btn.classList.toggle('visible', window.scrollY > 400);
+});
+
+/* ══════════════════════════════════════════════════════════
+   WIRE UP BUTTONS
+══════════════════════════════════════════════════════════ */
+document.getElementById('saveBtn').addEventListener('click', saveSession);
+document.getElementById('clearBtn').addEventListener('click', clearWorkspace);
+document.getElementById('exportBtn').addEventListener('click', exportSession);
+
+/* ══════════════════════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════════════════════ */
+loadVault();
+loadDraft();
+updateStats();
+renderVault();
+renderPrompts();
+renderWeekChart();
+</script>
+</body>
+</html>

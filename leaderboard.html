@@ -4,70 +4,245 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TaskQuest Leaderboard</title>
+
   <link rel="stylesheet" href="style.css" />
+
+  <meta
+    name="description"
+    content="Real-time TaskQuest leaderboard with live score updates and rankings."
+  />
 </head>
+
 <body>
-  <div class="bg blur1"></div>
-  <div class="bg blur2"></div>
-  <div class="grid-overlay"></div>
+  <div class="bg blur1" aria-hidden="true"></div>
+  <div class="bg blur2" aria-hidden="true"></div>
+  <div class="grid-overlay" aria-hidden="true"></div>
 
   <main class="container leaderboard-page">
     <section class="main-content leaderboard-main">
-      <div class="leaderboard-header">
-        <div>
-          <a class="back-link" href="index.html">← Back to TaskQuest</a>
-          <h1>Real-Time Leaderboard</h1>
-          <p>Watch the leaderboard update instantly as scores change and compete with friends in real time.</p>
-        </div>
-        <div class="leaderboard-meta">
-          <span class="status-chip" id="liveStatus">Live</span>
-          <span class="status-chip" id="lastUpdatedText">Updated just now</span>
-        </div>
-      </div>
 
+      <!-- HEADER -->
+      <header class="leaderboard-header">
+        <div>
+          <a
+            class="back-link"
+            href="index.html"
+            aria-label="Back to TaskQuest home page"
+          >
+            ← Back to TaskQuest
+          </a>
+
+          <h1>Real-Time Leaderboard</h1>
+
+          <p>
+            Watch the leaderboard update instantly as scores change
+            and compete with friends in real time.
+          </p>
+        </div>
+
+        <div
+          class="leaderboard-meta"
+          aria-live="polite"
+        >
+          <span class="status-chip" id="liveStatus">
+            Live
+          </span>
+
+          <span class="status-chip" id="lastUpdatedText">
+            Updated just now
+          </span>
+        </div>
+      </header>
+
+      <!-- MAIN GRID -->
       <div class="leaderboard-grid">
-        <div class="leaderboard-panel glass">
+
+        <!-- LEADERBOARD TABLE -->
+        <section
+          class="leaderboard-panel glass"
+          aria-labelledby="leaderboardHeading"
+        >
           <div class="panel-title">
             <div>
-              <h2>Top Players</h2>
-              <p>Sorted by score, completed tasks, and streak.</p>
+              <h2 id="leaderboardHeading">Top Players</h2>
+
+              <p>
+                Sorted by score, completed tasks, and streak.
+              </p>
             </div>
           </div>
 
-          <div class="leaderboard-table" id="leaderboardTable" role="table" aria-label="Leaderboard table"></div>
-        </div>
+          <div class="leaderboard-table-wrapper">
 
-        <aside class="leaderboard-actions glass">
-          <div class="action-card">
+            <table
+              class="leaderboard-table"
+              id="leaderboardTable"
+              aria-label="Leaderboard table"
+            >
+              <thead>
+                <tr>
+                  <th scope="col">Rank</th>
+                  <th scope="col">Player</th>
+                  <th scope="col">Score</th>
+                  <th scope="col">Completed</th>
+                  <th scope="col">Streak</th>
+                </tr>
+              </thead>
+
+              <tbody id="leaderboardBody">
+                <tr class="empty-state">
+                  <td colspan="5">
+                    No leaderboard data available yet.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+        </section>
+
+        <!-- SIDEBAR -->
+        <aside class="leaderboard-actions">
+
+          <!-- YOUR RANK -->
+          <section class="action-card glass">
             <h3>Your Rank</h3>
+
             <div class="stats-list">
-              <div class="stat-item"><span>Rank</span><strong id="myRank">—</strong></div>
-              <div class="stat-item"><span>Score</span><strong id="myScore">—</strong></div>
-              <div class="stat-item"><span>Completed</span><strong id="myCompleted">—</strong></div>
-              <div class="stat-item"><span>Streak</span><strong id="myStreak">—</strong></div>
+
+              <div class="stat-item">
+                <span>Rank</span>
+                <strong id="myRank">—</strong>
+              </div>
+
+              <div class="stat-item">
+                <span>Score</span>
+                <strong id="myScore">—</strong>
+              </div>
+
+              <div class="stat-item">
+                <span>Completed</span>
+                <strong id="myCompleted">—</strong>
+              </div>
+
+              <div class="stat-item">
+                <span>Streak</span>
+                <strong id="myStreak">—</strong>
+              </div>
+
             </div>
-            <button id="syncStatsBtn" class="primary-btn">Sync My TaskQuest Stats</button>
-          </div>
 
-          <div class="action-card">
+            <button
+              id="syncStatsBtn"
+              class="primary-btn"
+              type="button"
+              aria-label="Sync my TaskQuest stats"
+            >
+              Sync My TaskQuest Stats
+            </button>
+          </section>
+
+          <!-- PLAYER FORM -->
+          <section class="action-card glass">
             <h3>Simulate Live Updates</h3>
-            <label for="playerNameInput">Player name</label>
-            <input id="playerNameInput" type="text" placeholder="Example: Alex" />
-            <label for="playerScoreInput">Score</label>
-            <input id="playerScoreInput" type="number" min="0" placeholder="420" />
-            <label for="playerCompletedInput">Completed tasks</label>
-            <input id="playerCompletedInput" type="number" min="0" placeholder="12" />
-            <label for="playerStreakInput">Streak</label>
-            <input id="playerStreakInput" type="number" min="0" placeholder="4" />
-            <button id="addPlayerBtn" class="primary-btn">Add / Update Player</button>
-          </div>
 
-          <div class="action-card">
-            <h3>Live simulation</h3>
-            <p>Click to simulate a new challenge and make the board move.</p>
-            <button id="randomBoostBtn" class="secondary-btn">Simulate Score Boost</button>
-            <button id="refreshBtn" class="secondary-btn">Refresh Now</button>
-          </div>
+            <form id="playerForm" novalidate>
+
+              <fieldset>
+                <legend class="sr-only">
+                  Add or update player
+                </legend>
+
+                <label for="playerNameInput">
+                  Player name
+                </label>
+
+                <input
+                  id="playerNameInput"
+                  type="text"
+                  placeholder="Example: Alex"
+                  autocomplete="name"
+                  maxlength="30"
+                  required
+                />
+
+                <label for="playerScoreInput">
+                  Score
+                </label>
+
+                <input
+                  id="playerScoreInput"
+                  type="number"
+                  min="0"
+                  placeholder="420"
+                  required
+                />
+
+                <label for="playerCompletedInput">
+                  Completed tasks
+                </label>
+
+                <input
+                  id="playerCompletedInput"
+                  type="number"
+                  min="0"
+                  placeholder="12"
+                  required
+                />
+
+                <label for="playerStreakInput">
+                  Streak
+                </label>
+
+                <input
+                  id="playerStreakInput"
+                  type="number"
+                  min="0"
+                  placeholder="4"
+                  required
+                />
+
+                <button
+                  id="addPlayerBtn"
+                  class="primary-btn"
+                  type="submit"
+                >
+                  Add / Update Player
+                </button>
+
+              </fieldset>
+            </form>
+          </section>
+
+          <!-- LIVE SIMULATION -->
+          <section class="action-card glass">
+            <h3>Live Simulation</h3>
+
+            <p>
+              Click to simulate a new challenge and make the board move.
+            </p>
+
+            <div class="button-group">
+
+              <button
+                id="randomBoostBtn"
+                class="secondary-btn"
+                type="button"
+              >
+                Simulate Score Boost
+              </button>
+
+              <button
+                id="refreshBtn"
+                class="secondary-btn"
+                type="button"
+              >
+                Refresh Now
+              </button>
+
+            </div>
+          </section>
+
         </aside>
       </div>
     </section>

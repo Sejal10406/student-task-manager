@@ -5021,6 +5021,5 @@ function renderVault() {
 
 
 
-/* Search Filter Logic */
-const taskSearchInput = document.getElementById('taskSearchInput');
-if(taskSearchInput){ taskSearchInput.addEventListener('input', (e) => { const query = e.target.value.toLowerCase(); const taskItems = document.querySelectorAll('#taskList li'); taskItems.forEach(item => { const text = item.innerText.toLowerCase(); item.style.display = text.includes(query) ? '' : 'none'; }); }); }
+/* Export JSON Logic */
+document.getElementById('exportJsonBtn')?.addEventListener('click', () => { const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tasks, null, 2)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute('href', dataStr); dlAnchorElem.setAttribute('download', 'taskquest_backup.json'); dlAnchorElem.click(); });

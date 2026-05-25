@@ -1,0 +1,36 @@
+name: CI Code Quality
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify JavaScript Syntax
+        run: |
+          for file in $(find . -name "*.js" -not -path "./node_modules/*"); do
+            node --check "$file"
+          done
+        continue-on-error: true
+
+      - name: Check file sizes
+        run: |
+          echo "## Project Files Size Report 📊" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          find . -name "*.html" -o -name "*.css" -o -name "*.js" | not -path "./node_modules/*" | while read file; do
+            size=$(ls -lh "$file" | awk '{print $5}')
+            echo "| \`$file\` | $size |" >> $GITHUB_STEP_SUMMARY
+          done
+        continue-on-error: true
