@@ -91,16 +91,18 @@ function renderFriendsList() {
   collaborativeState.friends.forEach(friend => {
     const card = document.createElement('div');
     card.className = 'friend-card glass';
+    const statusColor = friend.status === 'online' ? '#10b981' : '#9ca3af';
+    const initial = escapeHtml(friend.name.charAt(0).toUpperCase());
     card.innerHTML = `
       <div class="friend-card-header">
         <div class="friend-info">
-          <div class="friend-avatar">${friend.name.charAt(0).toUpperCase()}</div>
+          <div class="friend-avatar">${initial}</div>
           <div>
             <h4>${escapeHtml(friend.name)}</h4>
-            <p class="friend-status"><span class="status-dot" style="background: ${friend.status === 'online' ? '#10b981' : '#9ca3af'};"></span> ${friend.status}</p>
+            <p class="friend-status"><span class="status-dot" style="background: ${statusColor};"></span> ${escapeHtml(friend.status)}</p>
           </div>
         </div>
-        <button class="icon-btn delete-btn" onclick="removeFriend(${friend.id})"><i class="ri-close-line"></i></button>
+        <button type="button" class="icon-btn delete-btn" data-action="remove-friend" data-friend-id="${friend.id}" aria-label="Remove friend"><i class="ri-close-line"></i></button>
       </div>
       <div class="friend-stats">
         <div class="stat">
@@ -116,7 +118,7 @@ function renderFriendsList() {
           <span>${friend.studyMinutes}m</span>
         </div>
       </div>
-      <button class="view-btn primary" style="width: 100%; margin-top: 10px;" onclick="inviteFriendToSession(${friend.id}, '${escapeHtml(friend.name)}')">
+      <button type="button" class="view-btn primary" style="width: 100%; margin-top: 10px;" data-action="study-friend" data-friend-id="${friend.id}">
         <i class="ri-send-plane-line"></i> Study Together
       </button>
     `;
@@ -137,20 +139,43 @@ function startCollabSession() {
 
   const sessionModal = document.createElement('div');
   sessionModal.className = 'modal-overlay';
-  sessionModal.innerHTML = `
-    <div class="modal-content" style="max-width: 400px;">
-      <h3>Start Collaborative Study Session</h3>
-      <p style="margin: 15px 0; color: var(--text-light);">Choose a study friend to partner with</p>
-      <div style="display: grid; gap: 10px; max-height: 300px; overflow-y: auto;">
-        ${collaborativeState.friends.map(f => `
-          <button class="view-btn" style="text-align: left; padding: 12px;" onclick="selectSessionPartner(${f.id}, '${escapeHtml(f.name)}')">
-            <i class="ri-user-fill"></i> ${escapeHtml(f.name)} <span style="float: right; font-size: 12px; opacity: 0.7;">${f.score} pts</span>
-          </button>
-        `).join('')}
-      </div>
-      <button class="view-btn" onclick="this.parentElement.parentElement.remove()" style="width: 100%; margin-top: 15px;">Cancel</button>
-    </div>
-  `;
+  const content = document.createElement('div');
+  content.className = 'modal-content';
+  content.style.maxWidth = '400px';
+
+  const title = document.createElement('h3');
+  title.textContent = 'Start Collaborative Study Session';
+  content.appendChild(title);
+
+  const hint = document.createElement('p');
+  hint.style.margin = '15px 0';
+  hint.style.color = 'var(--text-light)';
+  hint.textContent = 'Choose a study friend to partner with';
+  content.appendChild(hint);
+
+  const list = document.createElement('div');
+  list.style.cssText = 'display: grid; gap: 10px; max-height: 300px; overflow-y: auto;';
+
+  collaborativeState.friends.forEach(f => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'view-btn';
+    btn.style.cssText = 'text-align: left; padding: 12px;';
+    btn.innerHTML = `<i class="ri-user-fill"></i> ${escapeHtml(f.name)} <span style="float: right; font-size: 12px; opacity: 0.7;">${f.score} pts</span>`;
+    btn.addEventListener('click', () => selectSessionPartner(f.id, f.name));
+    list.appendChild(btn);
+  });
+  content.appendChild(list);
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'view-btn';
+  cancelBtn.style.cssText = 'width: 100%; margin-top: 15px;';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', () => sessionModal.remove());
+  content.appendChild(cancelBtn);
+
+  sessionModal.appendChild(content);
   document.body.appendChild(sessionModal);
   sessionModal.addEventListener('click', (e) => {
     if (e.target === sessionModal) sessionModal.remove();
@@ -359,7 +384,7 @@ function renderChallenges() {
           <h4>${escapeHtml(challenge.title)}</h4>
           <p class="muted">Type: <strong>${challenge.type === 'tasks' ? 'Most Tasks' : challenge.type === 'study' ? 'Most Study Time' : challenge.type === 'score' ? 'Highest Score' : 'Longest Streak'}</strong> • ${daysLeft} days left</p>
         </div>
-        ${isJoined ? `<button class="view-btn danger" onclick="leaveChallenge(${challenge.id})">Leave</button>` : `<button class="view-btn primary" onclick="joinChallenge(${challenge.id})">Join</button>`}
+        ${isJoined ? `<button type="button" class="view-btn danger" data-action="leave-challenge" data-challenge-id="${challenge.id}">Leave</button>` : `<button type="button" class="view-btn primary" data-action="join-challenge" data-challenge-id="${challenge.id}">Join</button>`}
       </div>
       <div class="challenge-participants">
         <h5>Leaderboard (${challenge.participants.length} participant${challenge.participants.length !== 1 ? 's' : ''})</h5>
@@ -442,8 +467,37 @@ function renderLeaderboard(entries) {
 // EVENT LISTENERS & INITIALIZATION
 // ==========================================================================
 
+function setupCollabDelegation() {
+  const friendsGrid = document.getElementById('friendsListGrid');
+  if (friendsGrid && !friendsGrid.dataset.delegationBound) {
+    friendsGrid.dataset.delegationBound = '1';
+    friendsGrid.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn || !friendsGrid.contains(btn)) return;
+      const friendId = Number(btn.dataset.friendId);
+      const friend = collaborativeState.friends.find(f => f.id === friendId);
+      if (!friend) return;
+      if (btn.dataset.action === 'remove-friend') removeFriend(friendId);
+      else if (btn.dataset.action === 'study-friend') inviteFriendToSession(friend.id, friend.name);
+    });
+  }
+
+  const challengesGrid = document.getElementById('challengesGrid');
+  if (challengesGrid && !challengesGrid.dataset.delegationBound) {
+    challengesGrid.dataset.delegationBound = '1';
+    challengesGrid.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn || !challengesGrid.contains(btn)) return;
+      const challengeId = Number(btn.dataset.challengeId);
+      if (btn.dataset.action === 'join-challenge') joinChallenge(challengeId);
+      else if (btn.dataset.action === 'leave-challenge') leaveChallenge(challengeId);
+    });
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   loadCollaborativeData();
+  setupCollabDelegation();
 
   // Friend buttons
   const addFriendBtn = document.getElementById('addFriendBtn');
