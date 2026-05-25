@@ -38,7 +38,11 @@ function addTask() {
     id: Date.now(),
     text: text,
     completed: false,
-    timestamp: `(${day}, ${date} at ${time})`
+    timestamp: `(${day}, ${date} at ${time})`,
+    createdAt: now.toISOString(),
+    completedAt: null,
+    category: "General",
+    priority: "Medium"
   };
 
   tasks.push(newTask);
@@ -54,7 +58,12 @@ function removeTask(id) {
 function toggleTask(id) {
   tasks = tasks.map(task => {
     if (task.id === id) {
-      return { ...task, completed: !task.completed };
+      const completed = !task.completed;
+      return {
+        ...task,
+        completed,
+        completedAt: completed ? new Date().toISOString() : null
+      };
     }
     return task;
   });
@@ -74,7 +83,9 @@ function editTask(id) {
 
 function saveAndRender() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
+  localStorage.setItem("quests", JSON.stringify(tasks));
   renderTasks();
+  if (typeof window.refreshAnalytics === "function") window.refreshAnalytics();
 }
 
 function renderTasks() {
@@ -137,7 +148,3 @@ function initTheme() {
   }
 }
 
-
-
-/* Export JSON Logic */
-document.getElementById('exportJsonBtn')?.addEventListener('click', () => { const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tasks, null, 2)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute('href', dataStr); dlAnchorElem.setAttribute('download', 'taskquest_backup.json'); dlAnchorElem.click(); });
