@@ -54,7 +54,7 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSys
 .game-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
 
 .game-card{background:var(--bg-card);border:0.5px solid var(--bdr);border-radius:var(--rl);padding:18px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s,transform .2s;cursor:default}
-.game-card:hover{border-color:var(--bdr2);transform:translateY(-2px)}
+.game-card:hover, .game-card:focus-within {border-color:var(--bdr2);transform:translateY(-2px)}
 
 .gc-header{display:flex;align-items:center;justify-content:space-between}
 .gc-icon{width:40px;height:40px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:20px}
@@ -178,3 +178,7 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSys
 .type-bar{height:100%;background:var(--pink);border-radius:2px;transition:width .2s}
 
 .hidden{display:none!important}
+.game-btn:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
+}

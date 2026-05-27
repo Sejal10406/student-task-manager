@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Performance Tracker • TaskQuest</title>
+  <meta name="description" content="Track your course grades, topic mastery, and detailed academic performance reports." />
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Poppins:wght@600;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060814;
+            --card: rgba(15, 12, 38, 0.45);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #a855f7;
+            --secondary: #06b6d4;
+            --text: #ffffff;
+            --text-light: #94a3b8;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+            --radius: 24px;
+        }
+
+        [data-theme="sunset"] {
+            --bg: #fffcf8;
+            --card: rgba(255, 255, 255, 0.75);
+            --border: rgba(0, 0, 0, 0.07);
+            --text: #1e293b;
+            --text-light: #64748b;
+            --primary: #f59e0b;
+            --secondary: #f43f5e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 40px 20px;
+            background-image: radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.05) 0%, var(--bg) 100%);
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+        }
+
+        .glass-card {
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 40px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .form-section {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-field label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-light);
+            padding-left: 4px;
+        }
+
+        input {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            padding: 14px 18px;
+            border-radius: 16px;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.15);
+        }
+
+        .subject-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .subject-row {
+            display: grid;
+            grid-template-columns: 1fr 140px 140px 48px;
+            gap: 12px;
+            align-items: center;
+            animation: rowIn 0.4s ease forwards;
+        }
+
+        @keyframes rowIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .btn {
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-add {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        .btn-add:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .btn-track {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 16px;
+            font-size: 16px;
+            box-shadow: 0 8px 25px rgba(168, 85, 247, 0.3);
+            margin-top: 20px;
+        }
+
+        .btn-track:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(168, 85, 247, 0.45);
+        }
+
+        .btn-remove {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            height: 48px;
+            width: 48px;
+        }
+
+        .btn-remove:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        #analysis-result {
+            margin-top: 40px;
+            display: none;
+            border-top: 1px solid var(--border);
+            padding-top: 30px;
+        }
+
+        .result-box {
+            padding: 24px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .result-box.strong {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .result-box.weak {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .result-box i { font-size: 32px; }
+        .strong i { color: var(--success); }
+        .weak i { color: var(--danger); }
+
+        .result-text h3 { font-size: 18px; margin-bottom: 4px; }
+        .result-text p { font-size: 14px; opacity: 0.9; line-height: 1.5; }
+
+        @media (max-width: 700px) {
+            .subject-row { grid-template-columns: 1fr 100px 100px 48px; }
+        }
+    </style>
+</head>
+<body data-theme="cosmic">
+    <div class="container">
+        <header>
+            <h1>Performance Evaluator</h1>
+            <p style="color: var(--text-light);">Analyze your academic progress and focus on what matters most.</p>
+        </header>
+
+        <div class="glass-card">
+            <div class="form-section">
+                <div class="input-field">
+                    <label for="username">Scholar Name</label>
+                    <input type="text" id="username" placeholder="Enter your username...">
+                </div>
+
+                <div class="input-field">
+                    <label>Manage Subjects</label>
+                    <div id="subjectList" class="subject-list">
+                        <div class="subject-row">
+                            <input type="text" class="sub-name" placeholder="Subject Name">
+                            <input type="number" class="sub-marks" placeholder="Obtained">
+                            <input type="number" class="sub-total" placeholder="Total Marks">
+                            <button class="btn btn-remove" onclick="this.parentElement.remove()"><i class="ri-delete-bin-line"></i></button>
+                        </div>
+                    </div>
+                    <button class="btn btn-add" onclick="addSubjectRow()">
+                        <i class="ri-add-line"></i> Add Subject
+                    </button>
+                </div>
+
+                <button class="btn btn-track" onclick="evaluatePerformance()">
+                    <i class="ri-line-chart-line"></i> Track Progress
+                </button>
+            </div>
+
+            <div id="analysis-result"></div>
+        </div>
+    </div>
+
+    <script>
+        function addSubjectRow() {
+            const container = document.getElementById('subjectList');
+            const div = document.createElement('div');
+            div.className = 'subject-row';
+            div.innerHTML = `
+                <input type="text" class="sub-name" placeholder="Subject Name">
+                <input type="number" class="sub-marks" placeholder="Obtained">
+                <input type="number" class="sub-total" placeholder="Total Marks">
+                <button class="btn btn-remove" onclick="this.parentElement.remove()"><i class="ri-delete-bin-line"></i></button>
+            `;
+            container.appendChild(div);
+        }
+
+        function evaluatePerformance() {
+            const user = document.getElementById('username').value.trim() || 'Scholar';
+            const rows = document.querySelectorAll('.subject-row');
+            const results = [];
+
+            rows.forEach(row => {
+                const name = row.querySelector('.sub-name').value.trim();
+                const marks = parseFloat(row.querySelector('.sub-marks').value);
+                const total = parseFloat(row.querySelector('.sub-total').value);
+
+                if (name && !isNaN(marks) && !isNaN(total) && total > 0) {
+                    results.push({ name, percent: (marks / total) * 100 });
+                }
+            });
+
+            if (results.length === 0) return alert('Please enter at least one subject with valid marks!');
+
+            results.sort((a, b) => b.percent - a.percent);
+            const strong = results[0];
+            const weak = results[results.length - 1];
+            const resDiv = document.getElementById('analysis-result');
+
+            resDiv.style.display = 'block';
+            resDiv.innerHTML = `
+                <div class="result-box strong">
+                    <i class="ri-medal-fill"></i>
+                    <div class="result-text">
+                        <h3>Peak Performance: ${strong.name}</h3>
+                        <p><strong>${user}</strong> Your Strong Subject is <strong>${strong.name}</strong>, Keep going champ!</p>
+                    </div>
+                </div>
+                <div class="result-box weak">
+                    <i class="ri-error-warning-fill"></i>
+                    <div class="result-text">
+                        <h3>Focus Required: ${weak.name}</h3>
+                        <p><strong>${user}</strong> Your Weak subject is <strong>${weak.name}</strong>, Study hard dude!</p>
+                    </div>
+                </div>
+            `;
+            resDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Theme sync with TaskQuest
+        const currentTheme = localStorage.getItem('quests_theme') || 'cosmic';
+        document.body.setAttribute('data-theme', currentTheme);
+    </script>
+</body>
+</html>
+<style>
+.chart-container {
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  padding: 20px;
+  background: #ffffff;
+}
+</style>

@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Productivity Reward Wheel</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a28;
+    --accent: #f5c842;
+    --accent2: #ff6b6b;
+    --accent3: #6bffd8;
+    --accent4: #b06bff;
+    --text: #f0eef8;
+    --text-dim: #7a7896;
+    --glow: rgba(245, 200, 66, 0.25);
+    --radius: 16px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Background grain */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  /* Ambient glow blobs */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .blob-1 { width: 500px; height: 500px; background: rgba(180, 100, 255, 0.07); top: -100px; left: -150px; }
+  .blob-2 { width: 400px; height: 400px; background: rgba(245, 200, 66, 0.06); bottom: 0; right: -100px; }
+  .blob-3 { width: 300px; height: 300px; background: rgba(107, 255, 216, 0.05); top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+  .page-wrapper {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 900px;
+    padding: 32px 20px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 36px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    width: 100%;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(245, 200, 66, 0.1);
+    border: 1px solid rgba(245, 200, 66, 0.3);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .badge-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+
+  h1 {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -1px;
+  }
+  h1 em {
+    font-style: normal;
+    color: var(--accent);
+    position: relative;
+  }
+  .subtitle {
+    margin-top: 10px;
+    color: var(--text-dim);
+    font-size: 15px;
+    font-weight: 400;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .stat-card {
+    flex: 1;
+    min-width: 140px;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 2px 2px 0 0;
+  }
+  .stat-card.gold::after { background: var(--accent); }
+  .stat-card.red::after { background: var(--accent2); }
+  .stat-card.teal::after { background: var(--accent3); }
+  .stat-card.purple::after { background: var(--accent4); }
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+    transition: all 0.4s;
+  }
+  .stat-card.gold .stat-value { color: var(--accent); }
+  .stat-card.red .stat-value { color: var(--accent2); }
+  .stat-card.teal .stat-value { color: var(--accent3); }
+  .stat-card.purple .stat-value { color: var(--accent4); }
+  .stat-unit { font-size: 13px; font-weight: 400; color: var(--text-dim); margin-left: 4px; }
+
+  /* Main layout */
+  .main-section {
+    display: flex;
+    gap: 32px;
+    width: 100%;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Wheel container */
+  .wheel-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    flex: 0 0 auto;
+  }
+
+  .wheel-wrapper {
+    position: relative;
+    width: 340px;
+    height: 340px;
+  }
+
+  /* Outer ring glow */
+  .wheel-glow {
+    position: absolute;
+    inset: -20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, transparent 55%, rgba(245, 200, 66, 0.08) 70%, transparent 80%);
+    animation: rotateGlow 8s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes rotateGlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  /* Tick marks */
+  .wheel-tick-ring {
+    position: absolute;
+    inset: -10px;
+    border-radius: 50%;
+    border: 1px dashed rgba(245, 200, 66, 0.15);
+    pointer-events: none;
+  }
+
+  .canvas-wheel {
+    width: 340px;
+    height: 340px;
+    border-radius: 50%;
+    filter: drop-shadow(0 0 30px rgba(245, 200, 66, 0.12));
+    cursor: pointer;
+    transition: filter 0.3s;
+  }
+  .canvas-wheel:hover { filter: drop-shadow(0 0 40px rgba(245, 200, 66, 0.22)); }
+
+  /* Pointer */
+  .pointer {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 14px solid transparent;
+    border-right: 14px solid transparent;
+    border-top: 28px solid var(--accent);
+    z-index: 10;
+    filter: drop-shadow(0 4px 12px rgba(245, 200, 66, 0.6));
+  }
+  .pointer::after {
+    content: '';
+    position: absolute;
+    top: -32px;
+    left: -6px;
+    width: 12px;
+    height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  /* Center button */
+  .wheel-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background: var(--bg);
+    border: 3px solid var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 0 24px rgba(245, 200, 66, 0.4), inset 0 0 12px rgba(245, 200, 66, 0.1);
+    z-index: 10;
+    cursor: pointer;
+    transition: all 0.3s;
+    user-select: none;
+  }
+  .wheel-center:hover {
+    background: rgba(245, 200, 66, 0.1);
+    box-shadow: 0 0 40px rgba(245, 200, 66, 0.5), inset 0 0 20px rgba(245, 200, 66, 0.15);
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+
+  /* Spin button */
+  .spin-btn {
+    background: var(--accent);
+    color: #0a0a0f;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 48px;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s;
+    text-transform: uppercase;
+  }
+  .spin-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 60%);
+  }
+  .spin-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(245, 200, 66, 0.4); }
+  .spin-btn:active { transform: translateY(0); }
+  .spin-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  .spin-btn .btn-sub {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    opacity: 0.7;
+    letter-spacing: 2px;
+    margin-top: 2px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Task input side */
+  .task-section {
+    flex: 1;
+    min-width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .section-title {
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .task-input-group {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius);
+    padding: 4px;
+    display: flex;
+    gap: 4px;
+    transition: border-color 0.3s;
+  }
+  .task-input-group:focus-within { border-color: rgba(245, 200, 66, 0.35); }
+
+  .task-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    outline: none;
+  }
+  .task-input::placeholder { color: var(--text-dim); }
+
+  .add-btn {
+    background: rgba(245, 200, 66, 0.12);
+    border: 1px solid rgba(245, 200, 66, 0.2);
+    border-radius: 10px;
+    color: var(--accent);
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 22px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .add-btn:hover { background: rgba(245, 200, 66, 0.22); transform: scale(1.05); }
+
+  /* Task list */
+  .task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 260px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--surface2) transparent;
+  }
+
+  .task-item {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+
+  .task-item.completed {
+    border-color: rgba(107, 255, 216, 0.25);
+    background: rgba(107, 255, 216, 0.04);
+  }
+
+  .task-check {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    border: 2px solid rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    font-size: 13px;
+  }
+  .task-item.completed .task-check {
+    background: var(--accent3);
+    border-color: var(--accent3);
+    color: #0a0a0f;
+  }
+  .task-check:hover { border-color: var(--accent3); }
+
+  .task-text {
+    flex: 1;
+    font-size: 14px;
+    transition: all 0.3s;
+  }
+  .task-item.completed .task-text {
+    color: var(--text-dim);
+    text-decoration: line-through;
+    text-decoration-color: var(--accent3);
+  }
+
+  .task-del {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0;
+    transition: all 0.2s;
+    padding: 4px;
+    border-radius: 6px;
+  }
+  .task-item:hover .task-del { opacity: 1; }
+  .task-del:hover { color: var(--accent2); background: rgba(255,107,107,0.1); }
+
+  .spin-prompt {
+    background: rgba(245, 200, 66, 0.07);
+    border: 1px dashed rgba(245, 200, 66, 0.25);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--accent);
+    text-align: center;
+    animation: fadeIn 0.5s ease;
+    display: none;
+  }
+  .spin-prompt.visible { display: block; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* Reward history */
+  .history-section {
+    width: 100%;
+  }
+  .history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .history-item {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+  .history-icon { font-size: 24px; flex-shrink: 0; }
+  .history-name { font-size: 13px; font-weight: 700; }
+  .history-desc { font-size: 11px; color: var(--text-dim); margin-top: 2px; font-family: 'Space Mono', monospace; }
+
+  /* Overlay modal */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  .overlay.visible { opacity: 1; pointer-events: all; }
+
+  .reward-modal {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px;
+    padding: 48px 40px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    position: relative;
+    transform: scale(0.85) translateY(20px);
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .overlay.visible .reward-modal { transform: scale(1) translateY(0); }
+
+  .reward-modal::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 24px;
+    z-index: -1;
+  }
+
+  .modal-emoji {
+    font-size: 72px;
+    margin-bottom: 16px;
+    display: block;
+    animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s both;
+  }
+  @keyframes bounceIn {
+    from { transform: scale(0) rotate(-15deg); }
+    to { transform: scale(1) rotate(0deg); }
+  }
+
+  .modal-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .modal-title {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .modal-desc {
+    font-size: 15px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+
+  .modal-close {
+    background: var(--accent);
+    color: #0a0a0f;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 40px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .modal-close:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,200,66,0.35); }
+
+  /* Confetti */
+  .confetti-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 200;
+    overflow: hidden;
+  }
+  .confetti-piece {
+    position: absolute;
+    top: -20px;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Spinning state */
+  .spinning .canvas-wheel { animation: wheelSpin var(--spin-duration, 4s) cubic-bezier(0.17, 0.67, 0.12, 1) forwards; }
+  @keyframes wheelSpin { from { transform: rotate(0deg); } to { transform: rotate(var(--spin-degrees, 1440deg)); } }
+
+  /* Streak indicator */
+  .streak-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.25);
+    border-radius: 100px;
+    padding: 8px 18px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent2);
+    transition: all 0.4s;
+  }
+  .streak-badge.hot { background: rgba(255, 107, 107, 0.18); border-color: rgba(255, 107, 107, 0.5); animation: hotStreak 1s ease infinite; }
+  @keyframes hotStreak { 0%,100% { box-shadow: 0 0 0 0 rgba(255,107,107,0.3); } 50% { box-shadow: 0 0 0 8px rgba(255,107,107,0); } }
+
+  .empty-state {
+    text-align: center;
+    padding: 32px;
+    color: var(--text-dim);
+    font-size: 14px;
+    border: 1px dashed rgba(255,255,255,0.08);
+    border-radius: 12px;
+    margin-top: 12px;
+  }
+
+  .multiplier-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(176, 107, 255, 0.15);
+    border: 1px solid rgba(176, 107, 255, 0.3);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent4);
+    margin-top: 4px;
+  }
+
+  @media (max-width: 640px) {
+    .wheel-wrapper { width: 280px; height: 280px; }
+    .canvas-wheel { width: 280px; height: 280px; }
+    .main-section { gap: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+<div class="confetti-container" id="confetti"></div>
+
+<div class="page-wrapper">
+
+  <!-- Header -->
+  <header>
+    <div class="badge"><span class="badge-dot"></span> Productivity Engine</div>
+    <h1>Spin for Your <em>Reward</em></h1>
+    <p class="subtitle">Complete tasks → earn spins → unlock bonuses & boosts</p>
+  </header>
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat-card gold">
+      <div class="stat-label">Total Points</div>
+      <div class="stat-value" id="stat-points">0<span class="stat-unit">pts</span></div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">Current Streak</div>
+      <div class="stat-value" id="stat-streak">0<span class="stat-unit">🔥</span></div>
+    </div>
+    <div class="stat-card teal">
+      <div class="stat-label">Tasks Done</div>
+      <div class="stat-value" id="stat-tasks">0<span class="stat-unit"></span></div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">Spins Left</div>
+      <div class="stat-value" id="stat-spins">0<span class="stat-unit"></span></div>
+    </div>
+  </div>
+
+  <!-- Main section -->
+  <div class="main-section">
+
+    <!-- Wheel -->
+    <div class="wheel-section">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="streak-badge" id="streak-badge">🔥 Streak ×<span id="streak-mult">1</span></div>
+      </div>
+
+      <div class="wheel-wrapper" id="wheel-wrapper">
+        <div class="wheel-glow"></div>
+        <div class="wheel-tick-ring"></div>
+        <div class="pointer"></div>
+        <canvas class="canvas-wheel" id="wheel" width="340" height="340"></canvas>
+        <div class="wheel-center" id="wheel-center" onclick="spinWheel()">⚡</div>
+      </div>
+
+      <button class="spin-btn" id="spin-btn" onclick="spinWheel()" disabled>
+        SPIN TO WIN
+        <span class="btn-sub">0 SPINS AVAILABLE</span>
+      </button>
+    </div>
+
+    <!-- Tasks -->
+    <div class="task-section">
+      <div class="section-title">Tasks Queue</div>
+
+      <div class="task-input-group">
+        <input class="task-input" id="task-input" type="text" placeholder="Add a task to complete..." maxlength="60">
+        <button class="add-btn" onclick="addTask()">+</button>
+      </div>
+
+      <div class="task-list" id="task-list"></div>
+
+      <div class="spin-prompt" id="spin-prompt">
+        ✨ Task completed! You earned a spin. Head to the wheel!
+      </div>
+
+      <div style="margin-top:8px;">
+        <div class="section-title">Quick Add</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+          <button onclick="quickAdd('Review code')" style="background:var(--surface2);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:6px 12px;color:var(--text-dim);font-size:12px;cursor:pointer;font-family:Syne,sans-serif;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(245,200,66,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">Review code</button>
+          <button onclick="quickAdd('Write report')" style="background:var(--surface2);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:6px 12px;color:var(--text-dim);font-size:12px;cursor:pointer;font-family:Syne,sans-serif;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(245,200,66,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">Write report</button>
+          <button onclick="quickAdd('Team standup')" style="background:var(--surface2);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:6px 12px;color:var(--text-dim);font-size:12px;cursor:pointer;font-family:Syne,sans-serif;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(245,200,66,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">Team standup</button>
+          <button onclick="quickAdd('Clear inbox')" style="background:var(--surface2);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:6px 12px;color:var(--text-dim);font-size:12px;cursor:pointer;font-family:Syne,sans-serif;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(245,200,66,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">Clear inbox</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Reward history -->
+  <div class="history-section">
+    <div class="section-title">Recent Rewards</div>
+    <div id="history-container">
+      <div class="empty-state" id="empty-history">No rewards yet — complete tasks and spin to earn!</div>
+    </div>
+    <div class="history-grid" id="history-grid"></div>
+  </div>
+
+</div>
+
+<!-- Reward Modal -->
+<div class="overlay" id="overlay">
+  <div class="reward-modal" id="reward-modal">
+    <span class="modal-emoji" id="modal-emoji">🎉</span>
+    <div class="modal-tag" id="modal-tag">Reward Unlocked</div>
+    <div class="modal-title" id="modal-title">Amazing!</div>
+    <div class="modal-desc" id="modal-desc">You earned something great!</div>
+    <div class="multiplier-badge" id="modal-mult" style="display:none;">⚡ Streak Multiplier Applied!</div>
+    <button class="modal-close" onclick="closeModal()">Awesome, thanks!</button>
+  </div>
+</div>
+
+<script>
+// ─── Rewards ───────────────────────────────────────────────────────────────
+const REWARDS = [
+  { id:'pts50',  label:'+50 pts',    emoji:'💰', color:'#f5c842', desc:'Small wins add up!',                  type:'points',  value:50  },
+  { id:'pts100', label:'+100 pts',   emoji:'🏆', color:'#ffd700', desc:'A solid point reward.',               type:'points',  value:100 },
+  { id:'pts200', label:'+200 pts',   emoji:'💎', color:'#6bffd8', desc:'A big points jackpot!',              type:'points',  value:200 },
+  { id:'boost2', label:'2× Boost',   emoji:'⚡', color:'#b06bff', desc:'Double points for next 3 tasks!',    type:'boost',   value:2,  duration:3 },
+  { id:'boost3', label:'3× Boost',   emoji:'🚀', color:'#ff6b6b', desc:'Triple points for next 2 tasks!',   type:'boost',   value:3,  duration:2 },
+  { id:'streak', label:'Streak +1',  emoji:'🔥', color:'#ff9f43', desc:'Your streak just jumped up!',        type:'streak',  value:1  },
+  { id:'xspin',  label:'Free Spin',  emoji:'🎡', color:'#6bcfff', desc:'Bonus spin on the house!',           type:'spin',    value:1  },
+  { id:'pts500', label:'+500 pts',   emoji:'🌟', color:'#ffe066', desc:'Jackpot! Massive points haul.',      type:'points',  value:500 },
+];
+
+const SEGMENT_COLORS = [
+  '#1e1e30','#252540','#1e2a3a','#2a1e3a',
+  '#1e3028','#3a2a1e','#2a1e1e','#1a2a2a',
+];
+
+// ─── State ─────────────────────────────────────────────────────────────────
+let state = {
+  points: 0,
+  streak: 0,
+  tasksCompleted: 0,
+  spinsAvailable: 1, // start with 1 demo spin
+  tasks: [],
+  rewardHistory: [],
+  activeBoost: null,   // { multiplier, tasksLeft }
+  spinning: false,
+};
+
+// ─── Canvas Wheel ──────────────────────────────────────────────────────────
+const canvas = document.getElementById('wheel');
+const ctx = canvas.getContext('2d');
+const SIZE = canvas.width;
+const CX = SIZE / 2, CY = SIZE / 2, R = SIZE / 2 - 8;
+const SEG = (2 * Math.PI) / REWARDS.length;
+let currentRotation = 0;
+
+function drawWheel(rot = 0) {
+  ctx.clearRect(0, 0, SIZE, SIZE);
+
+  // Outer shadow ring
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(CX, CY, R + 6, 0, 2 * Math.PI);
+  ctx.strokeStyle = 'rgba(245,200,66,0.15)';
+  ctx.lineWidth = 10;
+  ctx.stroke();
+  ctx.restore();
+
+  REWARDS.forEach((r, i) => {
+    const start = rot + i * SEG - Math.PI / 2;
+    const end = start + SEG;
+
+    // Segment fill
+    const grad = ctx.createRadialGradient(CX, CY, R * 0.2, CX, CY, R);
+    grad.addColorStop(0, SEGMENT_COLORS[i]);
+    grad.addColorStop(1, adjustBrightness(SEGMENT_COLORS[i], -10));
+
+    ctx.beginPath();
+    ctx.moveTo(CX, CY);
+    ctx.arc(CX, CY, R, start, end);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Accent arc strip
+    ctx.beginPath();
+    ctx.arc(CX, CY, R, start, end);
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = r.color + '88';
+    ctx.stroke();
+
+    // Divider lines
+    ctx.beginPath();
+    ctx.moveTo(CX, CY);
+    ctx.lineTo(CX + R * Math.cos(start), CY + R * Math.sin(start));
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Emoji
+    const emojiAngle = start + SEG / 2;
+    const emojiR = R * 0.7;
+    const ex = CX + emojiR * Math.cos(emojiAngle);
+    const ey = CY + emojiR * Math.sin(emojiAngle);
+
+    ctx.save();
+    ctx.translate(ex, ey);
+    ctx.rotate(emojiAngle + Math.PI / 2);
+    ctx.font = '22px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(r.emoji, 0, 0);
+    ctx.restore();
+
+    // Label
+    const lblAngle = start + SEG / 2;
+    const lblR = R * 0.42;
+    const lx = CX + lblR * Math.cos(lblAngle);
+    const ly = CY + lblR * Math.sin(lblAngle);
+
+    ctx.save();
+    ctx.translate(lx, ly);
+    ctx.rotate(lblAngle + Math.PI / 2);
+    ctx.font = 'bold 11px Syne, sans-serif';
+    ctx.fillStyle = r.color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(r.label, 0, 0);
+    ctx.restore();
+  });
+
+  // Center cap
+  const capGrad = ctx.createRadialGradient(CX, CY, 0, CX, CY, 34);
+  capGrad.addColorStop(0, '#1a1a28');
+  capGrad.addColorStop(1, '#0a0a0f');
+  ctx.beginPath();
+  ctx.arc(CX, CY, 34, 0, 2 * Math.PI);
+  ctx.fillStyle = capGrad;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(245,200,66,0.4)';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+}
+
+function adjustBrightness(hex, pct) {
+  const r = parseInt(hex.slice(1,3),16) + pct;
+  const g = parseInt(hex.slice(3,5),16) + pct;
+  const b = parseInt(hex.slice(5,7),16) + pct;
+  return '#' + [r,g,b].map(v => Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0')).join('');
+}
+
+drawWheel(0);
+
+// ─── Spin Logic ─────────────────────────────────────────────────────────────
+function spinWheel() {
+  if (state.spinning || state.spinsAvailable < 1) return;
+  state.spinning = true;
+  state.spinsAvailable--;
+  updateUI();
+
+  // Pick reward
+  const rewardIdx = Math.floor(Math.random() * REWARDS.length);
+  const reward = REWARDS[rewardIdx];
+
+  // Calculate target rotation
+  const segAngle = 360 / REWARDS.length;
+  const targetSegCenter = rewardIdx * segAngle + segAngle / 2;
+  const extraSpins = 5 + Math.floor(Math.random() * 4); // 5-8 full spins
+  const totalDeg = extraSpins * 360 + (360 - targetSegCenter - (currentRotation % 360) + 360) % 360;
+
+  const totalRad = (totalDeg * Math.PI) / 180;
+  const duration = 3800 + Math.random() * 800;
+  const start = performance.now();
+  const startRot = currentRotation;
+
+  function easeOut(t) {
+    return 1 - Math.pow(1 - t, 4);
+  }
+
+  function animate(now) {
+    const elapsed = now - start;
+    const t = Math.min(elapsed / duration, 1);
+    const easedT = easeOut(t);
+    const rot = startRot + totalRad * easedT;
+    currentRotation = rot;
+    drawWheel(rot);
+
+    if (t < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      // Done
+      state.spinning = false;
+      applyReward(reward);
+      updateUI();
+      updateSpinBtn();
+    }
+  }
+
+  updateSpinBtn();
+  requestAnimationFrame(animate);
+}
+
+// ─── Reward Application ─────────────────────────────────────────────────────
+function applyReward(reward) {
+  const multiplier = getMultiplier();
+  let bonusText = '';
+
+  switch (reward.type) {
+    case 'points':
+      const earned = reward.value * multiplier;
+      state.points += earned;
+      bonusText = multiplier > 1
+        ? `+${reward.value} pts × ${multiplier} streak = <strong style="color:var(--accent)">${earned} pts</strong> added!`
+        : `<strong style="color:var(--accent)">${earned} pts</strong> added to your total!`;
+      break;
+    case 'boost':
+      state.activeBoost = { multiplier: reward.value, tasksLeft: reward.duration };
+      bonusText = `Next <strong>${reward.duration}</strong> tasks earn <strong style="color:var(--accent4)">${reward.value}× points!</strong>`;
+      break;
+    case 'streak':
+      state.streak += reward.value;
+      bonusText = `Streak jumped to <strong style="color:var(--accent2)">${state.streak} 🔥</strong>`;
+      break;
+    case 'spin':
+      state.spinsAvailable += reward.value;
+      bonusText = `You got a <strong style="color:var(--accent3)">bonus spin!</strong> Go again!`;
+      break;
+  }
+
+  // Add to history
+  state.rewardHistory.unshift({ ...reward, earnedAt: Date.now(), multiplier });
+  if (state.rewardHistory.length > 8) state.rewardHistory.pop();
+
+  showModal(reward, bonusText, multiplier);
+  launchConfetti(reward.color);
+  updateUI();
+  renderHistory();
+}
+
+function getMultiplier() {
+  let m = 1;
+  if (state.streak >= 10) m = 3;
+  else if (state.streak >= 5) m = 2;
+  else if (state.streak >= 3) m = 1.5;
+  if (state.activeBoost) m = Math.max(m, state.activeBoost.multiplier);
+  return m;
+}
+
+// ─── Modal ─────────────────────────────────────────────────────────────────
+function showModal(reward, desc, multiplier) {
+  document.getElementById('modal-emoji').textContent = reward.emoji;
+  document.getElementById('modal-tag').textContent = reward.type.toUpperCase() + ' REWARD';
+  document.getElementById('modal-tag').style.color = reward.color;
+  document.getElementById('modal-title').textContent = reward.label;
+  document.getElementById('modal-desc').innerHTML = desc;
+
+  const multBadge = document.getElementById('modal-mult');
+  if (multiplier > 1) {
+    multBadge.style.display = 'inline-flex';
+    multBadge.textContent = `⚡ ${multiplier}× Multiplier Applied!`;
+  } else {
+    multBadge.style.display = 'none';
+  }
+
+  document.getElementById('overlay').classList.add('visible');
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('visible');
+}
+
+document.getElementById('overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ─── Confetti ─────────────────────────────────────────────────────────────
+function launchConfetti(baseColor) {
+  const container = document.getElementById('confetti');
+  const colors = [baseColor, '#f5c842', '#6bffd8', '#ff6b6b', '#b06bff', '#ffffff'];
+
+  for (let i = 0; i < 60; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.cssText = `
+      left: ${Math.random() * 100}%;
+      background: ${color};
+      width: ${6 + Math.random() * 8}px;
+      height: ${6 + Math.random() * 8}px;
+      border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+      animation-duration: ${2 + Math.random() * 2}s;
+      animation-delay: ${Math.random() * 0.5}s;
+      opacity: 1;
+    `;
+    container.appendChild(piece);
+    piece.addEventListener('animationend', () => piece.remove());
+  }
+}
+
+// ─── Task Management ───────────────────────────────────────────────────────
+let taskIdCounter = 0;
+
+function addTask(text) {
+  const input = document.getElementById('task-input');
+  const taskText = text || input.value.trim();
+  if (!taskText) return;
+
+  state.tasks.unshift({ id: ++taskIdCounter, text: taskText, done: false });
+  input.value = '';
+  renderTasks();
+}
+
+function quickAdd(text) {
+  state.tasks.unshift({ id: ++taskIdCounter, text, done: false });
+  renderTasks();
+}
+
+function completeTask(id) {
+  const task = state.tasks.find(t => t.id === id);
+  if (!task || task.done) return;
+  task.done = true;
+
+  state.tasksCompleted++;
+  state.streak++;
+  state.spinsAvailable++;
+
+  // Apply active boost if any
+  let pts = 10;
+  if (state.activeBoost) {
+    pts = 10 * state.activeBoost.multiplier;
+    state.activeBoost.tasksLeft--;
+    if (state.activeBoost.tasksLeft <= 0) state.activeBoost = null;
+  }
+  state.points += pts;
+
+  renderTasks();
+  updateUI();
+  updateSpinBtn();
+
+  // Show spin prompt
+  const prompt = document.getElementById('spin-prompt');
+  prompt.classList.add('visible');
+  setTimeout(() => prompt.classList.remove('visible'), 4000);
+}
+
+function deleteTask(id) {
+  state.tasks = state.tasks.filter(t => t.id !== id);
+  renderTasks();
+}
+
+function renderTasks() {
+  const list = document.getElementById('task-list');
+  if (state.tasks.length === 0) {
+    list.innerHTML = '<div style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px;">Add tasks above to get started!</div>';
+    return;
+  }
+
+  list.innerHTML = state.tasks.map(t => `
+    <div class="task-item ${t.done ? 'completed' : ''}" id="task-${t.id}">
+      <div class="task-check" onclick="${t.done ? '' : `completeTask(${t.id})`}">
+        ${t.done ? '✓' : ''}
+      </div>
+      <span class="task-text">${t.text}</span>
+      <button class="task-del" onclick="deleteTask(${t.id})">✕</button>
+    </div>
+  `).join('');
+}
+
+// ─── UI Updates ─────────────────────────────────────────────────────────────
+function updateUI() {
+  document.getElementById('stat-points').innerHTML = `${state.points}<span class="stat-unit">pts</span>`;
+  document.getElementById('stat-streak').innerHTML = `${state.streak}<span class="stat-unit">🔥</span>`;
+  document.getElementById('stat-tasks').innerHTML = `${state.tasksCompleted}`;
+  document.getElementById('stat-spins').innerHTML = `${state.spinsAvailable}`;
+
+  // Streak badge
+  const streakBadge = document.getElementById('streak-badge');
+  const mult = getMultiplier();
+  document.getElementById('streak-mult').textContent = mult;
+  if (state.streak >= 5) streakBadge.classList.add('hot');
+  else streakBadge.classList.remove('hot');
+
+  // Animate stat changes
+  document.querySelectorAll('.stat-value').forEach(el => {
+    el.style.transform = 'scale(1.1)';
+    setTimeout(() => el.style.transform = 'scale(1)', 200);
+  });
+}
+
+function updateSpinBtn() {
+  const btn = document.getElementById('spin-btn');
+  const hasSpins = state.spinsAvailable > 0 && !state.spinning;
+  btn.disabled = !hasSpins;
+  btn.querySelector('.btn-sub').textContent = state.spinning
+    ? 'SPINNING...'
+    : `${state.spinsAvailable} SPIN${state.spinsAvailable !== 1 ? 'S' : ''} AVAILABLE`;
+}
+
+function renderHistory() {
+  const grid = document.getElementById('history-grid');
+  const empty = document.getElementById('empty-history');
+
+  if (state.rewardHistory.length === 0) {
+    empty.style.display = 'block';
+    grid.innerHTML = '';
+    return;
+  }
+
+  empty.style.display = 'none';
+  grid.innerHTML = state.rewardHistory.map(r => `
+    <div class="history-item" style="border-color:${r.color}22;">
+      <div class="history-icon">${r.emoji}</div>
+      <div>
+        <div class="history-name" style="color:${r.color}">${r.label}</div>
+        <div class="history-desc">${r.type.toUpperCase()}${r.multiplier > 1 ? ` · ${r.multiplier}× mult` : ''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── Keyboard ──────────────────────────────────────────────────────────────
+document.getElementById('task-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addTask();
+});
+
+// ─── Init ──────────────────────────────────────────────────────────────────
+// Preload some demo tasks
+state.tasks = [
+  { id: ++taskIdCounter, text: 'Review pull request', done: false },
+  { id: ++taskIdCounter, text: 'Write meeting notes', done: false },
+  { id: ++taskIdCounter, text: 'Update project board', done: false },
+];
+
+renderTasks();
+updateUI();
+updateSpinBtn();
+renderHistory();
+</script>
+</body>
+</html>
+<style>
+.spin-wheel-container {
+  overflow: hidden;
+  border-radius: 50%;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+}
+</style>

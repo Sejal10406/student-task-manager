@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Documentation - Study Task Tracker</title>
+  <title>Documentation & Setup • TaskQuest</title>
+  <meta name="description" content="Step-by-step setup guides, features list, and API documentation for TaskQuest." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,6 +12,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="legal-page">
+<main>
   <!-- BACKGROUND -->
   <div class="bg blur1"></div>
   <div class="bg blur2"></div>
@@ -46,27 +48,31 @@
   </header>
 
   <main class="container">
-    <section>
+    <div class="search-box glass" style="margin-bottom: 2rem; display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 8px 16px;">
+      <i class="ri-search-line" style="color: var(--text-light); font-size: 1.2rem;"></i>
+      <input type="text" id="docSearch" placeholder="Search documentation..." style="width: 100%; border: none; background: transparent; color: var(--text); outline: none; font-size: 1rem;">
+    </div>
+    <section class="doc-section">
       <h2>🚀 Getting Started</h2>
       <p>Simply enter your task in the input box, select a priority, choose a due date, and click <strong>Add</strong>.</p>
     </section>
 
-    <section style="margin-top: 2rem;">
+    <section class="doc-section" style="margin-top: 2rem;">
       <h2>🔍 Search & Filtering</h2>
       <p>Use the search bar to quickly find tasks. The list filters in real-time as you type.</p>
     </section>
 
-    <section style="margin-top: 2rem;">
+    <section class="doc-section" style="margin-top: 2rem;">
       <h2>✏️ Editing Tasks</h2>
       <p>Click the <strong>Edit</strong> button on any task to change its text inline. Click <strong>Save</strong> to commit your changes.</p>
     </section>
 
-    <section style="margin-top: 2rem;">
+    <section class="doc-section" style="margin-top: 2rem;">
       <h2>📊 Progress Tracking</h2>
       <p>The progress bar at the bottom updates automatically as you complete tasks. Finish all tasks to trigger a celebration!</p>
     </section>
 
-    <section style="margin-top: 2rem;">
+    <section class="doc-section" style="margin-top: 2rem;">
       <h2>🎨 Themes</h2>
       <p>Switch between Light, Dark, Blue, and Pastel themes using the dropdown in the header. Your preference is saved automatically.</p>
     </section>
@@ -76,9 +82,25 @@
     <p>&copy; 2026 Study Task Tracker. Empowering students.</p>
   </footer>
 
+  <script src="storage.js"></script>
   <script>
+    const docSearch = document.getElementById("docSearch");
+    if (docSearch) {
+      docSearch.addEventListener("input", (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        document.querySelectorAll(".doc-section").forEach(sec => {
+          const text = sec.textContent.toLowerCase();
+          if (text.includes(query)) {
+            sec.style.display = "block";
+          } else {
+            sec.style.display = "none";
+          }
+        });
+      });
+    }
+
     const themeSwitcher = document.getElementById("themeSwitcher");
-    const savedTheme = localStorage.getItem("quests_theme") || "cosmic";
+    const savedTheme = (window.TaskQuestStorage ? window.TaskQuestStorage.getTheme() : localStorage.getItem("taskquest_v1.theme")) || "cosmic";
     document.body.setAttribute("data-theme", savedTheme);
     if (savedTheme === "sunset") document.body.classList.add("light");
     themeSwitcher.value = savedTheme;
@@ -87,8 +109,13 @@
       const theme = e.target.value;
       document.body.setAttribute("data-theme", theme);
       if (theme === "sunset") document.body.classList.add("light"); else document.body.classList.remove("light");
-      localStorage.setItem("quests_theme", theme);
+      if (window.TaskQuestStorage) { window.TaskQuestStorage.setTheme(theme); } else { localStorage.setItem("taskquest_v1.theme", theme); }
     });
   </script>
 </body>
 </html>
+
+<section id="api-reference">
+  <h2>API Reference</h2>
+  <p>API documentation will be available in future releases.</p>
+</section>

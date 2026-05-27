@@ -1,15 +1,19 @@
+"use strict";
 (function() {
-  const STORAGE_KEY = "taskquest_leaderboard_v1";
-  const PROFILE_KEY = "quests_profile";
-  const COINS_KEY = "coins";
-  const TASKS_KEY = "quests";
-  const STREAK_KEY = "streak";
-  const XP_KEY = "xp";
+  // Use unified storage keys when available, fall back to legacy keys
+  const _S = window.TaskQuestStorage;
+  const STORAGE_KEY = _S ? _S.KEYS.LEADERBOARD    : "taskquest_leaderboard_v1";
+  const PROFILE_KEY = _S ? _S.KEYS.PROFILE         : "quests_profile";
+  const COINS_KEY   = _S ? _S.KEYS.COINS            : "coins";
+  const TASKS_KEY   = _S ? _S.KEYS.TASKS            : "quests";
+  const STREAK_KEY  = _S ? _S.KEYS.STREAK           : "streak";
+  const XP_KEY      = _S ? _S.KEYS.XP               : "xp";
   const REFRESH_INTERVAL = 900;
   const currentTimestamp = () => new Date().toISOString();
 
   const elements = {
     leaderboardTable: document.getElementById("leaderboardTable"),
+    leaderboardBody: document.getElementById("leaderboardBody"),
     liveStatus: document.getElementById("liveStatus"),
     lastUpdatedText: document.getElementById("lastUpdatedText"),
     myRank: document.getElementById("myRank"),
@@ -79,11 +83,21 @@
       const profile = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null");
       const tasks = JSON.parse(localStorage.getItem(TASKS_KEY) || "[]");
       const completedTasks = Array.isArray(tasks) ? tasks.filter(task => task.completed).length : 0;
-      const coins = parseInt(localStorage.getItem(COINS_KEY), 10) || 0;
-      const streak = parseInt(localStorage.getItem(STREAK_KEY), 10) || 0;
-      const xp = parseInt(localStorage.getItem(XP_KEY), 10) || 0;
+
+      // parseInt(null, 10) returns NaN — the || 0 guard does NOT catch it
+      // because NaN is falsy but the || short-circuit only fires for falsy
+      // values produced by the overall expression, not NaN from parseInt.
+      // NaN propagates through the arithmetic and makes score === NaN,
+      // breaking the sort comparator and displaying "NaN" in the UI.
+      // Number() correctly coerces null, "null", undefined, and "" to 0.
+      const coins  = Math.max(0, Number(localStorage.getItem(COINS_KEY))  || 0);
+      const streak = Math.max(0, Number(localStorage.getItem(STREAK_KEY)) || 0);
+      const xp     = Math.max(0, Number(localStorage.getItem(XP_KEY))     || 0);
+
       const name = profile?.name || "You";
-      const score = coins + completedTasks * 30 + streak * 20 + Math.floor(xp / 10);
+      const rawScore = coins + completedTasks * 30 + streak * 20 + Math.floor(xp / 10);
+      // Final guard: if any operand was still NaN for any reason, fall back to 0.
+      const score = Number.isFinite(rawScore) ? rawScore : 0;
 
       return {
         id: "me",
@@ -98,16 +112,31 @@
     }
   }
 
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function buildRow(entry, rank, highlight) {
-    const row = document.createElement("div");
+    const row = document.createElement("tr");
     row.className = `leaderboard-row${highlight ? " highlight-row" : ""}`;
+    const safeName  = escapeHtml(entry.name);
+    const safeScore = Number.isFinite(entry.score) ? entry.score : 0;
+    const safeTasks  = Number.isFinite(entry.completedTasks) ? entry.completedTasks : 0;
+    const safeStreak = Number.isFinite(entry.streak) ? entry.streak : 0;
     row.innerHTML = `
-      <div class="row-rank">#${rank}</div>
-      <div class="row-player">
+      <td class="row-rank">#${rank}</td>
+      <td class="row-player">
         <div class="player-name">${entry.name}</div>
         <div class="player-subtitle">Score ${entry.score} • ${entry.completedTasks} tasks • ${entry.streak}-day streak</div>
-      </div>
-      <div class="row-score">${entry.score}</div>
+      </td>
+      <td class="row-score">${entry.score}</td>
+      <td class="row-completed">${entry.completedTasks}</td>
+      <td class="row-streak">${entry.streak}</td>
     `;
     return row;
   }
@@ -124,11 +153,11 @@
     }
 
     const sorted = sortLeaderboard(merged);
-    elements.leaderboardTable.innerHTML = "";
+    elements.leaderboardBody.innerHTML = "";
 
     sorted.forEach((entry, index) => {
       const isCurrentUser = entry.id === "me";
-      elements.leaderboardTable.appendChild(buildRow(entry, index + 1, isCurrentUser));
+      elements.leaderboardBody.appendChild(buildRow(entry, index + 1, isCurrentUser));
     });
 
     const rank = sorted.findIndex(entry => entry.id === "me") + 1;
@@ -162,6 +191,7 @@
   }
 
   function addOrUpdatePlayer() {
+    if (!elements.playerNameInput) return;
     const name = elements.playerNameInput.value.trim();
     const score = Number(elements.playerScoreInput.value) || 0;
     const completedTasks = Number(elements.playerCompletedInput.value) || 0;

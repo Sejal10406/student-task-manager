@@ -1,3 +1,4 @@
+
 // Core Elements
 const taskInput = document.getElementById("taskInput");
 const addTaskBtn = document.getElementById("addTaskBtn");
@@ -129,7 +130,6 @@ function getTagColor(tag) {
   return palette[Math.abs(hash) % palette.length];
 }
 
-
 // Subject color mapping - deterministic, consistent, accessible
 function getSubjectColor(subject) {
   if (!subject) return '#94a3b8';
@@ -162,7 +162,6 @@ function getContrastColor(hex) {
   const luminance = (0.2126*r + 0.7152*g + 0.0722*b) / 255;
   return luminance > 0.6 ? '#0b1220' : '#ffffff';
 }
-
 
 function getRecentTags() {
   try {
@@ -370,6 +369,7 @@ let currentFilter = "All";
 let currentSort = "default";
 let searchQuery = "";
 let currentView = "list";
+let smartSortEnabled = false; 
 let performanceData = [];
 let timetable = [];
 let calendarEvents = [];
@@ -545,6 +545,26 @@ function loadData() {
           task.tags = typeof task.tags === "string" ? parseTags(task.tags) : [];
         } else {
           task.tags = parseTags(task.tags.join(", "));
+        }
+        // Normalize recurrence fields
+        if (!task.recurrence) task.recurrence = null;
+        if (!task.masterId && task.recurrence) {
+          // create a lightweight masterId if missing for compatibility
+          task.masterId = `rt-${task.id}`;
+          // ensure template exists
+          if (!recurringTemplates.find(t => t.id === task.masterId)) {
+            recurringTemplates.push({ id: task.masterId, text: task.text, category: task.category, priority: task.priority, recurrence: task.recurrence, active: true, startDate: task.createdAt || new Date().toISOString() });
+          }
+        }
+      });
+      // Ensure dependency arrays are normalized
+      tasks.forEach(task => {
+        if (!task.depends) task.depends = [];
+        if (!Array.isArray(task.depends)) {
+          // support comma-separated string legacy
+          task.depends = typeof task.depends === 'string' ? task.depends.split(/[,\s]+/).filter(Boolean).map(id => parseInt(id)) : [];
+        } else {
+          task.depends = task.depends.map(id => parseInt(id)).filter(Boolean);
         }
       });
     } catch (e) {
@@ -1383,6 +1403,18 @@ function addTask() {
     }, 400);
     return;
   }
+  if (text.length > 200) {
+    if (window.showToast) window.showToast("Task description is too long (maximum 200 characters).", "warning");
+    return;
+  }
+    taskInput.classList.add("input-invalid");
+    taskInput.setAttribute("aria-invalid", "true");
+    announce("Failed to add task. Please enter a task description.");
+    setTimeout(() => {
+      taskInput.classList.remove("input-invalid");
+    }, 400);
+    return;
+  }
   taskInput.setAttribute("aria-invalid", "false");
 
 
@@ -1413,6 +1445,29 @@ function addTask() {
     };
     recurringTemplates.push(template);
     task.masterId = template.id;
+  }
+
+  // collect selected prerequisites (multiple)
+  try {
+    const dependsSel = document.getElementById('dependsSelect');
+    if (dependsSel) {
+      const selected = Array.from(dependsSel.selectedOptions).map(o => o.value).filter(v => v !== "" && v !== null && v !== undefined);
+      task.depends = selected.map(v => parseInt(v)).filter(Boolean);
+      // Remove any dependencies that would create a cycle
+      const safeDeps = [];
+      task.depends.forEach(did => {
+        if (hasCircularDependency(task.id, did)) {
+          if (window && window.showToast) window.showToast('Dependency removed to avoid circular reference', 'warning');
+        } else {
+          safeDeps.push(did);
+        }
+      });
+      task.depends = safeDeps;
+    } else {
+      task.depends = [];
+    }
+  } catch (e) {
+    task.depends = [];
   }
 
   tasks.push(task);
@@ -1457,14 +1512,12 @@ function createTaskEl(task) {
   }
 
   const pri = task.priority || "Medium";
+  const urgencyInfo = window.Prioritization ? window.Prioritization.getUrgencyInfo(task) : null;
+  const urgencyBadgeHtml = urgencyInfo ? '<span class="urgency-badge ' + urgencyInfo.level + '">' + urgencyInfo.label + '</span>' : '';
   const catEmoji = getCategoryEmoji(task.category);
   const tags = getTaskTags(task);
   const subjectColor = getSubjectColor(task.category);
   const subjectTextColor = getContrastColor(subjectColor);
-
-  const subjectColor = getSubjectColor(task.category);
-  const subjectTextColor = getContrastColor(subjectColor);
-
 
   div.innerHTML = `
     <div class="drag-handle" title="Drag to reorder"><i class="ri-drag-move-fill"></i></div>
@@ -1475,7 +1528,9 @@ function createTaskEl(task) {
         <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px; flex-wrap: wrap;">
           <p class="task-category" style="margin: 0;"><span class="subject-pill" style="background: ${subjectColor}; color: ${subjectTextColor};">${catEmoji} ${escapeHtml(task.category)}</span></p>
           <span class="priority-pill priority-${pri.toLowerCase()}">${pri}</span>
+          ${urgencyBadgeHtml}
           ${task.recurrence && task.recurrence !== 'none' ? `<span class="recurrence-pill" data-type="${escapeHtml(task.recurrence)}" title="Recurring: ${escapeHtml(task.recurrence)}">${escapeHtml(task.recurrence)}</span>` : ''}
+          ${task.depends && task.depends.length ? `<span class="dependency-pill" title="Depends on ${task.depends.length} task(s)">🔒 ${task.depends.length}</span>` : ''}
           <span class="task-timestamp" style="font-size: 11px; color: var(--text-light); opacity: 0.8;"><i class="ri-history-line"></i> ${task.createdAt}</span>
         </div>
         ${tags.length ? `<div class="task-tags">${tags.map(tag => `<span class="task-tag" style="--tag-color: ${getTagColor(tag)};"><i class="ri-price-tag-3-line"></i>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
@@ -1497,6 +1552,14 @@ function createTaskEl(task) {
   checkBtn.setAttribute("aria-checked", task.completed ? "true" : "false");
 
   const handleToggle = (e) => {
+    // prevent toggling if task has unmet dependencies
+    if (!task.completed && isTaskBlocked(task)) {
+      const pending = (task.depends || []).map(id => tasks.find(t => t.id === id)).filter(Boolean).filter(t => !t.completed).map(t => t.text);
+      const msg = `Cannot complete task until prerequisites are done: ${pending.join(', ')}`;
+      if (window && window.showToast) window.showToast(msg, 'warning');
+      else alert(msg);
+      return;
+    }
     const oldXp = xp;
     task.completed = !task.completed;
     checkBtn.setAttribute("aria-checked", task.completed ? "true" : "false");
@@ -1523,6 +1586,39 @@ function createTaskEl(task) {
       if (e) triggerCoinExplosion(e);
       showTaskPopup(`QUEST CONQUERED! Gained +${coinReward} Coins & +${xpReward} XP 🏆`);
       try { playSound('complete'); } catch (err) {}
+      // If this task is part of a recurring schedule, generate the next occurrence
+      try {
+        const recurrenceType = task.recurrence || (task.masterId && (recurringTemplates.find(t => t.id === task.masterId) || {}).recurrence);
+        const masterId = task.masterId;
+        if (recurrenceType && recurrenceType !== 'none') {
+          // compute next deadline based on current task deadline or createdAt
+          const base = task.deadline ? new Date(task.deadline) : new Date();
+          const next = computeNextDeadline(recurrenceType, base);
+          if (next) {
+            const nextTask = {
+              id: Date.now() + Math.floor(Math.random() * 1000),
+              text: task.text,
+              category: task.category,
+              priority: task.priority,
+              completed: false,
+              createdAt: getFormattedDateTime(new Date()),
+              deadline: next.toISOString().slice(0,16),
+              penaltyApplied: false,
+              tags: Array.isArray(task.tags) ? task.tags.slice() : (typeof task.tags === 'string' ? parseTags(task.tags) : []),
+              recurrence: recurrenceType,
+              masterId: masterId || null
+            };
+            // ensure template exists
+            if (masterId && !recurringTemplates.find(t => t.id === masterId)) {
+              recurringTemplates.push({ id: masterId, text: task.text, category: task.category, priority: task.priority, recurrence: recurrenceType, active: true, startDate: task.createdAt || new Date().toISOString() });
+            }
+            tasks.push(nextTask);
+            if (window && window.showToast) window.showToast(`Next recurring task scheduled (${recurrenceType})`, 'success');
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to schedule next recurring task', err);
+      }
     } else {
       coins = Math.max(0, coins - 10);
       streak = Math.max(0, streak - 1);
@@ -1557,6 +1653,12 @@ function createTaskEl(task) {
 
   // Delete task event
   div.querySelector(".delete-btn").addEventListener("click", () => {
+    // Remove references from other tasks' dependencies
+    tasks.forEach(t => {
+      if (Array.isArray(t.depends) && t.depends.includes(task.id)) {
+        t.depends = t.depends.filter(d => d !== task.id);
+      }
+    });
     tasks = tasks.filter(t => t.id !== task.id);
     saveData();
     renderTasks();
@@ -1621,6 +1723,30 @@ function createTaskEl(task) {
   setupTouchDrag(div, task);
 
   return div;
+}
+
+// Compute next deadline Date for recurrence types
+function computeNextDeadline(type, fromDate) {
+  if (!fromDate || !(fromDate instanceof Date)) return null;
+  const d = new Date(fromDate.getTime());
+  if (type === 'daily') {
+    d.setDate(d.getDate() + 1);
+    return d;
+  }
+  if (type === 'weekly') {
+    d.setDate(d.getDate() + 7);
+    return d;
+  }
+  if (type === 'monthly') {
+    const day = d.getDate();
+    d.setMonth(d.getMonth() + 1);
+    // handle month rollover (e.g., Jan 31 -> Feb 28)
+    if (d.getDate() !== day) {
+      d.setDate(0); // go to last day of previous month
+    }
+    return d;
+  }
+  return null;
 }
 
 let touchDraggedEl = null;
@@ -1739,6 +1865,54 @@ function saveTaskOrder() {
   renderTasks();
 }
 
+// Render depends select options for the add-task form
+function renderDependsSelect() {
+  // Delegate to legacy helper if present
+  if (typeof populateDependsSelect === 'function') return populateDependsSelect();
+  const sel = document.getElementById('dependsSelect');
+  if (!sel) return;
+  const prev = Array.from(sel.selectedOptions).map(o => o.value);
+  // Clear current options (preserve the placeholder)
+  sel.innerHTML = '<option value="">No prerequisite</option>';
+  tasks.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = `${t.text} (${t.category || 'General'})`;
+    if (prev.includes(String(t.id))) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+// Returns true if task has any unmet dependencies
+function isTaskBlocked(task) {
+  if (!task || !Array.isArray(task.depends) || task.depends.length === 0) return false;
+  return task.depends.some(id => {
+    const t = tasks.find(x => x.id === id);
+    return !t || !t.completed;
+  });
+}
+
+// Get full dependency chain for a task id (for cycle detection)
+function getDependencyChain(startId, visited = new Set()) {
+  if (visited.has(startId)) return [];
+  visited.add(startId);
+  const t = tasks.find(x => x.id === startId);
+  if (!t || !Array.isArray(t.depends) || t.depends.length === 0) return [];
+  let chain = [];
+  t.depends.forEach(d => {
+    chain.push(d);
+    chain = chain.concat(getDependencyChain(d, visited));
+  });
+  return chain;
+}
+
+// Detect if adding a dependency would create a circular reference
+function hasCircularDependency(taskId, dependsOnId) {
+  // if dependsOnId already depends (directly or indirectly) on taskId, that's a cycle
+  const chain = getDependencyChain(dependsOnId, new Set());
+  return chain.includes(taskId);
+}
+
 function getDragAfterElement(container, y) {
   const draggableElements = [...container.querySelectorAll('[data-id]:not(.dragging)')];
 
@@ -1795,6 +1969,11 @@ function renderTasks() {
     
     let filteredTasks = tasks;
     filteredTasks = filteredTasks.filter(task => taskMatchesFilters(task));
+
+    // Smart Sort: re-order by adaptive priority score when enabled
+    if (smartSortEnabled && window.Prioritization) {
+      filteredTasks = window.Prioritization.getSortedTasksByPriority(filteredTasks);
+    }
 
     // Apply sort logic
     if (currentSort === "priority") {
@@ -1866,6 +2045,18 @@ function renderTasks() {
   renderTagSuggestions();
   renderTagFilters();
   updateStats();
+  // Update dependency selector for task creation
+  try { renderDependsSelect(); } catch (e) {}
+  // Refresh suggestion banner if smart sort is active
+  if (smartSortEnabled && window.Prioritization) {
+    var _banner = document.getElementById('smartSuggestionBanner');
+    if (_banner) {
+      var _suggestions = window.Prioritization.getProductivitySuggestions(tasks);
+      _banner.innerHTML = _suggestions
+        .map(function (s) { return '<div class="smart-suggestion-item">' + s + '</div>'; })
+        .join('');
+    }
+  }
 }
 
 // ==========================
@@ -3145,7 +3336,6 @@ function renderStreakTracker() {
   if (goalLeft) goalLeft.textContent = remaining;
   if (xpReward) xpReward.textContent = `+${todayMetrics.completed * 20} XP`;
 
-
   renderWeeklyStreak();
   updateGamification();
 }
@@ -3173,37 +3363,6 @@ function completeDailyGoal() {
   checkAchievements();
   announce("Today's goal completed — streak progress updated.");
 }
-
-
-
-  renderWeeklyStreak();
-  updateGamification();
-}
-
-function logStudyMinutes(minutes = 25) {
-  const today = getFormattedDate(new Date());
-  analyticsData.dailyStudyMinutes[today] = (analyticsData.dailyStudyMinutes[today] || 0) + minutes;
-  analyticsData.completedTasksPerDay[today] = Math.max(analyticsData.completedTasksPerDay[today] || 0, 1);
-  xp += 15;
-  updateStreakMetrics();
-  saveData();
-  renderStreakTracker();
-  checkAchievements();
-  announce(`Logged ${minutes} minutes of study. Keep the streak alive!`);
-}
-
-function completeDailyGoal() {
-  const today = getFormattedDate(new Date());
-  analyticsData.completedTasksPerDay[today] = Math.max(analyticsData.completedTasksPerDay[today] || 0, 5);
-  analyticsData.dailyStudyMinutes[today] = Math.max(analyticsData.dailyStudyMinutes[today] || 0, 60);
-  xp += 40;
-  updateStreakMetrics();
-  saveData();
-  renderStreakTracker();
-  checkAchievements();
-  announce("Today's goal completed — streak progress updated.");
-}
-
 
 function announce(message) {
   const liveRegion = document.getElementById("liveRegion");
@@ -3243,207 +3402,6 @@ function updateAnalyticsDashboard() {
   const completionRate = totalCreated > 0 ? Math.round((totalCompleted / totalCreated) * 100) : 0;
   const rateEl = document.getElementById("analyticsCompletionRate");
   if (rateEl) rateEl.textContent = `${completionRate}%`;
-
-  // Notifications init
-  loadNotifications();
-  renderNotificationPanel();
-  updateNotificationBadge();
-
-  const bell = document.getElementById('notificationBell');
-  const panel = document.getElementById('notificationPanel');
-  const markAllBtn = document.getElementById('markAllReadBtn');
-  const clearAllBtn = document.getElementById('clearAllNotifBtn');
-
-  if (bell) {
-    bell.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleNotificationPanel();
-    });
-  }
-
-
-
-  loadData();
-  updateStreakMetrics();
-  updateGamification();
-  renderTasks();
-  renderAchievements();
-  renderWeeklyStreak();
-  renderStreakTracker();
-  updateDisplay();
-  renderPerformance();
-  renderTimetable();
-  renderCalendar();
-  renderProfile();
-  renderSubjectTracker();
-  renderHeatmap(15);
-
-  // Close panel if clicking outside
-  document.addEventListener('click', (e) => {
-    if (!panel) return;
-    const target = e.target;
-    if (!panel.contains(target) && !bell.contains(target)) {
-      panel.style.display = 'none';
-      if (bell) bell.setAttribute('aria-expanded', 'false');
-    }
-  });
-
-
-
-  loadData();
-  updateStreakMetrics();
-  updateGamification();
-  renderTasks();
-  renderAchievements();
-  renderWeeklyStreak();
-  renderStreakTracker();
-  updateDisplay();
-  renderPerformance();
-  renderTimetable();
-  renderCalendar();
-  renderProfile();
-  renderSubjectTracker();
-  renderHeatmap(15);
-
-  // Close panel if clicking outside
-  document.addEventListener('click', (e) => {
-    if (!panel) return;
-    const target = e.target;
-    if (!panel.contains(target) && !bell.contains(target)) {
-      panel.style.display = 'none';
-      if (bell) bell.setAttribute('aria-expanded', 'false');
-    }
-  });
-
-
-  if (markAllBtn) markAllBtn.addEventListener('click', () => markAllRead());
-  if (clearAllBtn) clearAllBtn.addEventListener('click', () => clearAllNotifications());
-
-  // CTA wiring for empty states
-  const ctaCreateTask = document.getElementById('ctaCreateTask');
-  if (ctaCreateTask) ctaCreateTask.addEventListener('click', () => { document.getElementById('taskInput').focus(); });
-
-  const ctaBrowseTemplates = document.getElementById('ctaBrowseTemplates');
-  if (ctaBrowseTemplates) ctaBrowseTemplates.addEventListener('click', () => { document.getElementById('taskTemplate').focus(); });
-
-  const ctaUploadFiles = document.getElementById('ctaUploadFiles');
-  if (ctaUploadFiles) ctaUploadFiles.addEventListener('click', () => { document.getElementById('vaultFileInput').click(); });
-
-  const vaultBrowseBtnSmall = document.getElementById('vaultBrowseBtnSmall');
-  if (vaultBrowseBtnSmall) vaultBrowseBtnSmall.addEventListener('click', () => { document.getElementById('vaultFileInput').click(); });
-
-  const ctaAddSubject = document.getElementById('ctaAddSubject');
-  if (ctaAddSubject) ctaAddSubject.addEventListener('click', () => { const s = document.getElementById('subjectInputForm'); if (s) { s.style.display='grid'; s.querySelector('input')?.focus(); } });
-
-  // Export menu handlers
-  const exportBtn = document.getElementById('exportBtn');
-  const exportMenu = document.getElementById('exportMenu');
-  const exportCsvBtn = document.getElementById('exportCsvBtn');
-  const exportPngBtn = document.getElementById('exportPngBtn');
-  const exportPdfBtn = document.getElementById('exportPdfBtn');
-
-  if (exportBtn && exportMenu) {
-    exportBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      exportMenu.style.display = exportMenu.style.display === 'block' ? 'none' : 'block';
-    });
-  }
-
-
-  document.addEventListener('click', () => { if (exportMenu) exportMenu.style.display = 'none'; });
-
-  if (exportCsvBtn) exportCsvBtn.addEventListener('click', (e) => { e.stopPropagation(); exportAnalyticsCSV(); exportMenu.style.display='none'; });
-  if (exportPngBtn) exportPngBtn.addEventListener('click', (e) => { e.stopPropagation(); exportChartsPNG(); exportMenu.style.display='none'; });
-  if (exportPdfBtn) exportPdfBtn.addEventListener('click', (e) => { e.stopPropagation(); exportAnalyticsPDF(); exportMenu.style.display='none'; });
-
-
-
-
-  document.addEventListener('click', () => { if (exportMenu) exportMenu.style.display = 'none'; });
-
-  if (exportCsvBtn) exportCsvBtn.addEventListener('click', (e) => { e.stopPropagation(); exportAnalyticsCSV(); exportMenu.style.display='none'; });
-  if (exportPngBtn) exportPngBtn.addEventListener('click', (e) => { e.stopPropagation(); exportChartsPNG(); exportMenu.style.display='none'; });
-  if (exportPdfBtn) exportPdfBtn.addEventListener('click', (e) => { e.stopPropagation(); exportAnalyticsPDF(); exportMenu.style.display='none'; });
-
-
-
-  // Notifications init
-  loadNotifications();
-  renderNotificationPanel();
-  updateNotificationBadge();
-
-  const bell = document.getElementById('notificationBell');
-  const panel = document.getElementById('notificationPanel');
-  const markAllBtn = document.getElementById('markAllReadBtn');
-  const clearAllBtn = document.getElementById('clearAllNotifBtn');
-
-  if (bell) {
-    bell.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleNotificationPanel();
-    });
-  }
-
-  // Close panel if clicking outside
-  document.addEventListener('click', (e) => {
-    if (!panel) return;
-    const target = e.target;
-    if (!panel.contains(target) && !bell.contains(target)) {
-      panel.style.display = 'none';
-      if (bell) bell.setAttribute('aria-expanded', 'false');
-    }
-  });
-
-  if (markAllBtn) markAllBtn.addEventListener('click', () => markAllRead());
-  if (clearAllBtn) clearAllBtn.addEventListener('click', () => clearAllNotifications());
-
-  // Notifications init
-  loadNotifications();
-  renderNotificationPanel();
-  updateNotificationBadge();
-
-  const bell = document.getElementById('notificationBell');
-  const panel = document.getElementById('notificationPanel');
-  const markAllBtn = document.getElementById('markAllReadBtn');
-  const clearAllBtn = document.getElementById('clearAllNotifBtn');
-
-  if (bell) {
-    bell.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleNotificationPanel();
-    });
-  }
-
-  // Close panel if clicking outside
-  document.addEventListener('click', (e) => {
-    if (!panel) return;
-    const target = e.target;
-    if (!panel.contains(target) && !bell.contains(target)) {
-      panel.style.display = 'none';
-      if (bell) bell.setAttribute('aria-expanded', 'false');
-    }
-  });
-
-  if (markAllBtn) markAllBtn.addEventListener('click', () => markAllRead());
-  if (clearAllBtn) clearAllBtn.addEventListener('click', () => clearAllNotifications());
-
-  // CTA wiring for empty states
-  const ctaCreateTask = document.getElementById('ctaCreateTask');
-  if (ctaCreateTask) ctaCreateTask.addEventListener('click', () => { document.getElementById('taskInput').focus(); });
-
-  const ctaBrowseTemplates = document.getElementById('ctaBrowseTemplates');
-  if (ctaBrowseTemplates) ctaBrowseTemplates.addEventListener('click', () => { document.getElementById('taskTemplate').focus(); });
-
-  const ctaUploadFiles = document.getElementById('ctaUploadFiles');
-  if (ctaUploadFiles) ctaUploadFiles.addEventListener('click', () => { document.getElementById('vaultFileInput').click(); });
-
-  const vaultBrowseBtnSmall = document.getElementById('vaultBrowseBtnSmall');
-  if (vaultBrowseBtnSmall) vaultBrowseBtnSmall.addEventListener('click', () => { document.getElementById('vaultFileInput').click(); });
-
-  const ctaAddSubject = document.getElementById('ctaAddSubject');
-  if (ctaAddSubject) ctaAddSubject.addEventListener('click', () => { const s = document.getElementById('subjectInputForm'); if (s) { s.style.display='grid'; s.querySelector('input')?.focus(); } });
-
-
   document.getElementById("logStudyBtn")?.addEventListener("click", () => {
     logStudyMinutes(25);
   });
@@ -3523,6 +3481,32 @@ function updateAnalyticsDashboard() {
       renderTasks();
     });
   });
+
+  // ── Smart Sort toggle ──────────────────────────────────────
+  const smartSortBtn = document.getElementById('smartSortBtn');
+  const smartBanner  = document.getElementById('smartSuggestionBanner');
+
+  if (smartSortBtn) {
+    smartSortBtn.addEventListener('click', function () {
+      smartSortEnabled = !smartSortEnabled;
+      smartSortBtn.classList.toggle('active', smartSortEnabled);
+
+      if (smartSortEnabled && smartBanner) {
+        var suggestions = window.Prioritization.getProductivitySuggestions(tasks);
+        smartBanner.innerHTML = suggestions
+          .map(function (s) {
+            return '<div class="smart-suggestion-item">' + s + '</div>';
+          })
+          .join('');
+        smartBanner.classList.add('visible');
+      } else if (smartBanner) {
+        smartBanner.classList.remove('visible');
+      }
+
+      renderTasks();
+    });
+  }
+  // ── End Smart Sort toggle ──────────────────────────────────
 
   document.getElementById('resetTasksBtn')?.addEventListener('click', () => {
     if (!confirm('Clear all tasks?')) return;
@@ -3991,1032 +3975,306 @@ if (addExamBtn) {
   });
 }
 
-function deleteExam(id) {
-  exams = exams.filter(e => e.id !== id);
-  saveData();
-  renderExams();
+// --- State Management ---
+// Guard against corrupt or malformed JSON in storage. A bare JSON.parse at
+// the top level throws a SyntaxError before any function is defined, leaving
+// `tasks` undefined and making the entire app non-functional until the user
+// manually clears localStorage. The try/catch recovers silently with an
+// empty array so the app always boots into a usable state.
+let tasks = [];
+try {
+  const _raw = window.TaskQuestStorage
+    ? window.TaskQuestStorage.getTasks()
+    : JSON.parse(localStorage.getItem("taskquest_v1.tasks") || localStorage.getItem("tasks"));
+  if (Array.isArray(_raw)) tasks = _raw;
+} catch (e) {
+  console.warn("[TaskQuest] Corrupt task data in storage — resetting to empty list.", e);
 }
 
-function updateExamsCountdown() {
-  const cards = examsGrid.querySelectorAll(".exam-card");
-  const now = Date.now();
-
-  cards.forEach(card => {
-    const examId = parseInt(card.dataset.id);
-    const exam = exams.find(e => e.id === examId);
-    if (!exam) return;
-
-    const timeDiff = exam.date - now;
-    
-    const dEl = card.querySelector(".cd-d");
-    const hEl = card.querySelector(".cd-h");
-    const mEl = card.querySelector(".cd-m");
-    const sEl = card.querySelector(".cd-s");
-
-    if (timeDiff <= 0) {
-      dEl.textContent = "00";
-      hEl.textContent = "00";
-      mEl.textContent = "00";
-      sEl.textContent = "00";
-      card.className = "exam-card urgency-red"; // Completed or missed
-      return;
-    }
-
-    // Time calculations
-    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((timeDiff / (1000 * 60 * 60)) % 24);
-    const minutes = Math.floor((timeDiff / 1000 / 60) % 60);
-    const seconds = Math.floor((timeDiff / 1000) % 60);
-
-    dEl.textContent = String(days).padStart(2, "0");
-    hEl.textContent = String(hours).padStart(2, "0");
-    mEl.textContent = String(minutes).padStart(2, "0");
-    sEl.textContent = String(seconds).padStart(2, "0");
-
-    // Dynamic Urgency Coloring & Progress Bar
-    const totalDuration = exam.date - exam.createdAt;
-    let progressPercent = totalDuration > 0 ? ((now - exam.createdAt) / totalDuration) * 100 : 100;
-    progressPercent = Math.max(0, Math.min(100, progressPercent)); // clamp 0-100
-
-    const progressFill = card.querySelector(".exam-progress-fill");
-    if (progressFill) progressFill.style.width = `${progressPercent}%`;
-
-    let urgencyClass = "urgency-green";
-    if (timeDiff < 24 * 60 * 60 * 1000) {
-      urgencyClass = "urgency-red";
-      // Trigger notification once if < 24h
-      if (!notifiedExams.has(exam.id)) {
-        sendNotification("Urgent Exam!", `${exam.title} is in less than 24 hours!`);
-
-        addNotification({ type: 'exam', title: `Exam soon: ${exam.title}`, body: `${exam.subject} in <24 hours`, ref: `exam-urgent-${exam.id}` });
-
-        notifiedExams.add(exam.id);
-      }
-    } else if (timeDiff < 3 * 24 * 60 * 60 * 1000) {
-      urgencyClass = "urgency-orange";
-    }
-
-    // Update class efficiently
-    card.className = `exam-card ${urgencyClass}`;
-  });
+// --- Security Helpers ---
+// Escapes user-supplied strings before injecting into innerHTML.
+// Without this, a task saved as <img src=x onerror=alert(1)> executes
+// on every render — a persistent stored XSS vector with full access to
+// all localStorage data.
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-function renderExams() {
-  if (!examsGrid) return;
+// --- Selectors ---
+const taskForm = document.getElementById("taskForm");
+const taskInput = document.getElementById("taskInput");
+const taskList = document.getElementById("taskList");
+const taskStats = document.getElementById("taskStats");
+const errorMsg = document.getElementById("errorMsg");
+const celebration = document.getElementById("celebration");
+const themeSwitcher = document.getElementById("themeSwitcher");
 
-  // Clear existing interval if any
-  if (examTimerInterval) clearInterval(examTimerInterval);
-
-  // Clear grid (keep empty state)
-  const existingCards = examsGrid.querySelectorAll(".exam-card");
-  existingCards.forEach(c => c.remove());
-
-  // Show/hide empty state
-  if (exams.length === 0) {
-    if (examEmptyState) examEmptyState.style.display = "block";
-    return;
-  }
-  
-  if (examEmptyState) examEmptyState.style.display = "none";
-
-  // Render cards
-  exams.forEach(exam => {
-    const card = document.createElement("div");
-    card.className = "exam-card";
-    card.dataset.id = exam.id;
-    
-    // Format date string for display (e.g., Nov 24, 2026 - 10:00 AM)
-    const dateObj = new Date(exam.date);
-    const dateOptions = { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' };
-    const dateStr = dateObj.toLocaleDateString(undefined, dateOptions);
-
-    card.innerHTML = `
-      <div class="exam-header">
-        <div class="exam-info">
-          <h4>${escapeHtml(exam.title)}</h4>
-          <p><i class="ri-book-read-line"></i> ${escapeHtml(exam.subject)}</p>
-          <p style="margin-top: 2px;"><i class="ri-calendar-line"></i> ${dateStr}</p>
-        </div>
-        <button class="exam-delete-btn" aria-label="Delete Exam" onclick="deleteExam(${exam.id})">
-          <i class="ri-delete-bin-line"></i>
-        </button>
-      </div>
-
-      <div class="exam-countdown-display">
-        <div class="cd-box"><span class="cd-num cd-d">00</span><span class="cd-lbl">Days</span></div>
-        <div class="cd-box"><span class="cd-num cd-h">00</span><span class="cd-lbl">Hours</span></div>
-        <div class="cd-box"><span class="cd-num cd-m">00</span><span class="cd-lbl">Mins</span></div>
-        <div class="cd-box"><span class="cd-num cd-s">00</span><span class="cd-lbl">Secs</span></div>
-      </div>
-
-      <div class="exam-progress-wrap">
-        <div class="exam-progress-bar">
-          <div class="exam-progress-fill" style="width: 0%;"></div>
-        </div>
-      </div>
-      
-      ${exam.notes ? `<div class="exam-footer-notes"><i class="ri-information-line"></i> ${escapeHtml(exam.notes)}</div>` : ''}
-    `;
-    examsGrid.appendChild(card);
-  });
-
-}
-
-
-// Call renderExams once data is loaded (add to window.onload block)
-window.addEventListener('load', () => {
-  renderExams();
-  renderVault();
-  renderProjects();
-  renderLabRecords && renderLabRecords();
-  // generate recurring tasks on load
-  generateRecurringTasks();
-  // render timetable
-  renderTimetable();
-});
-
-function getSubjectColorSafe(subject) {
-  if (typeof getSubjectColor === 'function') return getSubjectColor(subject);
-  // fallback deterministic color map
-  const colors = ['#ef4444','#f97316','#f59e0b','#10b981','#06b6d4','#3b82f6','#8b5cf6'];
-  let h = 0; for (let i=0;i<subject.length;i++) h = (h<<5)-h+subject.charCodeAt(i);
-  return colors[Math.abs(h) % colors.length];
-}
-
-function renderTimetable() {
-  const container = document.getElementById('timetableContainer');
-  if (!container) return;
-  const days = ['mon','tue','wed','thu','fri','sat','sun'];
-  container.innerHTML = '';
-  days.forEach(day => {
-    const col = document.createElement('div'); col.className = 'tt-column';
-    const title = document.createElement('h4'); title.textContent = day.toUpperCase(); col.appendChild(title);
-    const items = timetableEntries.filter(e => e.day === day).sort((a,b)=>a.startTime.localeCompare(b.startTime));
-    if (items.length === 0) {
-      const empty = document.createElement('div'); empty.style.opacity = '0.6'; empty.style.fontSize='12px'; empty.textContent = 'No classes'; col.appendChild(empty);
-    } else {
-      items.forEach(it => {
-        const el = document.createElement('div'); el.className = 'tt-item';
-        const color = getSubjectColorSafe(it.subject || '');
-        el.style.background = color;
-        el.style.color = getContrastColor ? getContrastColor(color) : '#fff';
-        const left = document.createElement('div'); left.style.display='flex'; left.style.flexDirection='column';
-        const lbl = document.createElement('div'); lbl.className='tt-label'; lbl.textContent = it.subject || 'Untitled'; left.appendChild(lbl);
-        const time = document.createElement('small'); time.textContent = `${it.startTime || ''} - ${it.endTime || ''}`; left.appendChild(time);
-        const actions = document.createElement('div'); actions.className='tt-actions';
-        const editBtn = document.createElement('button'); editBtn.className='tt-btn'; editBtn.title='Edit'; editBtn.innerHTML='✏️';
-        const delBtn = document.createElement('button'); delBtn.className='tt-btn'; delBtn.title='Delete'; delBtn.innerHTML='🗑️';
-        actions.appendChild(editBtn); actions.appendChild(delBtn);
-        el.appendChild(left); el.appendChild(actions);
-        // edit handler
-        editBtn.addEventListener('click', (e)=>{
-          e.stopPropagation();
-          const newSub = prompt('Subject', it.subject) || it.subject;
-          const newStart = prompt('Start time (HH:MM)', it.startTime) || it.startTime;
-          const newEnd = prompt('End time (HH:MM)', it.endTime) || it.endTime;
-          it.subject = newSub; it.startTime = newStart; it.endTime = newEnd;
-          saveData(); renderTimetable();
-        });
-        delBtn.addEventListener('click',(e)=>{ e.stopPropagation(); if (confirm('Delete this entry?')) { timetableEntries = timetableEntries.filter(x=>x.id!==it.id); saveData(); renderTimetable(); } });
-        col.appendChild(el);
-      });
-    }
-    container.appendChild(col);
-  });
-}
-
-function addTimetableEntry() {
-  const subj = (document.getElementById('ttSubjectInput')||{}).value.trim();
-  const day = (document.getElementById('ttDaySelect')||{}).value;
-  const start = (document.getElementById('ttStartInput')||{}).value;
-  const end = (document.getElementById('ttEndInput')||{}).value;
-  if (!subj || !day) return alert('Please provide a subject and day.');
-  const entry = { id: Date.now()+Math.floor(Math.random()*999), subject: subj, day, startTime: start, endTime: end };
-  timetableEntries.push(entry); saveData(); renderTimetable();
-  if (window && window.showToast) window.showToast('Timetable entry added', 'success');
-  // clear inputs
-  (document.getElementById('ttSubjectInput')||{}).value='';
-}
-
-const ttAddBtnEl = document.getElementById('ttAddBtn');
-if (ttAddBtnEl) ttAddBtnEl.addEventListener('click', addTimetableEntry);
-
-function computeNextDate(dateStr, recurrence) {
-  const d = dateStr ? new Date(dateStr) : new Date();
-  if (recurrence === 'daily') {
-    d.setDate(d.getDate() + 1);
-    return d;
-  }
-  if (recurrence === 'weekly') {
-    d.setDate(d.getDate() + 7);
-    return d;
-  }
-  if (recurrence === 'monthly') {
-    const m = d.getMonth();
-    d.setMonth(m + 1);
-    return d;
-  }
-  return null;
-}
-
-function generateRecurringTasks() {
-  loadData(); // ensure templates are loaded
-  const now = new Date();
-  // for each template, find latest occurrence among tasks
-  recurringTemplates.forEach(tpl => {
-    if (!tpl.active) return;
-    // find existing occurrences
-    const occurrences = tasks.filter(tsk => tsk.masterId === tpl.id).map(x => x.occurrenceDate).filter(Boolean).sort();
-    let last = occurrences.length ? new Date(occurrences[occurrences.length-1]) : null;
-    if (!last) last = tpl.startDate ? new Date(tpl.startDate) : new Date();
-
-    // generate next occurrence if within next 30 days and not already present
-    const next = computeNextDate(last.toISOString(), tpl.recurrence);
-    if (!next) return;
-    const limit = new Date(); limit.setDate(limit.getDate() + 30);
-    if (next <= limit) {
-      const nextIso = next.toISOString().split('T')[0];
-      const exists = tasks.some(tt => tt.masterId === tpl.id && tt.occurrenceDate && tt.occurrenceDate.startsWith(nextIso));
-      if (!exists) {
-        // create instance
-        const inst = {
-          id: Date.now() + Math.floor(Math.random()*1000),
-          text: tpl.text,
-          category: tpl.category,
-          priority: tpl.priority,
-          completed: false,
-          createdAt: getFormattedDateTime(new Date()),
-          deadline: next.toISOString(),
-          penaltyApplied: false,
-          tags: [],
-          masterId: tpl.id,
-          occurrenceDate: next.toISOString(),
-          recurrence: tpl.recurrence
-        };
-        tasks.push(inst);
-      }
-    }
-  });
-  saveData();
+// --- Initialization ---
+"use strict";
+document.addEventListener("DOMContentLoaded", () => {
   renderTasks();
-}
-
-// ==========================
-// Lab Records (minimal)
-// ==========================
-let labRecords = [];
-
-function loadLabRecords() {
-  try { labRecords = JSON.parse(localStorage.getItem('lab_records') || '[]'); } catch(e){ labRecords = []; }
-}
-
-function saveLabRecords() {
-  localStorage.setItem('lab_records', JSON.stringify(labRecords));
-}
-
-function renderLabRecords() {
-  loadLabRecords();
-  const list = document.getElementById('labRecordsList');
-  const filter = document.getElementById('labSubjectFilter');
-  if (!list || !filter) return;
-
-  // populate filter options from current records
-  const subjects = Array.from(new Set(labRecords.map(r => r.subject).filter(Boolean)));
-  filter.innerHTML = '<option value="All">All</option>' + subjects.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
-
-  const selected = filter.value || 'All';
-  const toRender = labRecords.filter(r => selected === 'All' || r.subject === selected).sort((a,b)=> a.deadline ? (new Date(a.deadline)-new Date(b.deadline)) : 0);
-
-  list.innerHTML = '';
-  if (labRecords.length === 0) {
-    list.innerHTML = `<div style="color:var(--text-light);">No lab records yet. Add experiments above.</div>`;
-  }
-
-  labRecords.forEach(rec => {
-    if (selected !== 'All' && rec.subject !== selected) return;
-    const el = document.createElement('div');
-    el.className = 'lab-record-item';
-    const subjectColor = getSubjectColor(rec.subject);
-    const subjectText = getContrastColor(subjectColor);
-
-    const left = document.createElement('div');
-    left.className = 'lab-record-left';
-    left.innerHTML = `
-      <div style="display:flex;flex-direction:column;">
-        <strong style="font-size:14px;">${escapeHtml(rec.title)}</strong>
-        <div class="lab-record-meta">${escapeHtml(rec.subject || '—')} • ${rec.deadline ? new Date(rec.deadline).toLocaleString() : 'No deadline'}</div>
-      </div>
-    `;
-
-    const actions = document.createElement('div');
-    actions.className = 'lab-record-actions';
-    const statusBtn = document.createElement('button');
-    statusBtn.className = 'view-btn small';
-    statusBtn.textContent = rec.submitted ? 'Submitted' : 'Pending';
-    statusBtn.addEventListener('click', () => {
-      toggleLabSubmission(rec.id);
+  initTheme();
+  const filterOverdueBtn = document.getElementById('filterOverdueBtn');
+  if (filterOverdueBtn){
+    filterOverdueBtn.addEventListener('click', ()=>{
+      const isActive = filterOverdueBtn.classList.contains('active');
+      if (isActive){
+        filterOverdueBtn.classList.remove('active'); activeFilter = 'All';
+      } else {
+        // deactivate other filters briefly if needed
+        document.querySelectorAll('.filter-btn.active')?.forEach(b=>b.classList.remove('active'));
+        filterOverdueBtn.classList.add('active'); activeFilter = 'Overdue';
+      }
+      renderTasks();
     });
-
-    const del = document.createElement('button');
-    del.className = 'view-btn small';
-    del.textContent = 'Delete';
-    del.addEventListener('click', () => { deleteLabRecord(rec.id); });
-
-    actions.appendChild(statusBtn);
-    actions.appendChild(del);
-
-    el.appendChild(left);
-    el.appendChild(actions);
-
-    list.appendChild(el);
-  });
-
-  // update progress
-  const total = labRecords.length;
-  const done = labRecords.filter(r=>r.submitted).length;
-  const pct = total === 0 ? 0 : Math.round((done/total)*100);
-  const fill = document.getElementById('labProgressFill');
-  if (fill) fill.style.width = pct + '%';
-}
-
-function addLabRecord() {
-  const title = document.getElementById('labTitleInput').value.trim();
-  const subject = document.getElementById('labSubjectInput').value.trim() || 'General';
-  const deadline = document.getElementById('labDeadlineInput').value || null;
-  if (!title) { showTaskPopup('Please enter an experiment title'); return; }
-
-  const rec = { id: Date.now(), title, subject, deadline, submitted: false, createdAt: Date.now() };
-  labRecords.push(rec);
-  saveLabRecords();
-  renderLabRecords();
-  document.getElementById('labTitleInput').value = '';
-  document.getElementById('labSubjectInput').value = '';
-  document.getElementById('labDeadlineInput').value = '';
-  showTaskPopup('Lab record added');
-}
-
-function toggleLabSubmission(id) {
-  const rec = labRecords.find(r=>r.id===id);
-  if (!rec) return;
-  rec.submitted = !rec.submitted;
-  if (rec.submitted) rec.submittedAt = Date.now(); else rec.submittedAt = null;
-  saveLabRecords();
-  renderLabRecords();
-  showTaskPopup(rec.submitted ? 'Marked submitted' : 'Marked pending');
-}
-
-function deleteLabRecord(id) {
-  labRecords = labRecords.filter(r=>r.id!==id);
-  saveLabRecords();
-  renderLabRecords();
-  showTaskPopup('Lab record deleted');
-}
-
-// Wire lab controls
-document.addEventListener('DOMContentLoaded', ()=>{
-  loadLabRecords();
-  const addBtn = document.getElementById('labAddBtn');
-  if (addBtn) addBtn.addEventListener('click', (e)=>{ e.preventDefault(); addLabRecord(); });
-  const filter = document.getElementById('labSubjectFilter');
-  if (filter) filter.addEventListener('change', renderLabRecords);
+  }
 });
 
-// ==========================================================================
-// 10. MASTER PROJECTS & SUBTASKS FEATURE
-// ==========================================================================
+// --- Core Functions ---
 
-const addProjectBtn = document.getElementById("addProjectBtn");
-const projectFormBody = document.getElementById("projectFormBody");
-const cancelProjectBtn = document.getElementById("cancelProjectBtn");
-const saveProjectBtn = document.getElementById("saveProjectBtn");
-const newProjectTitleInput = document.getElementById("newProjectTitle");
-const projectsGrid = document.getElementById("projectsGrid");
-
-// Global dragging state
-let draggedSubtask = null;
-let draggedSubtaskParentId = null;
-
-if (addProjectBtn && projectFormBody) {
-  addProjectBtn.addEventListener("click", () => {
-    projectFormBody.style.display = "block";
-    newProjectTitleInput.focus();
-  });
-
-  cancelProjectBtn.addEventListener("click", () => {
-    projectFormBody.style.display = "none";
-    newProjectTitleInput.value = "";
-  });
-
-  saveProjectBtn.addEventListener("click", () => {
-    const title = newProjectTitleInput.value.trim();
-    if (!title) {
-      announce("Please enter a project name.");
-      return;
-    }
-
-    const newProject = {
-      id: Date.now(),
-      title: title,
-      subtasks: []
-    };
-
-    projects.push(newProject);
-    saveData();
-    renderProjects();
-    
-    projectFormBody.style.display = "none";
-    newProjectTitleInput.value = "";
-    announce(`Created project: ${title}`);
-  });
-}
-
-function calculateProjectProgress(subtasks) {
-  if (subtasks.length === 0) return 0;
-  const completed = subtasks.filter(st => st.completed).length;
-  return Math.round((completed / subtasks.length) * 100);
-}
-
-function toggleSubtask(projectId, subtaskId) {
-  const proj = projects.find(p => p.id === projectId);
-  if (!proj) return;
+function addTask() {
+  const text = taskInput.value.trim();
   
-  const st = proj.subtasks.find(s => s.id === subtaskId);
-  if (!st) return;
-
-  st.completed = !st.completed;
-  saveData();
-  renderProjects();
-
-  if (st.completed) {
-    showTaskPopup("Subtask Completed! ✨");
-    announce("Subtask completed.");
-  } else {
-    announce("Subtask unchecked.");
+  if (text === "") {
+    errorMsg.textContent = "Please enter a task.";
+    return;
   }
-}
 
-function addSubtask(projectId) {
-  const inputEl = document.getElementById(`newSubtaskInput-${projectId}`);
-  if (!inputEl) return;
-  
-  const text = inputEl.value.trim();
-  if (!text) return;
+  errorMsg.textContent = "";
 
-  const proj = projects.find(p => p.id === projectId);
-  if (!proj) return;
+  const now = new Date();
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const day = dayNames[now.getDay()];
+  const date = `${now.getDate()} ${now.toLocaleString("default", { month: "long" })} ${now.getFullYear()}`;
+  const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-  proj.subtasks.push({
-    id: Date.now() + Math.random().toString(36).substr(2, 5),
+  const deadlineVal = document.getElementById('deadlineInput')?.value || null;
+  const deadlineIso = deadlineVal ? new Date(deadlineVal).toISOString() : null;
+  const dependsSel = document.getElementById('dependsSelect');
+  const dependsVals = dependsSel ? Array.from(dependsSel.selectedOptions).map(o => o.value).filter(v => v !== '') : [];
+  const newTask = {
+    id: Date.now(),
     text: text,
-    completed: false
+    completed: false,
+    timestamp: `(${day}, ${date} at ${time})`,
+    deadline: deadlineIso
+    , depends: dependsVals.map(v => parseInt(v)).filter(Boolean)
+  };
+
+  tasks.push(newTask);
+  saveAndRender();
+  taskInput.value = "";
+}
+
+function removeTask(id) {
+  // Remove references from other tasks' dependency lists
+  tasks.forEach(t => {
+    if (Array.isArray(t.depends) && t.depends.includes(id)) {
+      t.depends = t.depends.filter(d => d !== id);
+    }
+    if (t.dependsOn && t.dependsOn === id) {
+      delete t.dependsOn;
+    }
   });
-
-  saveData();
-  renderProjects();
+  tasks = tasks.filter(task => task.id !== id);
+  saveAndRender();
 }
 
-function deleteSubtask(projectId, subtaskId) {
-  const proj = projects.find(p => p.id === projectId);
-  if (!proj) return;
-
-  proj.subtasks = proj.subtasks.filter(s => s.id !== subtaskId);
-  saveData();
-  renderProjects();
-}
-
-function deleteProject(projectId) {
-  if (confirm("Are you sure you want to delete this master project?")) {
-    projects = projects.filter(p => p.id !== projectId);
-    saveData();
-    renderProjects();
-  }
-}
-
-// Drag & Drop specific to Subtasks
-function handleSubtaskDragStart(e, projectId, subtaskId) {
-  draggedSubtask = subtaskId;
-  draggedSubtaskParentId = projectId;
-  e.target.classList.add('dragging');
-  // Required for Firefox
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', subtaskId);
-}
-
-function handleSubtaskDragEnd(e) {
-  e.target.classList.remove('dragging');
-  draggedSubtask = null;
-  draggedSubtaskParentId = null;
-  
-  // Clean up any remaining drop indicators if necessary
-  const allContainers = document.querySelectorAll('.subtasks-list');
-  allContainers.forEach(c => c.style.border = "");
-}
-
-function handleSubtaskDragOver(e, projectId) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  
-  // Only allow reordering within the SAME project to prevent bugs
-  if (draggedSubtaskParentId !== projectId) return;
-
-  const container = document.getElementById(`subtaskList-${projectId}`);
-  const draggingItem = document.querySelector('.subtask-item.dragging');
-  if (!container || !draggingItem) return;
-
-  const afterElement = getDragAfterElement(container, e.clientY, '.subtask-item:not(.dragging)');
-  if (afterElement == null) {
-    container.appendChild(draggingItem);
-  } else {
-    container.insertBefore(draggingItem, afterElement);
-  }
-}
-
-function handleSubtaskDrop(e, projectId) {
-  e.preventDefault();
-  if (draggedSubtaskParentId !== projectId) return;
-
-  // Re-calculate the array order based on DOM
-  const container = document.getElementById(`subtaskList-${projectId}`);
-  if (!container) return;
-
-  const proj = projects.find(p => p.id === projectId);
-  if (!proj) return;
-
-  const newOrderIds = Array.from(container.querySelectorAll('.subtask-item')).map(item => item.dataset.subtaskId);
-  
-  // Rebuild the subtasks array based on the new order
-  const newSubtasksArray = [];
-  newOrderIds.forEach(id => {
-    const st = proj.subtasks.find(s => s.id === id);
-    if (st) newSubtasksArray.push(st);
-  });
-
-  proj.subtasks = newSubtasksArray;
-  saveData();
-  // No need to re-render immediately as the DOM is already visually updated, 
-  // but rendering ensures progress bars etc stay perfectly synced.
-  renderProjects();
-}
-
-function renderProjects() {
-  if (!projectsGrid) return;
-  projectsGrid.innerHTML = '';
-
-  if (projects.length === 0) {
-    projectsGrid.innerHTML = `
-      <div style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: 30px;">
-        <i class="ri-rocket-2-line" style="font-size: 3rem; opacity: 0.3;"></i>
-        <p style="margin-top: 10px;">No master projects yet. Break down a big goal today!</p>
-      </div>
-    `;
-    return;
-  }
-
-  projects.forEach(proj => {
-    const progress = calculateProjectProgress(proj.subtasks);
-    
-    const card = document.createElement("div");
-    card.className = "project-card";
-    
-    // Header & Progress
-    let html = `
-      <div class="project-header">
-        <h3>${escapeHtml(proj.title)}</h3>
-        <button class="subtask-delete-btn" style="opacity: 1;" onclick="deleteProject(${proj.id})" aria-label="Delete Project">
-          <i class="ri-delete-bin-line"></i>
-        </button>
-      </div>
-      <div class="project-progress-wrap">
-        <div class="project-progress-text">
-          <span>Progress</span>
-          <span style="font-weight: 600; color: ${progress === 100 ? '#10b981' : 'var(--text)'};">${progress}%</span>
-        </div>
-        <div class="project-progress-bar">
-          <div class="project-progress-fill" style="width: ${progress}%;"></div>
-        </div>
-      </div>
-      <div class="subtasks-list" id="subtaskList-${proj.id}">
-    `;
-
-    // Subtasks Array
-    proj.subtasks.forEach(st => {
-      html += `
-        <div class="subtask-item" data-subtask-id="${st.id}" draggable="true" 
-             ondragstart="handleSubtaskDragStart(event, ${proj.id}, '${st.id}')"
-             ondragend="handleSubtaskDragEnd(event)">
-          <i class="ri-draggable subtask-drag-handle"></i>
-          <input type="checkbox" class="subtask-checkbox" ${st.completed ? 'checked' : ''} onclick="toggleSubtask(${proj.id}, '${st.id}')">
-          <span class="subtask-text">${escapeHtml(st.text)}</span>
-          <button class="subtask-delete-btn" onclick="deleteSubtask(${proj.id}, '${st.id}')">
-            <i class="ri-close-line"></i>
-          </button>
-        </div>
-      `;
+function toggleTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  // Prevent completing if blocked by an incomplete prerequisite
+  if (!task.completed && (Array.isArray(task.depends) ? task.depends.length > 0 : task.dependsOn)) {
+    const deps = Array.isArray(task.depends) ? task.depends : (task.dependsOn ? [task.dependsOn] : []);
+    const blocked = deps.some(did => {
+      const pre = tasks.find(t => t.id === did);
+      return pre && !pre.completed;
     });
-
-    html += `
-      </div>
-      <div class="add-subtask-form">
-        <input type="text" class="add-subtask-input" id="newSubtaskInput-${proj.id}" placeholder="Add a subtask..." onkeypress="if(event.key === 'Enter') addSubtask(${proj.id})">
-        <button class="add-subtask-btn" onclick="addSubtask(${proj.id})"><i class="ri-add-line"></i></button>
-      </div>
-    `;
-
-    card.innerHTML = html;
-
-    // Attach dragover/drop to the subtask list container dynamically
-    const listContainer = card.querySelector(`#subtaskList-${proj.id}`);
-    if (listContainer) {
-      listContainer.addEventListener('dragover', (e) => handleSubtaskDragOver(e, proj.id));
-      listContainer.addEventListener('drop', (e) => handleSubtaskDrop(e, proj.id));
-    }
-
-    projectsGrid.appendChild(card);
-  });
-}
-
-// ==========================================================================
-// 9. FILES VAULT FEATURE (ATTACHMENTS & STORAGE)
-// ==========================================================================
-
-const vaultDropZone = document.getElementById("vaultDropZone");
-const vaultFileInput = document.getElementById("vaultFileInput");
-const vaultBrowseBtn = document.getElementById("vaultBrowseBtn");
-const vaultFilesGrid = document.getElementById("vaultFilesGrid");
-const vaultEmptyState = document.getElementById("vaultEmptyState");
-const vaultSearch = document.getElementById("vaultSearch");
-const storageFill = document.getElementById("storageFill");
-const storageText = document.getElementById("storageText");
-
-const MAX_FILE_SIZE = 500 * 1024; // 500 KB limit per file due to LocalStorage
-const MAX_STORAGE_QUOTA = 5 * 1024 * 1024; // 5 MB total quota estimate
-
-// Initialize search listener
-if (vaultSearch) {
-  vaultSearch.addEventListener("input", renderVault);
-}
-
-// Clear Vault button binding (added feature)
-const clearVaultBtn = document.getElementById("clearVaultBtn");
-if (clearVaultBtn) {
-  clearVaultBtn.addEventListener("click", clearVault);
-}
-
-// Drag & Drop Handlers
-if (vaultDropZone) {
-  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    vaultDropZone.addEventListener(eventName, preventDefaults, false);
-  });
-
-  function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-
-  ['dragenter', 'dragover'].forEach(eventName => {
-    vaultDropZone.addEventListener(eventName, () => {
-      vaultDropZone.classList.add('drag-active');
-    }, false);
-  });
-
-  ['dragleave', 'drop'].forEach(eventName => {
-    vaultDropZone.addEventListener(eventName, () => {
-      vaultDropZone.classList.remove('drag-active');
-    }, false);
-  });
-
-  vaultDropZone.addEventListener('drop', (e) => {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    handleFiles(files);
-  }, false);
-
-  vaultBrowseBtn.addEventListener('click', () => {
-    vaultFileInput.click();
-  });
-
-  vaultFileInput.addEventListener('change', function() {
-    handleFiles(this.files);
-    // Reset input so same file can be selected again
-    this.value = '';
-  });
-}
-
-function getStorageUsed() {
-  let totalBytes = 0;
-  for (let key in localStorage) {
-    if (localStorage.hasOwnProperty(key)) {
-      totalBytes += ((localStorage[key].length + key.length) * 2); // rough estimate in bytes
-    }
-  }
-  return totalBytes;
-}
-
-function updateStorageUI() {
-  if (!storageFill || !storageText) return;
-  const usedBytes = getStorageUsed();
-  let percent = (usedBytes / MAX_STORAGE_QUOTA) * 100;
-  percent = Math.min(100, percent);
-  
-  storageFill.style.width = `${percent}%`;
-  
-  if (percent > 90) {
-    storageFill.style.background = "#ef4444"; // Red if almost full
-  } else if (percent > 75) {
-    storageFill.style.background = "#f59e0b"; // Orange
-  } else {
-    storageFill.style.background = "linear-gradient(90deg, var(--primary), var(--secondary))";
-  }
-
-  storageText.textContent = `${(usedBytes / 1024).toFixed(1)} KB / ${(MAX_STORAGE_QUOTA / 1024 / 1024).toFixed(1)} MB Used`;
-}
-
-function formatBytes(bytes, decimals = 2) {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
-
-function handleFiles(files) {
-  const filesArray = Array.from(files);
-  let filesAdded = 0;
-
-  filesArray.forEach(file => {
-    if (file.size > MAX_FILE_SIZE) {
-      announce(`File "${file.name}" is too large! Max size is 500KB.`);
-      showTaskPopup(`"${file.name}" too large! 🚨`);
+    if (blocked) {
+      const pending = deps.map(did => tasks.find(t => t.id === did)).filter(Boolean).filter(t => !t.completed).map(t => t.text);
+      try { window.showToast(`Blocked — complete: ${pending.join(', ')}`, 'warning'); } catch(e){}
       return;
     }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const base64Data = e.target.result;
-      
-      const newFileObj = {
-        id: Date.now() + Math.random().toString(36).substr(2, 5),
-        name: file.name,
-        type: file.type || 'application/octet-stream',
-        size: file.size,
-        data: base64Data,
-        addedAt: Date.now()
-      };
-
-      vaultFiles.push(newFileObj);
-      filesAdded++;
-
-      // Check if this is the last file to process
-      if (filesAdded === filesArray.length) {
-        saveData();
-        renderVault();
-        announce(`Uploaded ${filesAdded} file(s) to vault.`);
-        showTaskPopup("Files securely vaulted! 🛡️");
-      }
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-function deleteVaultFile(id) {
-  vaultFiles = vaultFiles.filter(f => f.id !== id);
-  saveData();
-  renderVault();
-  announce("File deleted from vault.");
-}
-
-// New feature: Clear entire vault after confirmation
-function clearVault() {
-  const proceed = confirm("Are you sure you want to clear all files from the vault? This action cannot be undone.");
-  if (!proceed) return;
-  vaultFiles = [];
-  saveData();
-  renderVault();
-  announce("All files removed from vault.");
-  try { showTaskPopup("Vault cleared."); } catch (e) { /* ignore if popup not available */ }
-}
-
-function downloadVaultFile(id) {
-  const file = vaultFiles.find(f => f.id === id);
-  if (!file) return;
-
-  const a = document.createElement("a");
-  a.href = file.data;
-  a.download = file.name;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-
-function renderVault() {
-  if (!vaultFilesGrid) return;
-  updateStorageUI();
-
-  // Clear existing cards
-  const existingCards = vaultFilesGrid.querySelectorAll(".vault-card");
-  existingCards.forEach(c => c.remove());
-
-  const searchTerm = vaultSearch ? vaultSearch.value.toLowerCase() : "";
-  const filteredFiles = vaultFiles.filter(f => f.name.toLowerCase().includes(searchTerm));
-
-  if (filteredFiles.length === 0) {
-    if (vaultEmptyState) vaultEmptyState.style.display = "block";
-    return;
   }
-  
-  if (vaultEmptyState) vaultEmptyState.style.display = "none";
+  tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+  saveAndRender();
+}
 
-  // Sort by newest first
-  filteredFiles.sort((a, b) => b.addedAt - a.addedAt);
-
-  filteredFiles.forEach(file => {
-    const card = document.createElement("div");
-    card.className = "vault-card";
-
-    let previewHtml = "";
-    if (file.type.startsWith("image/")) {
-      previewHtml = `<img src="${file.data}" alt="${file.name}" loading="lazy" />`;
-    } else if (file.type === "application/pdf") {
-      previewHtml = `<i class="ri-file-pdf-2-fill" style="color: #ef4444;"></i>`;
-    } else if (file.type.includes("text")) {
-      previewHtml = `<i class="ri-file-text-fill" style="color: var(--secondary);"></i>`;
+function editTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  const newText = prompt("Edit task:", task.text);
+  if (newText !== null && newText.trim() !== "") {
+    task.text = newText.trim();
+  }
+  // prompt for dependency selection (minimal UI): allow selecting multiple by comma-separated indices
+  const choices = tasks.filter(t => t.id !== id).map((t, i) => `${i+1}. ${t.text} (id:${t.id}${t.completed? ' ✓':''})`);
+  const sel = prompt(`Select prerequisite numbers (comma separated) or empty = none:\n${choices.join('\n')}`);
+  if (sel !== null) {
+    if (sel.trim() === '') {
+      task.depends = [];
     } else {
-      previewHtml = `<i class="ri-file-fill" style="color: var(--text-light);"></i>`;
+      const parts = sel.split(/[,\s]+/).map(s => Number(s)).filter(n => Number.isFinite(n) && n>=1 && n<=choices.length);
+      const chosen = parts.map(n => tasks.filter(t => t.id !== id)[n-1]).filter(Boolean).map(t => t.id);
+      // filter out circular dependencies
+      task.depends = chosen.filter(did => !hasCircularDependency(task.id, did));
     }
+  }
+  saveAndRender();
+}
 
-    card.innerHTML = `
-      <div class="vault-card-preview">
-        ${previewHtml}
-      </div>
-      <div class="vault-card-info">
-        <div class="vault-card-name" title="${file.name}">${file.name}</div>
-        <div class="vault-card-size">${formatBytes(file.size)}</div>
-        <div class="vault-card-actions">
-          <button class="vault-action-btn" onclick="downloadVaultFile('${file.id}')" aria-label="Download ${file.name}">
-            <i class="ri-download-2-line"></i> Download
-          </button>
-          <button class="vault-action-btn delete" onclick="deleteVaultFile('${file.id}')" aria-label="Delete ${file.name}">
-            <i class="ri-delete-bin-line"></i>
-          </button>
-        </div>
+function saveAndRender() {
+  try {
+    if (window.TaskQuestStorage) {
+      window.TaskQuestStorage.setTasks(tasks);
+    } else {
+      localStorage.setItem("taskquest_v1.tasks", JSON.stringify(tasks));
+    }
+  } catch (e) {
+    console.warn("[TaskQuest] Failed to persist tasks.", e);
+  }
+  renderTasks();
+  // Notify other modules (badges, analytics) that tasks changed
+  try { document.dispatchEvent(new CustomEvent('tasksUpdated')); } catch (e) {}
+}
+
+function updateOverdueFlags(){
+  const now = Date.now();
+  tasks = tasks.map(t => {
+    const copy = { ...t };
+    copy.overdue = false;
+    if (!copy.completed && copy.deadline){
+      try{
+        const d = new Date(copy.deadline).getTime();
+        if (!isNaN(d) && d < now) copy.overdue = true;
+      }catch(e){}
+    }
+    return copy;
+  });
+}
+
+function renderTasks() {
+  taskList.innerHTML = "";
+
+  // refresh depends select for creation
+  populateDependsSelect();
+
+  tasks.forEach(task => {
+    // apply filter
+    if (activeFilter === 'Overdue' && !task.overdue) return;
+
+    const li = document.createElement("li");
+    if (task.completed) li.classList.add("completed");
+    if (task.overdue) li.classList.add('overdue');
+
+    const deadlineLabel = task.deadline ? new Date(task.deadline).toLocaleString() : '';
+    const deps = Array.isArray(task.depends) ? task.depends : (task.dependsOn ? [task.dependsOn] : []);
+    const depTasks = deps.map(did => tasks.find(t => t.id === did)).filter(Boolean);
+    const blocked = depTasks.some(d => !d.completed);
+    const depBadge = deps.length ? (blocked ? `<span class="dep-badge blocked">Blocked</span>` : `<span class="dep-badge ready">Ready</span>`) : '';
+    const depInfo = deps.length ? `<div class="dep-info">Depends on: ${depTasks.map(d => escapeHtml(d.text) + (d.completed ? ' ✓' : '')).join(', ')}</div>` : '';
+    li.innerHTML = `
+      <input type="checkbox" ${task.completed ? "checked" : ""} onchange="toggleTask(${task.id})">
+      <span>
+        ${escapeHtml(task.text)}
+        <small style="display: block; font-size: 0.75rem; opacity: 0.7;">${escapeHtml(task.timestamp)}</small>
+      </span>
+      <div style="display: flex; gap: 5px;">
+        <button onclick="editTask(${task.id})" style="padding: 0.5rem; font-size: 0.8rem;">Edit</button>
+        <button onclick="removeTask(${task.id})" style="padding: 0.5rem; font-size: 0.8rem; background: var(--error-color, #ef4444);">Remove</button>
       </div>
     `;
 
-    vaultFilesGrid.appendChild(card);
+    taskList.appendChild(li);
   });
 
+  updateStats();
 }
 
-  // ----------------------
-  // Syllabus Checklist JS
-  // ----------------------
+function updateStats() {
+  const completedCount = tasks.filter(t => t.completed).length;
+  const totalCount = tasks.length;
+  const overdueCount = tasks.filter(t => t.overdue).length;
 
-  function getSyllabusItems() {
-    try { return JSON.parse(localStorage.getItem('syllabus_items') || '[]'); }
-    catch (e) { return []; }
+  if (taskStats) {
+    taskStats.innerText = `✅ ${completedCount} / ${totalCount} completed`;
   }
 
-  function saveSyllabusItems(items) {
-    localStorage.setItem('syllabus_items', JSON.stringify(items));
+  const overdueEl = document.getElementById('overdueCount');
+  if (overdueEl) {
+    overdueEl.innerText = overdueCount;
+    const sc = overdueEl.closest('.stat-card');
+    if (sc) sc.classList.toggle('overdue', overdueCount>0);
   }
 
-  function renderSyllabus() {
-    const list = document.getElementById('syllabusList');
-    const fill = document.getElementById('syllabusProgressFill');
-    const text = document.getElementById('syllabusProgressText');
-    if (!list || !fill || !text) return;
-    const items = getSyllabusItems();
-    list.innerHTML = '';
-    if (!items || items.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'muted';
-      empty.textContent = 'No syllabus items. Add topics to track completion.';
-      list.appendChild(empty);
-      fill.style.width = '0%';
-      text.textContent = '0/0';
-      return;
+  if (celebration) {
+    if (totalCount > 0 && completedCount === totalCount) {
+      celebration.classList.remove("hidden");
+      setTimeout(() => celebration.classList.add("show"), 10);
+    } else {
+      celebration.classList.remove("show");
+      celebration.classList.add("hidden");
     }
-
-    let completed = 0;
-    items.forEach(item => {
-      const li = document.createElement('li');
-      li.dataset.id = item.id;
-
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.checked = !!item.completed;
-      cb.addEventListener('change', () => toggleSyllabusItem(item.id));
-
-      const label = document.createElement('div');
-      label.textContent = item.text;
-      label.style.marginLeft = '8px';
-      if (item.completed) { label.style.textDecoration = 'line-through'; label.style.opacity = '0.7'; completed++; }
-
-      const remove = document.createElement('button');
-      remove.className = 'icon-btn remove-syllabus';
-      remove.innerHTML = '<i class="ri-delete-bin-line"></i>';
-      remove.title = 'Remove';
-      remove.addEventListener('click', () => removeSyllabusItem(item.id));
-
-      li.appendChild(cb);
-      li.appendChild(label);
-      li.appendChild(remove);
-      list.appendChild(li);
-    });
-
-    const pct = items.length ? Math.round((completed / items.length) * 100) : 0;
-    fill.style.width = pct + '%';
-    text.textContent = `${completed}/${items.length}`;
   }
+}
 
-  function addSyllabusItem(text) {
-    if (!text || !text.trim()) return;
-    const items = getSyllabusItems();
-    items.push({ id: Date.now() + Math.floor(Math.random()*1000), text: text.trim(), completed: false });
-    saveSyllabusItems(items);
-    renderSyllabus();
-    announce('Syllabus item added.');
+// --- Theme Management ---
+
+function initTheme() {
+  let savedTheme = "cosmic";
+  try {
+    savedTheme = (window.TaskQuestStorage
+      ? window.TaskQuestStorage.getTheme()
+      : localStorage.getItem("taskquest_v1.theme") || localStorage.getItem("quests_theme")) || "cosmic";
+  } catch (e) {
+    console.warn("[TaskQuest] Could not read theme from storage.", e);
   }
+  document.documentElement.setAttribute("data-theme", savedTheme);
 
-  function toggleSyllabusItem(id) {
-    const items = getSyllabusItems();
-    const it = items.find(i => String(i.id) === String(id));
-    if (!it) return;
-    it.completed = !it.completed;
-    saveSyllabusItems(items);
-    renderSyllabus();
-    if (it.completed) { coins += 2; saveData(); }
-  }
-
-  function removeSyllabusItem(id) {
-    let items = getSyllabusItems();
-    items = items.filter(i => String(i.id) !== String(id));
-    saveSyllabusItems(items);
-    renderSyllabus();
-  }
-
-  function completeAllSyllabus() {
-    const items = getSyllabusItems().map(i => ({ ...i, completed: true }));
-    saveSyllabusItems(items);
-    renderSyllabus();
-    announce('All syllabus items marked complete.');
-  }
-
-  function clearSyllabus() {
-    localStorage.removeItem('syllabus_items');
-    renderSyllabus();
-    announce('Syllabus cleared.');
-  }
-
-  function applySyllabusToTasks() {
-    const items = getSyllabusItems();
-    if (!items || items.length === 0) { announce('No syllabus items to import.'); return; }
-    const existing = new Set(tasks.map(t => t.text.toLowerCase()));
-    let created = 0;
-    items.forEach(it => {
-      if (!existing.has(it.text.toLowerCase())) {
-        tasks.push({ id: Date.now() + Math.floor(Math.random()*1000), text: it.text, category: 'Revision', priority: 'Medium', completed: !!it.completed, createdAt: getFormattedDateTime(new Date()), deadline: null, penaltyApplied: false });
-        created++;
+  if (themeSwitcher) {
+    themeSwitcher.value = savedTheme;
+    themeSwitcher.addEventListener("change", (e) => {
+      const selectedTheme = e.target.value;
+      document.documentElement.setAttribute("data-theme", selectedTheme);
+      try {
+        if (window.TaskQuestStorage) {
+          window.TaskQuestStorage.setTheme(selectedTheme);
+        } else {
+          localStorage.setItem("taskquest_v1.theme", selectedTheme);
+        }
+      } catch (err) {
+        console.warn("[TaskQuest] Failed to persist theme.", err);
       }
     });
-    if (created) { saveData(); renderTasks(); announce(`${created} syllabus items imported as tasks.`); }
-    else announce('No new syllabus items to import.');
   }
+}
 
-  // Init handlers
-  document.addEventListener('DOMContentLoaded', () => {
-    const addBtn = document.getElementById('addSyllabusBtn');
-    const input = document.getElementById('syllabusInput');
-    const clearBtn = document.getElementById('clearSyllabusBtn');
-    const completeAllBtn = document.getElementById('completeAllSyllabus');
-    const applyBtn = document.getElementById('applySyllabusBtn');
-    const panel = document.getElementById('syllabusPanel');
-
-    if (addBtn && input) {
-      addBtn.addEventListener('click', () => { addSyllabusItem(input.value); input.value = ''; });
-      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { addSyllabusItem(input.value); input.value = ''; } });
-    }
-    if (clearBtn) clearBtn.addEventListener('click', clearSyllabus);
-    if (completeAllBtn) completeAllBtn.addEventListener('click', completeAllSyllabus);
-    if (applyBtn) applyBtn.addEventListener('click', applySyllabusToTasks);
-
-    function updateSyllabusVisibility() {
-      const boardActive = document.getElementById('boardViewBtn')?.classList.contains('active');
-      if (panel) panel.style.display = boardActive ? 'block' : 'none';
-    }
-    renderSyllabus();
-    updateSyllabusVisibility();
-
-    const boardBtn = document.getElementById('boardViewBtn');
-    const listBtn = document.getElementById('listViewBtn');
-    if (boardBtn) boardBtn.addEventListener('click', () => setTimeout(updateSyllabusVisibility, 100));
-    if (listBtn) listBtn.addEventListener('click', () => setTimeout(updateSyllabusVisibility, 100));
+function populateDependsSelect(){
+  const sel = document.getElementById('dependsSelect');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">No prerequisite</option>';
+  tasks.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.text = `${t.text}${t.completed? ' ✓':''}`;
+    sel.appendChild(opt);
   });
-
-
+  if (prev) sel.value = prev;
 }
 
+function escapeHtml(str){
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 
+
+/* Export JSON Logic */
+document.getElementById('exportJsonBtn')?.addEventListener('click', () => { const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tasks, null, 2)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute('href', dataStr); dlAnchorElem.setAttribute('download', 'taskquest_backup.json'); dlAnchorElem.click(); });
+
+window.addEventListener('error', (e) => console.error('Global Error:', e.message));

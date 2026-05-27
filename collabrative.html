@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Together • TaskQuest</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="collaborative.css">
+</head>
+<body class="collaborative-page">
+    <!-- Shared Background from main app -->
+    <div class="bg blur1"></div>
+    <div class="bg blur2"></div>
+    <div class="grid-overlay"></div>
+
+    <header class="site-header">
+        <div class="header-inner">
+            <a href="index.html" class="header-brand" style="text-decoration: none;">
+                <div class="topbar-logo"><i class="ri-gamepad-fill"></i></div>
+                <h1 style="color: var(--text); font-family: 'Poppins';">TaskQuest</h1>
+            </a>
+            <nav class="header-nav">
+                <a href="index.html" class="view-btn small" style="text-decoration: none;"><i class="ri-home-4-line"></i> Dashboard</a>
+                <div class="user-status-pill glass">
+                    <span id="currentUserStatus">📖 Studying</span>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="collab-container">
+        <!-- Sidebar: Friends & Team -->
+        <aside class="collab-sidebar glass">
+            <div class="sidebar-section team-management">
+                <h3><i class="ri-user-add-line"></i> Team Members</h3>
+                <div class="member-input-group">
+                    <input type="text" id="memberSearchInput" placeholder="Name to add or search...">
+                    <button id="addMemberBtn" title="Add Member"><i class="ri-add-line"></i></button>
+                </div>
+                <div class="team-list-container">
+                    <div class="member-list" id="teamMemberList">
+                        <!-- Team members will be listed here -->
+                    </div>
+                    <div id="noMembersMsg" class="empty-state-mini">
+                        No members added yet.
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3><i class="ri-team-line"></i> Active Scholars</h3>
+                <div class="online-list" id="onlineList">
+                    <!-- Presence indicators will appear here -->
+                    <div class="empty-state-mini">No other sessions active</div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section stats-section">
+                <h3><i class="ri-flashlight-line"></i> Team Energy</h3>
+                <div class="energy-bar-wrap">
+                    <div class="energy-fill" id="teamEnergy" style="width: 65%;"></div>
+                </div>
+                <p class="energy-text" id="energyText">Collective momentum is building!</p>
+            </div>
+        </aside>
+
+        <!-- Center: Real-time Chat -->
+        <section class="chat-window glass">
+            <div class="chat-header">
+                <div class="header-info">
+                    <h2>Global Study Lounge</h2>
+                    <p id="roomStatus">Syncing with other tabs...</p>
+                </div>
+                <div class="header-actions">
+                    <button id="clearChat" class="icon-btn danger small" title="Clear History"><i class="ri-delete-bin-line"></i></button>
+                </div>
+            </div>
+
+            <div class="messages-container" id="messagesContainer">
+                <!-- Messages populated here -->
+            </div>
+
+            <div class="chat-footer">
+                <!-- Motivational Quick Actions -->
+                <div class="quick-actions">
+                    <button class="action-pill" data-msg="You've got this, champ! 🚀">🚀 Support</button>
+                    <button class="action-pill" data-msg="Time for a 5-min break? ☕">☕ Break</button>
+                    <button class="action-pill" data-msg="Pure focus mode engaged! 🧠">🧠 Focus</button>
+                    <button class="action-pill" data-msg="I'm done with my task! ✅">✅ Victory</button>
+                </div>
+
+                <form id="chatForm" class="message-form">
+                    <input type="text" id="chatInput" placeholder="Send some motivation..." autocomplete="off">
+                    <button type="submit" class="send-btn"><i class="ri-send-plane-fill"></i></button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Right: My Current Focus -->
+        <aside class="collab-focus glass">
+            <div class="focus-card">
+                <h3>Your Focus</h3>
+                <div class="current-task-display">
+                    <p id="myActiveTask">No active quest</p>
+                </div>
+                
+                <div class="status-controls">
+                    <label>Set your status:</label>
+                    <select id="statusSelect" class="glass-select">
+                        <option value="Studying">📖 Studying</option>
+                        <option value="Break">☕ On Break</option>
+                        <option value="Deep Focus">⚡ Deep Focus</option>
+                        <option value="Away">🌙 Away</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="session-leaderboard">
+                <h3>Session Top Score</h3>
+                <div id="collabLeaderboard">
+                    <!-- Local tab leaderboard -->
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <script src="storage.js" defer></script>
+    <script src="collab-utils.js" defer></script>
+    <script src="collaborative.js" defer></script>
+</body>
+</html>

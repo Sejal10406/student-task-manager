@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyBot — Academic Productivity Assistant</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f6f6f4; --bg3: #efefec;
+    --text: #1a1a1a; --text2: #666; --text3: #999;
+    --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
+    --purple: #534AB7; --purple-light: #EEEDFE; --purple-mid: #AFA9EC; --purple-dark: #3C3489;
+    --teal: #1D9E75; --teal-light: #E1F5EE;
+    --coral-light: #FAECE7; --coral: #993C1D;
+    --amber-light: #FAEEDA; --amber: #854F0B;
+    --green-light: #EAF3DE; --green: #3B6D11;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1e; --bg2: #252525; --bg3: #2d2d2d;
+      --text: #f0f0f0; --text2: #aaa; --text3: #666;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.18);
+      --purple-light: #2a2560; --purple-mid: #534AB7; --purple-dark: #CECBF6;
+      --teal-light: #0a3326;
+      --coral-light: #3a1a10; --coral: #F0997B;
+      --amber-light: #3a2a08; --amber: #EF9F27;
+      --green-light: #1a2e0a; --green: #97C459;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+  #app { display: flex; width: 900px; height: 680px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+
+  /* SIDEBAR */
+  #sidebar { width: 200px; border-right: 0.5px solid var(--border); display: flex; flex-direction: column; background: var(--bg2); flex-shrink: 0; }
+  #sb-logo { padding: 16px 14px 12px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  #sb-logo .logo-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--purple-light); display: flex; align-items: center; justify-content: center; }
+  #sb-logo .logo-icon i { font-size: 16px; color: var(--purple); }
+  #sb-logo span { font-size: 15px; font-weight: 600; color: var(--text); }
+  #sb-nav { padding: 10px 8px; flex: 1; }
+  #sb-nav p { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; padding: 0 6px; margin-bottom: 6px; }
+  .sb-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius); cursor: pointer; font-size: 13px; color: var(--text2); transition: all .15s; user-select: none; }
+  .sb-item:hover { background: var(--bg); color: var(--text); }
+  .sb-item.active { background: var(--purple-light); color: var(--purple); font-weight: 500; }
+  .sb-item i { font-size: 16px; flex-shrink: 0; }
+  #sb-stats { padding: 12px 14px; border-top: 0.5px solid var(--border); }
+  #sb-stats p { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+  .mini-stat { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; color: var(--text2); }
+  .mini-stat span:last-child { font-weight: 600; color: var(--text); }
+
+  /* MAIN AREA */
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .view-pane { display: none; flex-direction: column; height: 100%; }
+  .view-pane.active { display: flex; }
+
+  /* CHAT VIEW */
+  #chat-header { padding: 12px 16px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 10px; background: var(--bg); flex-shrink: 0; }
+  #bot-ava { width: 36px; height: 36px; border-radius: 50%; background: var(--purple-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  #bot-ava i { font-size: 18px; color: var(--purple); }
+  #htext h2 { font-size: 14px; font-weight: 600; color: var(--text); }
+  #htext p { font-size: 11px; color: var(--teal); display: flex; align-items: center; gap: 4px; }
+  #online-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); display: inline-block; }
+  #header-actions { margin-left: auto; display: flex; gap: 6px; }
+  .icon-btn { width: 30px; height: 30px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text2); transition: all .15s; }
+  .icon-btn:hover { background: var(--bg2); color: var(--text); }
+  .icon-btn i { font-size: 15px; }
+  #chips-row { display: flex; gap: 6px; padding: 8px 12px; overflow-x: auto; border-bottom: 0.5px solid var(--border); flex-shrink: 0; scrollbar-width: none; }
+  #chips-row::-webkit-scrollbar { display: none; }
+  .chip { white-space: nowrap; padding: 5px 11px; border-radius: 20px; border: 0.5px solid var(--border2); font-size: 12px; color: var(--text2); cursor: pointer; background: var(--bg); transition: all .15s; display: flex; align-items: center; gap: 4px; user-select: none; }
+  .chip:hover { background: var(--purple-light); border-color: var(--purple-mid); color: var(--purple-dark); }
+  .chip i { font-size: 13px; }
+  #msgs { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: thin; }
+  .msg { display: flex; gap: 8px; max-width: 90%; animation: fi .2s ease; }
+  @keyframes fi { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .m-ava { width: 28px; height: 28px; border-radius: 50%; background: var(--purple-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .m-ava i { font-size: 14px; color: var(--purple); }
+  .user .m-ava { background: var(--teal-light); }
+  .user .m-ava i { color: var(--teal); }
+  .msg-inner { display: flex; flex-direction: column; }
+  .bubble { padding: 9px 13px; border-radius: var(--radius-lg); font-size: 13.5px; line-height: 1.65; color: var(--text); border: 0.5px solid var(--border); background: var(--bg2); white-space: pre-wrap; }
+  .user .bubble { background: var(--purple-light); border-color: var(--purple-mid); color: var(--purple-dark); }
+  .time-lbl { font-size: 10px; color: var(--text3); margin-top: 3px; }
+  .user .time-lbl { text-align: right; }
+  .typing-bub { display: flex; align-items: center; gap: 5px; padding: 10px 14px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--purple-mid); animation: bce 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: .2s; } .dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes bce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+  .card-block { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px 12px; margin-top: 8px; }
+  .t-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+  .t-row:last-child { border-bottom: none; }
+  .prio { font-size: 11px; padding: 2px 7px; border-radius: 10px; font-weight: 600; flex-shrink: 0; }
+  .ph { background: var(--coral-light); color: var(--coral); }
+  .pm { background: var(--amber-light); color: var(--amber); }
+  .pl { background: var(--green-light); color: var(--green); }
+  .s-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+  .s-box { background: var(--bg2); border-radius: var(--radius); padding: 10px; text-align: center; }
+  .s-num { font-size: 22px; font-weight: 700; color: var(--text); }
+  .s-lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .tip-box { border-left: 3px solid var(--purple); padding: 9px 12px; margin-top: 8px; background: var(--purple-light); border-radius: 0 var(--radius) var(--radius) 0; }
+  .tip-box strong { color: var(--purple-dark); font-size: 13.5px; }
+  .tip-box p { color: var(--text); font-size: 13px; line-height: 1.6; margin-top: 3px; }
+  .prog-wrap { background: var(--bg3); border-radius: 20px; height: 8px; overflow: hidden; margin: 6px 0; }
+  .prog-bar { height: 100%; border-radius: 20px; background: var(--purple); transition: width .6s ease; }
+  .action-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .ac { padding: 5px 12px; border-radius: 20px; border: 0.5px solid var(--purple-mid); font-size: 12px; color: var(--purple); cursor: pointer; background: var(--purple-light); user-select: none; }
+  .ac:hover { background: var(--purple-mid); }
+  #footer { padding: 10px 12px; border-top: 0.5px solid var(--border); display: flex; gap: 8px; align-items: flex-end; background: var(--bg); flex-shrink: 0; }
+  #inp { flex: 1; resize: none; padding: 9px 13px; border-radius: var(--radius-lg); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); font-size: 13.5px; font-family: inherit; min-height: 38px; max-height: 100px; outline: none; line-height: 1.5; }
+  #inp:focus { border-color: var(--purple); }
+  #send-btn { width: 38px; height: 38px; border-radius: 50%; background: var(--purple); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity .15s; }
+  #send-btn:hover { opacity: .85; }
+  #send-btn i { font-size: 17px; color: #fff; }
+
+  /* TASKS VIEW */
+  .pane-body { padding: 16px; flex: 1; overflow-y: auto; scrollbar-width: thin; }
+  .pane-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 14px; }
+  .full-t-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius); border: 0.5px solid var(--border); margin-bottom: 8px; background: var(--bg); transition: opacity .2s; }
+  .full-t-row.done-row { opacity: .5; }
+  .full-t-row input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; accent-color: var(--purple); }
+  .task-name { flex: 1; font-size: 13.5px; color: var(--text); }
+  .done-row .task-name { text-decoration: line-through; color: var(--text2); }
+  .due-tag { font-size: 11px; color: var(--text2); flex-shrink: 0; }
+  .del-btn { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 16px; padding: 2px; transition: color .15s; }
+  .del-btn:hover { color: #E24B4A; }
+  .add-row { display: flex; gap: 8px; margin-top: 12px; }
+  .add-row input, .add-row select { padding: 8px 10px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); font-size: 13px; font-family: inherit; outline: none; }
+  .add-row input { flex: 1; }
+  .add-row input:focus, .add-row select:focus { border-color: var(--purple); }
+  .add-row button { padding: 8px 16px; border-radius: var(--radius); border: none; background: var(--purple); color: #fff; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .add-row button:hover { opacity: .85; }
+
+  /* TIMER VIEW */
+  #big-timer { text-align: center; padding: 30px 20px; }
+  #session-label { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+  #big-time { font-size: 64px; font-weight: 700; color: var(--purple); letter-spacing: 6px; font-variant-numeric: tabular-nums; }
+  #timer-status { font-size: 13px; color: var(--text2); margin-top: 6px; min-height: 20px; }
+  .timer-ring { width: 160px; height: 160px; margin: 16px auto; position: relative; }
+  .timer-ring svg { transform: rotate(-90deg); }
+  .timer-ring circle { fill: none; stroke-width: 6; }
+  .timer-ring .track { stroke: var(--bg2); }
+  .timer-ring .prog { stroke: var(--purple); stroke-linecap: round; transition: stroke-dashoffset .5s linear; }
+  .timer-btns { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+  .timer-btn { padding: 9px 22px; border-radius: var(--radius-lg); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); font-size: 13.5px; cursor: pointer; font-family: inherit; transition: all .15s; }
+  .timer-btn:hover { background: var(--bg3); }
+  .timer-btn.primary { background: var(--purple); color: #fff; border-color: var(--purple); }
+  .timer-btn.primary:hover { opacity: .85; }
+  .preset-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
+  .preset { padding: 5px 14px; border-radius: 20px; border: 0.5px solid var(--purple-mid); font-size: 12px; color: var(--purple); cursor: pointer; background: var(--purple-light); user-select: none; }
+  .preset:hover { background: var(--purple-mid); }
+
+  /* REMINDERS VIEW */
+  .add-rem-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .add-rem-row input { padding: 8px 10px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); font-size: 13px; font-family: inherit; outline: none; }
+  .add-rem-row input:first-child { flex: 1; }
+  .add-rem-row input[type=number] { width: 70px; }
+  .add-rem-row input:focus { border-color: var(--purple); }
+  .add-rem-row button { padding: 8px 16px; border-radius: var(--radius); border: none; background: var(--purple); color: #fff; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .add-rem-row button:hover { opacity: .85; }
+  .rem-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius); border: 0.5px solid var(--border); margin-bottom: 8px; background: var(--bg); font-size: 13px; }
+  .rem-item i.rem-icon { font-size: 18px; color: var(--purple); flex-shrink: 0; }
+  .rem-details { flex: 1; }
+  .rem-details strong { font-size: 13.5px; color: var(--text); display: block; }
+  .rem-details span { font-size: 11px; color: var(--text2); }
+  .rm-del { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 16px; padding: 2px; }
+  .rm-del:hover { color: #E24B4A; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text2); font-size: 13px; }
+  .empty-state i { font-size: 36px; color: var(--text3); display: block; margin-bottom: 10px; }
+
+  /* STATS VIEW */
+  .big-stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+  .big-stat { background: var(--bg2); border-radius: var(--radius); padding: 14px; }
+  .big-stat .val { font-size: 28px; font-weight: 700; color: var(--purple); }
+  .big-stat .lbl { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .big-stat .sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .streak-row { display: flex; gap: 6px; margin-top: 10px; }
+  .streak-day { width: 32px; height: 32px; border-radius: var(--radius); background: var(--bg2); border: 0.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text2); flex-direction: column; gap: 1px; }
+  .streak-day.active { background: var(--purple-light); border-color: var(--purple-mid); color: var(--purple); }
+  .streak-day span { font-size: 10px; }
+  .section-title { font-size: 13px; font-weight: 600; color: var(--text); margin: 14px 0 8px; }
+</style>
+</head>
+<body>
+<main>
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div id="sb-logo">
+      <div class="logo-icon"><i class="ti ti-robot"></i></div>
+      <span>StudyBot</span>
+    </div>
+    <div id="sb-nav">
+      <p>Menu</p>
+      <div class="sb-item active" onclick="showView('chat',this)"><i class="ti ti-message-circle"></i>Chat</div>
+      <div class="sb-item" onclick="showView('tasks',this)"><i class="ti ti-list-check"></i>Tasks</div>
+      <div class="sb-item" onclick="showView('timer',this)"><i class="ti ti-clock"></i>Timer</div>
+      <div class="sb-item" onclick="showView('reminders',this)"><i class="ti ti-bell"></i>Reminders</div>
+      <div class="sb-item" onclick="showView('stats',this)"><i class="ti ti-chart-bar"></i>Stats</div>
+    </div>
+    <div id="sb-stats">
+      <p>Overview</p>
+      <div class="mini-stat"><span>Sessions</span><span id="ss-cnt">12</span></div>
+      <div class="mini-stat"><span>Study hrs</span><span id="sh-cnt">34h</span></div>
+      <div class="mini-stat"><span>Completed</span><span id="sd-cnt">3 tasks</span></div>
+      <div class="mini-stat"><span>Streak</span><span>5 days 🔥</span></div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- CHAT VIEW -->
+    <div id="view-chat" class="view-pane active">
+      <div id="chat-header">
+        <div id="bot-ava"><i class="ti ti-robot"></i></div>
+        <div id="htext">
+          <h2>StudyBot AI</h2>
+          <p><span id="online-dot"></span>Online — ready to help</p>
+        </div>
+        <div id="header-actions">
+          <button class="icon-btn" onclick="clearChat()" title="Clear chat"><i class="ti ti-trash"></i></button>
+          <button class="icon-btn" onclick="exportChat()" title="Export chat"><i class="ti ti-download"></i></button>
+        </div>
+      </div>
+      <div id="chips-row">
+        <div class="chip" onclick="qs('Show my tasks')"><i class="ti ti-list-check"></i>Tasks</div>
+        <div class="chip" onclick="qs('Give me a study tip')"><i class="ti ti-bulb"></i>Study tip</div>
+        <div class="chip" onclick="qs('Motivate me')"><i class="ti ti-flame"></i>Motivate</div>
+        <div class="chip" onclick="qs('Start a Pomodoro timer')"><i class="ti ti-player-play"></i>Pomodoro</div>
+        <div class="chip" onclick="qs('Show my stats')"><i class="ti ti-chart-bar"></i>Stats</div>
+        <div class="chip" onclick="qs('Help with exam prep')"><i class="ti ti-school"></i>Exam prep</div>
+        <div class="chip" onclick="qs('How to improve focus')"><i class="ti ti-brain"></i>Focus tips</div>
+        <div class="chip" onclick="qs('Remind me in 25 minutes')"><i class="ti ti-bell"></i>Reminder</div>
+      </div>
+      <div id="msgs"></div>
+      <div id="footer">
+        <textarea id="inp" placeholder="Ask about tasks, study tips, timers, reminders…" rows="1"></textarea>
+        <button id="send-btn" onclick="sendMsg()" title="Send"><i class="ti ti-send"></i></button>
+      </div>
+    </div>
+
+    <!-- TASKS VIEW -->
+    <div id="view-tasks" class="view-pane">
+      <div class="pane-body">
+        <div class="pane-title">My tasks</div>
+        <div id="task-list-full"></div>
+        <div class="add-row">
+          <input id="new-task-inp" placeholder="New task…" onkeydown="if(event.key==='Enter')addTask()">
+          <input id="new-task-due" placeholder="Due (e.g. Today)" style="width:110px">
+          <select id="new-task-prio">
+            <option value="high">High</option>
+            <option value="med" selected>Medium</option>
+            <option value="low">Low</option>
+          </select>
+          <button onclick="addTask()">Add task</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIMER VIEW -->
+    <div id="view-timer" class="view-pane">
+      <div class="pane-body" style="display:flex;flex-direction:column;align-items:center">
+        <div class="pane-title" style="align-self:flex-start">Focus timer</div>
+        <div id="big-timer">
+          <div id="session-label">Pomodoro session</div>
+          <div class="timer-ring">
+            <svg width="160" height="160" viewBox="0 0 160 160">
+              <circle class="track" cx="80" cy="80" r="70"/>
+              <circle class="prog" id="ring-prog" cx="80" cy="80" r="70" stroke-dasharray="439.8" stroke-dashoffset="0"/>
+            </svg>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+              <div id="big-time">25:00</div>
+              <div id="timer-status">Ready</div>
+            </div>
+          </div>
+          <div class="timer-btns">
+            <button class="timer-btn" onclick="resetTimer()"><i class="ti ti-refresh" style="font-size:14px;vertical-align:-2px"></i> Reset</button>
+            <button class="timer-btn primary" id="tog-btn" onclick="toggleTimer()"><i class="ti ti-player-play" style="font-size:14px;vertical-align:-2px"></i> Start</button>
+          </div>
+          <div class="preset-row">
+            <div class="preset" onclick="setPreset(25,'Pomodoro')">25 min</div>
+            <div class="preset" onclick="setPreset(5,'Short break')">5 min break</div>
+            <div class="preset" onclick="setPreset(15,'Long break')">15 min break</div>
+            <div class="preset" onclick="setPreset(45,'Deep work')">45 min</div>
+            <div class="preset" onclick="setPreset(60,'Study hour')">60 min</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REMINDERS VIEW -->
+    <div id="view-reminders" class="view-pane">
+      <div class="pane-body">
+        <div class="pane-title">Reminders</div>
+        <div class="add-rem-row">
+          <input id="rem-inp" placeholder="Reminder message…" onkeydown="if(event.key==='Enter')addReminder()">
+          <input id="rem-min" type="number" min="1" max="480" placeholder="Minutes">
+          <button onclick="addReminder()">Set reminder</button>
+        </div>
+        <div id="rem-list"></div>
+      </div>
+    </div>
+
+    <!-- STATS VIEW -->
+    <div id="view-stats" class="view-pane">
+      <div class="pane-body">
+        <div class="pane-title">Study stats</div>
+        <div class="big-stat-grid">
+          <div class="big-stat"><div class="val">34h</div><div class="lbl">Total study time</div><div class="sub">This month</div></div>
+          <div class="big-stat"><div class="val">12</div><div class="lbl">Sessions completed</div><div class="sub">Avg 2.8h each</div></div>
+          <div class="big-stat" id="stat-done"><div class="val">3</div><div class="lbl">Tasks completed</div><div class="sub" id="stat-pend">2 pending</div></div>
+          <div class="big-stat"><div class="val">78%</div><div class="lbl">Focus rate</div><div class="sub">Above average</div></div>
+        </div>
+        <div class="section-title">This week's streak</div>
+        <div class="streak-row" id="streak-row"></div>
+        <div class="section-title">Subject breakdown</div>
+        <div id="subject-bars"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const tasks = [
+  {id:1, name:'Math assignment', due:'Today 6PM', priority:'high', done:false},
+  {id:2, name:'Biology lab report', due:'Tomorrow', priority:'med', done:false},
+  {id:3, name:'History essay draft', due:'Thu', priority:'med', done:true},
+  {id:4, name:'Physics problem set', due:'Fri', priority:'low', done:false},
+  {id:5, name:'CS project milestone', due:'Sun', priority:'high', done:false},
+  {id:6, name:'Read Economics chapter', due:'Mon', priority:'low', done:true},
+  {id:7, name:'Spanish vocabulary quiz', due:'Wed', priority:'med', done:true},
+];
+let nextId = 8;
+const reminders = [];
+let nextRemId = 1;
+
+const motivations = [
+  "Every expert was once a beginner. Keep going — your effort is building something real.",
+  "Your future self is cheering for you right now. Don't stop!",
+  "Small consistent progress beats occasional perfection every single time.",
+  "The secret to getting ahead is getting started. Take that first step today.",
+  "You are capable of more than you know. Trust the process!",
+  "Hard work beats talent when talent doesn't work hard. Keep pushing.",
+  "One page at a time, one problem at a time — you are doing great.",
+  "Discipline is choosing between what you want now and what you want most.",
+  "Success is the sum of small efforts repeated day in and day out.",
+  "Believe in yourself. You have survived every hard day so far — this one too.",
+];
+
+const studyTips = [
+  {title:"Active recall", body:"Close your notes and write down everything you remember. This strengthens memory far more than re-reading the same material passively."},
+  {title:"Spaced repetition", body:"Review material at increasing intervals: 1 day, 3 days, 1 week. This fights the forgetting curve and dramatically improves long-term retention."},
+  {title:"The Feynman technique", body:"Explain the concept as if teaching a 10-year-old. Where you stumble reveals exactly what you still need to review."},
+  {title:"Interleaved practice", body:"Switch between different subjects or problem types in a session. It feels harder but produces much better recall than blocked practice."},
+  {title:"Elaborative interrogation", body:"Ask yourself 'Why is this true?' and 'How does this connect to what I already know?' Deep questions beat surface memorisation."},
+  {title:"The 2-minute rule", body:"If a task takes under 2 minutes, do it immediately. This keeps your task list clean and builds momentum for larger tasks."},
+  {title:"Pre-sleep review", body:"Briefly review key material right before bed. Memory consolidates during sleep — this genuinely improves next-day retention, not a myth."},
+];
+
+const examTips = [
+  "Start with past papers under timed conditions — this single activity delivers the highest exam prep ROI.",
+  "Use active recall over re-reading. Close the book and test yourself constantly rather than reviewing passively.",
+  "Teach topics out loud to yourself or a friend — gaps in your explanation reveal exactly what to review.",
+  "Prioritise topics by mark allocation and your weakest areas first, not what you enjoy most.",
+  "Get 7–8 hours of sleep the night before the exam — memory consolidates during sleep, not cramming.",
+  "On exam day: read each question fully before answering, manage time per section, and answer easiest questions first.",
+  "For written answers: one clear argument per paragraph, evidence, then analysis. Examiners reward structure.",
+];
+
+const focusTips = [
+  "Put your phone in another room — not just on silent. Out of sight dramatically reduces distraction urges.",
+  "Use a website blocker like Cold Turkey or Freedom for the session. Willpower alone is unreliable.",
+  "Set a clear written intention before each session: 'I will complete X by Y'. Vague goals leak focus.",
+  "Lo-fi music or white noise helps many people block ambient distractions — find what works for you.",
+  "Cold water, good lighting, and a tidy desk all measurably improve concentration. Environment matters.",
+  "The 5-minute rule: commit to working for just 5 minutes. Starting is the hardest part — momentum follows.",
+];
+
+// ── TIMER ─────────────────────────────────────────────────────────────────────
+let timerInt = null, timerSecs = 25*60, timerTotal = 25*60, timerRunning = false, timerPreset = 'Pomodoro';
+const CIRC = 2 * Math.PI * 70;
+
+function fmtTime(s) { return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); }
+function updateRing() {
+  const pct = timerSecs / timerTotal;
+  document.getElementById('ring-prog').style.strokeDashoffset = CIRC * (1 - pct);
+}
+function toggleTimer() {
+  if (timerRunning) {
+    clearInterval(timerInt); timerRunning = false;
+    document.getElementById('tog-btn').innerHTML = '<i class="ti ti-player-play" style="font-size:14px;vertical-align:-2px"></i> Resume';
+    document.getElementById('timer-status').textContent = 'Paused';
+  } else {
+    timerRunning = true;
+    document.getElementById('tog-btn').innerHTML = '<i class="ti ti-player-pause" style="font-size:14px;vertical-align:-2px"></i> Pause';
+    document.getElementById('timer-status').textContent = timerPreset + ' — running…';
+    timerInt = setInterval(() => {
+      timerSecs--;
+      document.getElementById('big-time').textContent = fmtTime(timerSecs);
+      updateRing();
+      if (timerSecs <= 0) {
+        clearInterval(timerInt); timerRunning = false;
+        document.getElementById('timer-status').textContent = timerPreset + ' complete!';
+        document.getElementById('tog-btn').innerHTML = '<i class="ti ti-player-play" style="font-size:14px;vertical-align:-2px"></i> Start';
+        addMsg('bot', timerPreset + ' complete! Great work. Take a well-earned break and come back refreshed.');
+      }
+    }, 1000);
+  }
+}
+function resetTimer() {
+  clearInterval(timerInt); timerRunning = false;
+  timerSecs = timerTotal;
+  document.getElementById('big-time').textContent = fmtTime(timerSecs);
+  document.getElementById('timer-status').textContent = 'Ready';
+  document.getElementById('tog-btn').innerHTML = '<i class="ti ti-player-play" style="font-size:14px;vertical-align:-2px"></i> Start';
+  updateRing();
+}
+function setPreset(mins, label) {
+  clearInterval(timerInt); timerRunning = false;
+  timerSecs = timerTotal = mins * 60; timerPreset = label;
+  document.getElementById('session-label').textContent = label + ' session';
+  document.getElementById('big-time').textContent = fmtTime(timerSecs);
+  document.getElementById('timer-status').textContent = 'Ready';
+  document.getElementById('tog-btn').innerHTML = '<i class="ti ti-player-play" style="font-size:14px;vertical-align:-2px"></i> Start';
+  updateRing();
+}
+
+// ── TASKS ─────────────────────────────────────────────────────────────────────
+function renderTasksFull() {
+  const c = document.getElementById('task-list-full'); c.innerHTML = '';
+  const sorted = [...tasks].sort((a,b) => {
+    if (a.done !== b.done) return a.done - b.done;
+    const o = {high:0, med:1, low:2};
+    return o[a.priority] - o[b.priority];
+  });
+  sorted.forEach(t => {
+    const d = document.createElement('div');
+    d.className = 'full-t-row' + (t.done ? ' done-row' : '');
+    d.innerHTML = `
+      <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id})">
+      <span class="task-name">${t.name}</span>
+      <span class="due-tag">${t.due}</span>
+      <span class="prio p${t.priority[0]}">${t.priority==='high'?'High':t.priority==='med'?'Medium':'Low'}</span>
+      <button class="del-btn" onclick="deleteTask(${t.id})" title="Delete"><i class="ti ti-trash"></i></button>`;
+    c.appendChild(d);
+  });
+  updateSidebarStats();
+}
+function toggleTask(id) {
+  const t = tasks.find(x => x.id === id);
+  if (t) { t.done = !t.done; renderTasksFull(); updateStatsPane(); }
+}
+function deleteTask(id) {
+  const i = tasks.findIndex(x => x.id === id);
+  if (i > -1) { tasks.splice(i,1); renderTasksFull(); updateStatsPane(); }
+}
+function addTask() {
+  const n = document.getElementById('new-task-inp').value.trim();
+  const due = document.getElementById('new-task-due').value.trim() || 'TBD';
+  const p = document.getElementById('new-task-prio').value;
+  if (!n) return;
+  tasks.push({id:nextId++, name:n, due, priority:p, done:false});
+  document.getElementById('new-task-inp').value = '';
+  document.getElementById('new-task-due').value = '';
+  renderTasksFull(); updateStatsPane();
+}
+function updateSidebarStats() {
+  const done = tasks.filter(t => t.done).length;
+  document.getElementById('sd-cnt').textContent = done + ' tasks';
+}
+
+// ── REMINDERS ─────────────────────────────────────────────────────────────────
+function renderReminders() {
+  const c = document.getElementById('rem-list'); c.innerHTML = '';
+  if (!reminders.length) {
+    c.innerHTML = `<div class="empty-state"><i class="ti ti-bell-off"></i>No reminders set.<br>Add one above and I'll notify you in chat!</div>`;
+    return;
+  }
+  reminders.forEach(r => {
+    const d = document.createElement('div'); d.className = 'rem-item';
+    d.innerHTML = `<i class="ti ti-bell rem-icon"></i>
+      <div class="rem-details"><strong>${r.text}</strong><span>In ${r.mins} min — fires at ${r.fireAt}</span></div>
+      <button class="rm-del" onclick="deleteReminder(${r.id})" title="Remove"><i class="ti ti-x"></i></button>`;
+    c.appendChild(d);
+  });
+}
+function addReminder() {
+  const txt = document.getElementById('rem-inp').value.trim();
+  const mins = parseInt(document.getElementById('rem-min').value) || 25;
+  if (!txt) { document.getElementById('rem-inp').focus(); return; }
+  const d = new Date(Date.now() + mins * 60000);
+  const fireAt = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+  const id = nextRemId++;
+  reminders.push({id, text:txt, mins, fireAt});
+  document.getElementById('rem-inp').value = '';
+  document.getElementById('rem-min').value = '';
+  setTimeout(() => {
+    addMsg('bot', '⏰ Reminder: ' + txt);
+    const i = reminders.findIndex(x => x.id === id);
+    if (i > -1) reminders.splice(i, 1);
+    renderReminders();
+  }, mins * 60000);
+  renderReminders();
+}
+function deleteReminder(id) {
+  const i = reminders.findIndex(x => x.id === id);
+  if (i > -1) reminders.splice(i, 1);
+  renderReminders();
+}
+
+// ── STATS PANE ─────────────────────────────────────────────────────────────────
+function updateStatsPane() {
+  const done = tasks.filter(t => t.done).length;
+  const pend = tasks.filter(t => !t.done).length;
+  const statDone = document.getElementById('stat-done');
+  if (statDone) { statDone.querySelector('.val').textContent = done; }
+  const statPend = document.getElementById('stat-pend');
+  if (statPend) statPend.textContent = pend + ' pending';
+  updateSidebarStats();
+}
+function renderStatsPane() {
+  updateStatsPane();
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const active = [true,true,true,true,true,false,false];
+  const sr = document.getElementById('streak-row'); sr.innerHTML = '';
+  days.forEach((d,i) => {
+    const el = document.createElement('div');
+    el.className = 'streak-day' + (active[i] ? ' active' : '');
+    el.innerHTML = `<i class="ti ti-${active[i]?'check':'x'}" style="font-size:12px"></i><span>${d}</span>`;
+    sr.appendChild(el);
+  });
+  const subjects = [{name:'Mathematics',hrs:10,color:'#534AB7'},{name:'Biology',hrs:8,color:'#1D9E75'},{name:'History',hrs:6,color:'#D85A30'},{name:'Physics',hrs:5,color:'#BA7517'},{name:'CS',hrs:5,color:'#185FA5'}];
+  const max = 10;
+  document.getElementById('subject-bars').innerHTML = subjects.map(s => `
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px"><span>${s.name}</span><span>${s.hrs}h</span></div>
+      <div style="background:var(--bg2);border-radius:20px;height:7px;overflow:hidden">
+        <div style="width:${Math.round(s.hrs/max*100)}%;height:100%;border-radius:20px;background:${s.color};transition:width .6s ease"></div>
+      </div>
+    </div>`).join('');
+}
+
+// ── VIEW ROUTER ────────────────────────────────────────────────────────────────
+function showView(name, el) {
+  document.querySelectorAll('.view-pane').forEach(p => { p.style.display='none'; p.classList.remove('active'); });
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+  const pane = document.getElementById('view-' + name);
+  pane.style.display = 'flex'; pane.classList.add('active');
+  if (el) el.classList.add('active');
+  if (name === 'tasks') renderTasksFull();
+  if (name === 'reminders') renderReminders();
+  if (name === 'stats') renderStatsPane();
+}
+
+// ── CHAT ENGINE ────────────────────────────────────────────────────────────────
+function taskListHTML() {
+  const pending = tasks.filter(t => !t.done);
+  const done = tasks.filter(t => t.done).length;
+  const pct = Math.round(done / tasks.length * 100);
+  const rows = pending.map(t => `
+    <div class="t-row">
+      <i class="ti ti-${t.priority==='high'?'alert-circle':t.priority==='med'?'clock':'circle-check'}" style="font-size:14px;color:${t.priority==='high'?'#D85A30':t.priority==='med'?'#BA7517':'#639922'}"></i>
+      <span style="flex:1;color:var(--text);font-size:13px">${t.name}</span>
+      <span style="font-size:11px;color:var(--text2)">${t.due}</span>
+      <span class="prio p${t.priority[0]}">${t.priority==='high'?'High':t.priority==='med'?'Med':'Low'}</span>
+    </div>`).join('');
+  return `<div style="font-size:13.5px;color:var(--text)">You have <strong>${pending.length} pending</strong> and ${done} completed tasks.</div>
+    <div style="margin:8px 0">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px"><span>Overall progress</span><span>${pct}%</span></div>
+      <div class="prog-wrap"><div class="prog-bar" style="width:${pct}%"></div></div>
+    </div>
+    <div class="card-block">${rows || '<div style="color:var(--text2);font-size:13px;padding:6px 0">All tasks complete! 🎉</div>'}</div>
+    <div class="action-chips"><span class="ac" onclick="switchToTasks()">Manage tasks →</span></div>`;
+}
+
+function switchToTasks() {
+  const el = document.querySelectorAll('.sb-item')[1];
+  showView('tasks', el);
+}
+
+function statsHTML() {
+  const done = tasks.filter(t => t.done).length;
+  return `<div style="font-size:13.5px;color:var(--text)">Here's your <strong>study overview</strong>:</div>
+    <div class="s-grid">
+      <div class="s-box"><div class="s-num">12</div><div class="s-lbl">Sessions</div></div>
+      <div class="s-box"><div class="s-num">34h</div><div class="s-lbl">Study time</div></div>
+      <div class="s-box"><div class="s-num">${done}</div><div class="s-lbl">Tasks done</div></div>
+      <div class="s-box"><div class="s-num">5</div><div class="s-lbl">Day streak</div></div>
+      <div class="s-box"><div class="s-num">2.8h</div><div class="s-lbl">Daily avg</div></div>
+      <div class="s-box"><div class="s-num">78%</div><div class="s-lbl">Focus rate</div></div>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-top:8px">Consistent sessions beat long cramming. Keep it up!</div>
+    <div class="action-chips"><span class="ac" onclick="switchToStats()">Full stats →</span></div>`;
+}
+function switchToStats() { showView('stats', document.querySelectorAll('.sb-item')[4]); }
+
+function pomHTML() {
+  return `<div style="font-size:13.5px;color:var(--text)">The <strong>Pomodoro technique</strong> explained:</div>
+    <div class="card-block">
+      <div class="t-row"><i class="ti ti-player-play" style="font-size:14px;color:var(--purple)"></i><span style="flex:1;color:var(--text);font-size:13px">Focus for <strong>25 minutes</strong> — zero distractions</span></div>
+      <div class="t-row"><i class="ti ti-coffee" style="font-size:14px;color:var(--teal)"></i><span style="flex:1;color:var(--text);font-size:13px">Take a <strong>5-minute</strong> short break</span></div>
+      <div class="t-row"><i class="ti ti-refresh" style="font-size:14px;color:#BA7517"></i><span style="flex:1;color:var(--text);font-size:13px">After 4 rounds, take a <strong>20-minute</strong> long break</span></div>
+      <div class="t-row" style="border:none"><i class="ti ti-repeat" style="font-size:14px;color:#639922"></i><span style="flex:1;color:var(--text);font-size:13px">The rhythm trains your brain to focus on demand</span></div>
+    </div>
+    <div class="action-chips"><span class="ac" onclick="startPomFromChat()">Start timer now →</span></div>`;
+}
+
+function startPomFromChat() {
+  setPreset(25, 'Pomodoro');
+  showView('timer', document.querySelectorAll('.sb-item')[2]);
+}
+
+function tipHTML(tip) {
+  return `<div class="tip-box"><strong>${tip.title}</strong><p>${tip.body}</p></div>
+    <div style="font-size:12px;color:var(--text2);margin-top:8px">Ask for another tip anytime — I have plenty more!</div>`;
+}
+
+function getResponse(text) {
+  const t = text.toLowerCase();
+  if (/^(hi|hello|hey|hiya|sup|howdy|yo\b)/.test(t))
+    return {html:false, c:"Hey! I'm StudyBot, your personal academic assistant. I can help with tasks, study tips, Pomodoro timers, reminders, motivation, exam prep, focus strategies and more. What do you need today?"};
+  if (/task|assignment|todo|to-do|deadline|due/.test(t)) return {html:true, c:taskListHTML()};
+  if (/stat|progress|overview|session|hours studied/.test(t)) return {html:true, c:statsHTML()};
+  if (/pomodoro|technique|method/.test(t) && !/start|begin|launch/.test(t)) return {html:true, c:pomHTML()};
+  if (/start.*pom|begin.*pom|launch.*pom|pom.*start|pom.*go/.test(t)) {
+    setTimeout(() => startPomFromChat(), 300);
+    return {html:false, c:"Starting your Pomodoro session now! I've opened the timer for you — hit Start and let's get focused!"};
+  }
+  if (/motiv|inspire|cheer|encourage|pump up|hype|boost/.test(t))
+    return {html:false, c: motivations[Math.floor(Math.random() * motivations.length)]};
+  if (/tip|technique|trick|strategy|how to study|study.*well|learn.*better/.test(t)) {
+    const tip = studyTips[Math.floor(Math.random() * studyTips.length)];
+    return {html:true, c:tipHTML(tip)};
+  }
+  if (/remind|alert|notify/.test(t)) {
+    const m = text.match(/(\d+)\s*(minute|min|hour|hr)/i);
+    if (m) {
+      const val = parseInt(m[1]);
+      const isHr = /hour|hr/i.test(m[2]);
+      const mins = isHr ? val * 60 : val;
+      const d = new Date(Date.now() + mins * 60000);
+      const fireAt = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+      const id = nextRemId++;
+      const label = `${val} ${m[2]}${val > 1 ? 's' : ''}`;
+      reminders.push({id, text:'Study session reminder', mins, fireAt});
+      setTimeout(() => {
+        addMsg('bot', '⏰ Reminder: Your ' + label + ' study reminder is up! Time to get focused.');
+        const i = reminders.findIndex(x => x.id === id);
+        if (i > -1) reminders.splice(i, 1);
+      }, mins * 60000);
+      return {html:false, c:`Done! I'll remind you in ${label} (at ${fireAt}). Head to the Reminders tab to manage all your alerts.`};
+    }
+    return {html:false, c:"Sure! Say something like 'remind me in 30 minutes' or use the Reminders tab to set a custom alert."};
+  }
+  if (/exam|test|quiz|paper|prep|revision/.test(t))
+    return {html:false, c: examTips[Math.floor(Math.random() * examTips.length)] + "\n\nWant more exam tips? Just ask — I have plenty more strategies!"};
+  if (/focus|concentrat|distract|attention|procrastinat/.test(t))
+    return {html:false, c: focusTips[Math.floor(Math.random() * focusTips.length)] + "\n\nWant to anchor your focus with a Pomodoro session? Just say 'Start Pomodoro'!"};
+  if (/break|rest|pause|tired|exhaust|burnt|burnout/.test(t))
+    return {html:false, c:"Breaks are scientifically essential — your brain actually consolidates learning during rest, not while studying. Take 5–10 minutes: step away, hydrate, stretch, look out a window. Avoid your phone if possible. You'll come back sharper."};
+  if (/schedule|plan|routine|habit|daily|timetable/.test(t))
+    return {html:false, c:"A great study schedule:\n\n• Same time blocks each day (habit > willpower)\n• Alternate subjects to avoid mental fatigue\n• Build in 20% buffer time — things always overrun\n• End each session with 5 mins of planning the next\n• Weekly review every Sunday to adjust\n\nWant me to set a reminder to anchor your schedule?"};
+  if (/note|notes|notetaking|cornell|mind map|outline/.test(t))
+    return {html:false, c:"Best note-taking systems:\n\n• Cornell notes — main ideas + cues + summary (great for review)\n• Mind maps — ideal for visual thinkers and concept connections\n• Outline method — fast during lectures, easy to scan later\n\nThe key rule: review notes within 24 hours. That's when the forgetting curve hits hardest."};
+  if (/sleep|tired|energy|caffeine|rest|insomnia/.test(t))
+    return {html:false, c:"Sleep is the most underrated academic tool. Memory consolidates during sleep — studying before bed and sleeping on it genuinely improves recall. Aim for 7–8 hours. Caffeine after 2pm disrupts sleep quality even if you fall asleep easily."};
+  if (/math|formula|equation|calculus|algebra|geometry|statistics/.test(t))
+    return {html:false, c:"For maths and technical subjects:\n\n• Practice problems > reading examples (always)\n• Work through your mistakes slowly — errors are your best teacher\n• Spaced sessions over multiple days beat one long cram\n• Teach a solution out loud — this exposes hidden gaps\n• Write formulae from memory regularly\n\nWhich maths topic are you working on?"};
+  if (/write|essay|writing|paragraph|thesis|argument/.test(t))
+    return {html:false, c:"Strong academic writing tips:\n\n• One clear argument per paragraph (topic sentence → evidence → analysis)\n• Write the introduction last — you'll know what you actually argued\n• Read your draft out loud to catch clunky sentences\n• Cut any sentence that doesn't directly support your argument\n• Aim for clarity over sophistication\n\nWhat are you writing about? I can help you brainstorm."};
+  if (/thank|thanks|cheers|appreciate|helpful/.test(t))
+    return {html:false, c:"You're welcome! Stay consistent — small daily effort compounds into real results. Good luck with your studies! 📚"};
+  if (/help|what can|feature|command|what do/.test(t))
+    return {html:false, c:"Here's what I can help with:\n\n📋 Tasks — view, add, and track your assignments\n💡 Study tips — evidence-based techniques\n🍅 Pomodoro — guided 25-min focus sessions\n⏰ Reminders — timed in-app alerts\n🔥 Motivation — when energy dips\n📊 Stats — your study overview\n📝 Exam prep, focus, notes, scheduling\n🧠 Subject-specific advice\n\nJust ask in plain English — no commands needed!"};
+  if (/good morning|morning/.test(t))
+    return {html:false, c:"Good morning! A great start to the day. Tip: tackle your hardest task first while your willpower is at its peak — the rest of the day feels easier after. What's your priority today?"};
+  if (/good night|night|going to sleep/.test(t))
+    return {html:false, c:"Good night! Before you sleep, take 2 minutes to review your 3 top priorities for tomorrow — it primes your brain and reduces morning friction. Rest well!"};
+  const fallbacks = [
+    "Great question! I'd suggest breaking that topic into smaller chunks and testing yourself at each step rather than reading through linearly.",
+    "For that, I'd recommend making a brief outline first, then tackling it one section at a time. Would a Pomodoro session help you get started?",
+    "That's something worth digging into. Try explaining it out loud — if you can teach it, you understand it. What part is trickiest for you?",
+    "My go-to advice: take 5 minutes to plan exactly what you'll do, then commit to 25 minutes of focused work. You might be surprised how much you get done.",
+  ];
+  return {html:false, c: fallbacks[Math.floor(Math.random() * fallbacks.length)]};
+}
+
+// ── CHAT RENDER ────────────────────────────────────────────────────────────────
+const msgsEl = document.getElementById('msgs');
+const inpEl = document.getElementById('inp');
+let chatLog = [];
+
+function nowTime() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+
+function addMsg(role, content, isHTML = false) {
+  const wrap = document.createElement('div'); wrap.className = 'msg ' + role;
+  const av = document.createElement('div'); av.className = 'm-ava';
+  av.innerHTML = role === 'user' ? '<i class="ti ti-user"></i>' : '<i class="ti ti-robot"></i>';
+  const bub = document.createElement('div'); bub.className = 'bubble';
+  if (isHTML) bub.innerHTML = content; else bub.textContent = content;
+  const tm = document.createElement('div'); tm.className = 'time-lbl'; tm.textContent = nowTime();
+  const inner = document.createElement('div'); inner.className = 'msg-inner';
+  inner.appendChild(bub); inner.appendChild(tm);
+  wrap.appendChild(av); wrap.appendChild(inner);
+  msgsEl.appendChild(wrap); msgsEl.scrollTop = msgsEl.scrollHeight;
+  chatLog.push({role, content: isHTML ? bub.textContent : content, time: nowTime()});
+  return bub;
+}
+
+function showTyping() {
+  const d = document.createElement('div'); d.className = 'msg bot'; d.id = 'typ-ind';
+  const av = document.createElement('div'); av.className = 'm-ava'; av.innerHTML = '<i class="ti ti-robot"></i>';
+  const b = document.createElement('div'); b.className = 'bubble typing-bub';
+  b.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  d.appendChild(av); d.appendChild(b); msgsEl.appendChild(d); msgsEl.scrollTop = msgsEl.scrollHeight;
+}
+
+function hideTyping() { const t = document.getElementById('typ-ind'); if (t) t.remove(); }
+
+function respond(text) {
+  showTyping();
+  setTimeout(() => {
+    hideTyping();
+    const r = getResponse(text);
+    addMsg('bot', r.c, r.html);
+  }, 650 + Math.random() * 450);
+}
+
+function sendMsg() {
+  const text = inpEl.value.trim(); if (!text) return;
+  addMsg('user', text); inpEl.value = ''; inpEl.style.height = 'auto';
+  respond(text);
+}
+
+function qs(text) { addMsg('user', text); respond(text); }
+
+function clearChat() {
+  if (confirm('Clear chat history?')) { msgsEl.innerHTML = ''; chatLog = []; addMsg('bot', 'Chat cleared! How can I help you today?'); }
+}
+
+function exportChat() {
+  const lines = chatLog.map(m => `[${m.time}] ${m.role === 'user' ? 'You' : 'StudyBot'}: ${m.content}`).join('\n');
+  const blob = new Blob([lines], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'studybot-chat.txt'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────────
+inpEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } });
+inpEl.addEventListener('input', () => { inpEl.style.height = 'auto'; inpEl.style.height = Math.min(inpEl.scrollHeight, 100) + 'px'; });
+document.getElementById('new-task-inp').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+document.getElementById('rem-inp').addEventListener('keydown', e => { if (e.key === 'Enter') addReminder(); });
+
+updateRing();
+setTimeout(() => addMsg('bot', "Hey! I'm StudyBot — your personal academic assistant. I can help with tasks, study tips, Pomodoro timers, reminders, motivation, and exam prep.\n\nUse the sidebar to switch between Chat, Tasks, Timer, Reminders and Stats. What do you need today?"), 250);
+</script>
+</body>
+</html>
+<style>
+.chat-message {
+  animation: fadeIn 0.3s ease-in;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
