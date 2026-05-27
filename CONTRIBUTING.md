@@ -193,3 +193,6 @@ Since this project uses plain HTML, CSS, and JavaScript:
 ---
 
 *Thank you for helping make Student Task Manager better for everyone. Happy coding! 🚀*
+## Development Setup
+1. Clone the repository to your local machine.
+2. Open `index.html` in your favorite browser to test changes locally.
