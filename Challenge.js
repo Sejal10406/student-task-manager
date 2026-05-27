@@ -54,6 +54,8 @@ function saveState() {
 
 function loadState() {
   try {
+    if (!window.localStorage) return;
+  try {
     const saved = window.TaskQuestStorage
       ? window.TaskQuestStorage.getChallenge()
       : JSON.parse(localStorage.getItem("taskquest_v1.challenge"));
