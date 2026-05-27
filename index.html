@@ -27,6 +27,26 @@
 </head>
 
 <body>
+  <a href="#quests-tab" class="skip-to-content" style="position: absolute; top: -100px; left: 10px; background: var(--primary); color: #fff; padding: 8px 16px; border-radius: 4px; z-index: 10000; transition: top 0.2s;" onfocus="this.style.top='10px'" onblur="this.style.top='-100px'">Skip to content</a>
+
+  <!-- GLOBAL HEADER -->
+  <header class="site-header" style="position: sticky; top: 0; z-index: 1000; padding: 12px 0; border-bottom: 1px solid var(--border); background: rgba(15, 12, 38, 0.6); backdrop-filter: blur(15px);">
+    <div class="header-inner" style="max-width: 1500px; width: 95%; display: flex; justify-content: space-between; align-items: center; margin: 0 auto;">
+      <a href="index.html" class="header-brand" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 10px;">
+        <div class="topbar-logo" style="width: 32px; height: 32px; font-size: 18px;"><i class="ri-gamepad-fill"></i></div>
+        <h1 style="font-size: 18px; margin: 0; font-family: 'Poppins', sans-serif;">TaskQuest</h1>
+      </a>
+      <nav class="header-nav" style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <a href="Reflection.html" class="view-btn small" style="text-decoration: none;"><i class="ri-focus-3-line"></i> Dark mode</a
+        <a href="Challenge.html" class="view-btn small" style="text-decoration: none;"><i class="ri-trophy-line"></i> Challenges</a>
+        <a href="leaderboard.html" class="view-btn small" style="text-decoration: none;"><i class="ri-medal-line"></i> Leaderboard</a>
+        <a href="reflection.html" class="view-btn small" style="text-decoration: none;"><i class="ri-focus-3-line"></i> Reflection</a>
+        <a href="docs.html" class="view-btn small" style="text-decoration: none;"><i class="ri-book-read-line"></i> Docs</a>
+        <a href="faq.html" class="view-btn small" style="text-decoration: none;"><i class="ri-question-line"></i> FAQ</a>
+        <a href="Privacy.html" class="view-btn small" style="text-decoration: none;"><i class="ri-lock-line"></i> Privacy</a>
+      </nav>
+    </div>
+  </header>
 
   <!-- BACKGROUND -->
   <div class="bg blur1"></div>
@@ -42,6 +62,9 @@
         <div class="logo">
           <i class="ri-gamepad-fill"></i>
         </div>
+        <button id="sidebarCollapseBtn" class="icon-btn" title="Toggle sidebar" style="position:absolute; right:18px; top:18px; width:36px; height:36px; display:flex;align-items:center;justify-content:center;"> 
+          <i class="ri-arrow-left-right-line"></i>
+        </button>
 
         <!-- Export Controls -->
         <div class="analytics-export-row" style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;position:relative;">
@@ -78,7 +101,7 @@
           </div>
         </div>
         <h2 id="profileNameDisplay">Student Hero</h2>
-        <p id="profileClassDisplay">Class 10 • Focus Warrior ⚔️</p>
+        <p id="profileClassDisplay">Class 10 • Focus Warrior <i class="ri-sword-fill"></i></p>
         <button class="view-btn" id="editProfileSidebarBtn" style="margin: 12px auto 0; font-size: 11px; padding: 5px 12px;"><i class="ri-pencil-line"></i> Edit Profile</button>
         
         <div class="xp-container">
@@ -101,6 +124,11 @@
           <i class="ri-checkbox-circle-fill"></i>
           <h3 id="completedTasks">0</h3>
           <p>Completed</p>
+        </div>
+        <div class="stat-card">
+          <i class="ri-error-warning-fill"></i>
+          <h3 id="overdueCount">0</h3>
+          <p>Overdue</p>
         </div>
         <div class="stat-card">
           <i class="ri-fire-fill"></i>
@@ -256,6 +284,10 @@
                   id="taskInput"
                   placeholder="Enter your next task..."
                 />
+                <label for="dependsSelect" style="display:none">Depends on (optional)</label>
+                <select id="dependsSelect" aria-label="Depends on (optional)" multiple size="1" style="min-width: 160px;">
+                  <option value="">No prerequisite</option>
+                </select>
               </div>
               <select id="categorySelect" aria-label="Task category">
                 <option value="Theory">📘 Theory</option>
@@ -263,11 +295,11 @@
                 <option value="Assignment">📝 Assignment</option>
                 <option value="Revision">📖 Revision</option>
               </select>
-              <select id="prioritySelect" aria-label="Task priority">
-                <option value="High">🔴 High</option>
-                <option value="Medium" selected>🟡 Medium</option>
-                <option value="Low">🟢 Low</option>
-              </select>
+            <select id="mobilePrioritySelect" aria-label="Task priority">
+  <option value="High">🔴 High Priority</option>
+  <option value="Medium" selected>🟡 Medium Priority</option>
+  <option value="Low">🟢 Low Priority</option>
+</select>
               <select id="recurrenceSelect" aria-label="Recurrence">
                 <option value="none">No Repeat</option>
                 <option value="daily">Daily</option>
@@ -282,14 +314,7 @@
                 aria-label="Task tags"
               />
               <datalist id="taskTagSuggestionsList"></datalist>
-              <input
-                type="text"
-                id="taskTagsInput"
-                placeholder="Tags (comma separated)"
-                list="taskTagSuggestionsList"
-                aria-label="Task tags"
-              />
-              <datalist id="taskTagSuggestionsList"></datalist>
+             
               <div class="deadline-input-wrapper" style="position: relative; display: inline-flex; align-items: center;">
                 <i class="ri-calendar-event-line" style="position: absolute; left: 10px; color: var(--text-muted); pointer-events: none;"></i>
                 <input
@@ -337,6 +362,7 @@
               <button class="filter-btn" data-filter="Practical">🧪 Practical</button>
               <button class="filter-btn" data-filter="Assignment">📝 Assignment</button>
               <button class="filter-btn" data-filter="Revision">📖 Revision</button>
+              <button class="filter-btn" id="filterOverdueBtn" data-filter="Overdue" title="Show overdue tasks"><i class="ri-error-warning-line"></i> Overdue</button>
 
               <!-- Sorting buttons -->
               <button class="filter-btn" id="sortByDeadline" data-sort="deadline" title="Sort by earliest deadline">
@@ -349,6 +375,9 @@
                 <i class="ri-sort-asc"></i> A-Z
               </button>
 
+              <button class="smart-sort-btn filter-btn" id="smartSortBtn" title="Sort by AI priority score">
+                Smart Sort
+              </button>
               <button class="filter-btn" id="openPriorityTableBtn" title="Open Priority Table">
                 <i class="ri-list-check-2"></i> Priority Table
               </button>
@@ -360,6 +389,7 @@
 
             <!-- DEADLINE ALERTS -->
             <div class="deadline-alerts" id="deadlineAlerts"></div>
+            <div class="smart-suggestion-banner" id="smartSuggestionBanner"></div>
 
             <!-- TASKS -->
             <div class="task-list-wrapper">
@@ -1849,15 +1879,10 @@
       </select>
 
       <select id="mobilePrioritySelect" aria-label="Task priority">
-
-        <option value="High">🚩 High Priority</option>
-        <option value="Medium" selected>🔸 Medium Priority</option>
-        <option value="Low">🔹 Low Priority</option>
-
-        <option value="High">🔴 High Priority</option>
-        <option value="Medium" selected>🟡 Medium Priority</option>
-        <option value="Low">🟢 Low Priority</option>
-      </select>
+  <option value="High">🔴 High Priority</option>
+  <option value="Medium" selected>🟡 Medium Priority</option>
+  <option value="Low">🟢 Low Priority</option>
+</select>
 
       <button id="mobileAddTaskBtn">
         <i class="ri-add-line"></i>Create Quest
@@ -2049,32 +2074,102 @@
     <i class="ri-team-line"></i> Open Study Together
   </button>
   <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+  <script src="storage.js"></script>
+  <script src="analytics.js"></script>
+  <script src="prioritization.js"></script>
   <script src="script.js"></script>
   <script src="toast.js"></script>
-  <!-- Minimal Timetable Manager -->
-  <section id="timetable-section" class="card" style="margin:16px;">
-    <h2 style="margin:0 0 8px 0;">Timetable</h2>
-    <div class="timetable-form" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
-      <input id="ttSubjectInput" placeholder="Subject (e.g., Math)" style="flex:1;min-width:160px;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);" />
-      <select id="ttDaySelect" style="padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);">
-        <option value="mon">Mon</option>
-        <option value="tue">Tue</option>
-        <option value="wed">Wed</option>
-        <option value="thu">Thu</option>
-        <option value="fri">Fri</option>
-        <option value="sat">Sat</option>
-        <option value="sun">Sun</option>
-      </select>
-      <input id="ttStartInput" type="time" style="padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);" />
-      <input id="ttEndInput" type="time" style="padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);" />
-      <button id="ttAddBtn" class="btn">Add</button>
-    </div>
-    <div id="timetableContainer" class="timetable-grid" aria-live="polite"></div>
-  </section>
   <script src="collaborative.js"></script>
+  <script>
+  /* ── Timetable Manager (single implementation, persisted) ── */
+  (function () {
+    var DAYS_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+    function loadEntries() {
+      return window.TaskQuestStorage ? window.TaskQuestStorage.getTimetable() : (JSON.parse(localStorage.getItem('taskquest_v1.timetable')) || []);
+    }
+
+    function saveEntries(entries) {
+      var success = true;
+      if (window.TaskQuestStorage) {
+        success = window.TaskQuestStorage.setTimetable(entries);
+      } else {
+        try {
+          localStorage.setItem('taskquest_v1.timetable', JSON.stringify(entries));
+        } catch (e) {
+          success = false;
+        }
+      }
+      if (!success) {
+        if (window.showToast) {
+          window.showToast("Storage full. Please clear space in the Vault.", "error");
+        } else {
+          alert("Storage full. Please clear space in the Vault.");
+        }
+      }
+      return success;
+    }
+
+    function render() {
+      var grid = document.getElementById('timetableGrid');
+      if (!grid) return;
+      var entries = loadEntries();
+      if (!entries.length) {
+        grid.innerHTML = '<p style="opacity:.5;padding:16px;">No sessions scheduled yet.</p>';
+        return;
+      }
+      var byDay = {};
+      entries.forEach(function (e) { (byDay[e.day] = byDay[e.day] || []).push(e); });
+      grid.innerHTML = DAYS_ORDER.filter(function (d) { return byDay[d]; }).map(function (day) {
+        var rows = byDay[day].sort(function (a, b) { return a.start.localeCompare(b.start); }).map(function (e) {
+          return '<div class="tt-entry" style="display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.04);margin-bottom:4px;">' +
+            '<span style="font-weight:600;min-width:90px;">' + e.start + ' – ' + e.end + '</span>' +
+            '<span style="flex:1;">' + escTT(e.subject) + '</span>' +
+            '<button onclick="window._ttDelete(' + e.id + ')" style="background:none;border:none;cursor:pointer;color:var(--danger,#ef4444);font-size:16px;" aria-label="Delete">✕</button>' +
+            '</div>';
+        }).join('');
+        return '<div style="margin-bottom:14px;"><h4 style="margin:0 0 6px 0;font-size:13px;opacity:.7;">' + day + '</h4>' + rows + '</div>';
+      }).join('');
+    }
+
+    function escTT(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    window._ttDelete = function (id) {
+      var entries = loadEntries().filter(function (e) { return e.id !== id; });
+      saveEntries(entries);
+      render();
+    };
+
+    function addEntry() {
+      var day     = (document.getElementById('ttDayInput') || {}).value;
+      var subject = (document.getElementById('ttSubjectInput') || {}).value.trim();
+      var start   = (document.getElementById('ttStartTimeInput') || {}).value;
+      var end     = (document.getElementById('ttEndTimeInput') || {}).value;
+      if (!day || !subject || !start || !end) { alert('Please fill in all timetable fields.'); return; }
+      if (start >= end) { alert('End time must be after start time.'); return; }
+      var entries = loadEntries();
+      entries.push({ id: Date.now(), day: day, subject: subject, start: start, end: end });
+      if (saveEntries(entries)) {
+        document.getElementById('ttSubjectInput').value = '';
+        document.getElementById('ttStartTimeInput').value = '';
+        document.getElementById('ttEndTimeInput').value = '';
+        render();
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var btn = document.getElementById('addTimetableBtn');
+      if (btn) btn.addEventListener('click', addEntry);
+      render();
+    });
+  })();
+  </script>
 
   <button class="back-to-top-btn" id="backToTopBtn" aria-label="Back to top">
     <i class="ri-arrow-up-line"></i>
   </button>
 </body>
 </html>
+
+<!-- Back to top button placeholder -->
+<div id="backToTop" class="hidden"></div>

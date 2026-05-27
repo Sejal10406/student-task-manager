@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Terms of Service - TaskQuest</title>
+  <title>Terms of Service • TaskQuest</title>
+  <meta name="description" content="Review the usage guidelines, local licensing, and terms of service for TaskQuest." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -31,9 +32,21 @@
       color: var(--text-muted, #94a3b8);
       line-height: 1.6;
     }
+    #scrollProgress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      width: 0%;
+      z-index: 10000;
+      transition: width 0.1s ease-out;
+    }
   </style>
 </head>
 <body class="legal-page">
+  <div id="scrollProgress"></div>
+<main>
 
   <!-- BACKGROUND -->
   <div class="bg blur1"></div>
@@ -86,5 +99,14 @@
     <p>&copy; 2026 TaskQuest. Level Up Productivity.</p>
   </footer>
 
+  <script>
+    window.addEventListener("scroll", () => {
+      const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
+      document.getElementById("scrollProgress").style.width = scrolled + "%";
+    });
+  </script>
 </body>
 </html>
+<footer><p><strong>Limitation of Liability:</strong> We shall not be held liable for any indirect damages.</p></footer>

@@ -16,6 +16,29 @@
   --radius: 12px;
 }
 
+/* Light mode (default already exists) */
+
+.dark-mode {
+  background-color: #121212;
+  color: white;
+}
+
+.dark-mode .card,
+.dark-mode .container,
+.dark-mode .task-box {
+  background-color: #1e1e1e;
+  color: white;
+}
+
+.dark-mode input,
+.dark-mode select,
+.dark-mode button {
+  background-color: #2c2c2c;
+  color: white;
+  border: 1px solid #555;
+}
+
+
 [data-theme="dark"] {
   --bg-color: #0f172a;
   --text-color: #f1f5f9;
@@ -262,6 +285,27 @@ li.completed span {
   text-decoration: line-through;
   opacity: 0.6;
 }
+
+/* Overdue task visuals */
+li.overdue {
+  border-left: 4px solid #ef4444;
+  background: linear-gradient(90deg, rgba(239,68,68,0.03), transparent);
+}
+
+/* Dependency badges */
+.dep-badge {
+  display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; margin-left:8px;
+}
+.dep-badge.blocked { background: rgba(239,68,68,0.12); color: #ef4444; border:1px solid rgba(239,68,68,0.15); }
+.dep-badge.ready { background: rgba(34,197,94,0.08); color:#16a34a; border:1px solid rgba(34,197,94,0.08); }
+.dep-info { font-size:12px; opacity:0.85; margin-top:6px; }
+
+li .task-deadline.overdue {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.stat-card.overdue { color: #ef4444; }
 
 li input[type="checkbox"] {
   width: 1.25rem;
@@ -731,6 +775,26 @@ li small {
   color: var(--text);
   margin-bottom: 10px;
 }
+
+/* Collapsible sidebar - minimal styles */
+body.sidebar-collapsed .sidebar {
+  width: 72px !important;
+  padding: 14px 8px !important;
+}
+
+body.sidebar-collapsed .sidebar .logo-box > div:not(.logo) { display: none !important; }
+body.sidebar-collapsed .sidebar .profile-card { padding: 8px 0; }
+body.sidebar-collapsed .sidebar .profile-card .avatar { margin: 0 auto; }
+body.sidebar-collapsed .sidebar .stats-grid, body.sidebar-collapsed .sidebar .achievement-card, body.sidebar-collapsed .sidebar .pomodoro-card, body.sidebar-collapsed .sidebar .streak-tracker-card { display: none !important; }
+
+/* Shift main content to account for collapsed sidebar on wide screens */
+@media (min-width: 1000px) {
+  body.sidebar-collapsed .main-content { margin-left: 88px; transition: margin 0.28s ease; }
+}
+
+/* Icon-only mode for badges */
+body.sidebar-collapsed .badges { display:flex; gap:8px; justify-content:center; }
+
 
 .enhanced-empty { display:flex; flex-direction:column; align-items:center; gap:12px; padding:28px; }
 .enhanced-empty svg { max-width:160px; height:auto; transform-origin:center; transition: transform 220ms ease; }
@@ -4056,6 +4120,10 @@ body.light .modal-progress-bar {
   transition: var(--transition);
 }
 
+.view-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
 .view-btn:hover {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text);
@@ -7501,4 +7569,136 @@ body.light .drag-handle:hover {
 .add-topic-row {
   display: flex;
   gap: 8px;
+}
+
+/* Floating Action Button */
+.fab {
+  position: fixed;
+  right: 20px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg,#8b5cf6,#06b6d4);
+  color: #fff;
+  font-size: 28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  border: none;
+  cursor: pointer;
+  z-index: 12000;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.fab:active { transform: scale(0.96); }
+.fab:hover { box-shadow: 0 14px 40px rgba(0,0,0,0.32); }
+
+/* FAB Modal */
+.fab-modal { display:none; }
+.fab-modal[aria-hidden="false"] { display:block; }
+.fab-backdrop {
+  position: fixed; inset:0; background: rgba(0,0,0,0.45); z-index:11990;
+}
+.fab-sheet {
+  position: fixed; right: 20px; bottom: 96px; width: 320px; max-width: calc(100% - 40px);
+  background: var(--card-bg); border:1px solid var(--border-color); padding:14px; border-radius:12px; z-index:11995;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+}
+.fab-sheet h3 { margin:0 0 8px 0; font-size:16px; }
+.fab-sheet input { width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border-color); }
+
+@media(max-width:480px){
+  .fab { right: 14px; bottom: 18px; width:52px; height:52px; }
+  .fab-sheet { left: 50%; right: auto; transform: translateX(-50%); bottom: 86px; width: 92%; }
+}
+
+/* ============================================================
+   ADAPTIVE PRIORITY SYSTEM — Urgency Badges & Smart Sort
+   ============================================================ */
+
+/* Urgency badge injected into each task card */
+.urgency-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  margin-left: 8px;
+  vertical-align: middle;
+  letter-spacing: 0.2px;
+  flex-shrink: 0;
+}
+.urgency-badge.critical { background: rgba(239,68,68,0.18);  color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+.urgency-badge.urgent   { background: rgba(249,115,22,0.18); color: #f97316; border: 1px solid rgba(249,115,22,0.3); }
+.urgency-badge.high     { background: rgba(245,158,11,0.18); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+.urgency-badge.medium   { background: rgba(6,182,212,0.18);  color: #06b6d4; border: 1px solid rgba(6,182,212,0.3);  }
+.urgency-badge.low      { background: rgba(16,185,129,0.18); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+.urgency-badge.done     { background: rgba(16,185,129,0.10); color: #10b981; border: 1px solid rgba(16,185,129,0.2); }
+
+/* Smart Sort toggle button */
+.smart-sort-btn {
+  border: 1px solid rgba(139,92,246,0.35);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(139,92,246,0.08);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.25s ease;
+  font-family: inherit;
+}
+.smart-sort-btn:hover {
+  background: rgba(139,92,246,0.16);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+.smart-sort-btn.active {
+  background: linear-gradient(135deg, #a855f7, #06b6d4);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 6px 20px rgba(168,85,247,0.35);
+}
+
+/* Suggestion banner shown below filter bar when Smart Sort is ON */
+.smart-suggestion-banner {
+  display: none;
+  flex-direction: column;
+  gap: 7px;
+  padding: 14px 18px;
+  background: rgba(139,92,246,0.07);
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: 16px;
+  margin-bottom: 18px;
+  animation: suggestionFade 0.35s ease;
+}
+.smart-suggestion-banner.visible { display: flex; }
+
+@keyframes suggestionFade {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.smart-suggestion-item {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Accessibility: Focus-visible states */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--secondary, #06b6d4);
+  outline-offset: 3px;
 }

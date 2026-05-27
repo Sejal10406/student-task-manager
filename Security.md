@@ -68,3 +68,6 @@ We support good-faith security research and will address valid issues responsibl
 ## 🙌 Acknowledgements
 
 We appreciate contributions from the community to improve this project.
+
+## Responsible Disclosure
+If you find a security issue, please report it privately. We aim to respond within 48 hours.

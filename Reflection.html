@@ -369,6 +369,11 @@ body::after{
   border-color:rgba(56,217,169,.25);
   color:var(--teal);
 }
+.status-badge.error{
+  background:rgba(245,101,101,.1);
+  border-color:rgba(245,101,101,.25);
+  color:var(--rose);
+}
 .status-badge i{font-size:12px}
 
 .hbtn{
@@ -852,6 +857,7 @@ body::after{
 </style>
 </head>
 <body>
+<main>
 
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toastContainer"></div>
@@ -1122,12 +1128,14 @@ body::after{
   <i class="ri-arrow-up-s-line"></i>
 </button>
 
+<script src="storage.js"></script>
 <script>
 /* ══════════════════════════════════════════════════════════
    CONSTANTS & STATE
 ══════════════════════════════════════════════════════════ */
-const STORAGE_KEY = 'tq_reflection_draft';
-const VAULT_KEY   = 'tq_reflection_vault';
+// Use unified storage keys when available, fall back to legacy keys
+const STORAGE_KEY = window.TaskQuestStorage ? window.TaskQuestStorage.KEYS.REFLECTION_DRAFT : 'tq_reflection_draft';
+const VAULT_KEY   = window.TaskQuestStorage ? window.TaskQuestStorage.KEYS.REFLECTION_VAULT  : 'tq_reflection_vault';
 
 const PROMPTS = [
   { icon:'ri-trophy-line',   pane:'ach', text:'What was my single biggest achievement today?' },
@@ -1238,6 +1246,9 @@ function setStatus(state) {
   } else if (state === 'saved') {
     icon.className = 'ri-checkbox-circle-line';
     text.textContent = 'Saved';
+  } else if (state === 'error') {
+    icon.className = 'ri-error-warning-line';
+    text.textContent = 'Storage Full';
   } else {
     icon.className = 'ri-checkbox-circle-line';
     text.textContent = 'Ready';
@@ -1260,8 +1271,21 @@ function saveDraft() {
     mood: currentMood,
     ts: Date.now(),
   };
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(draft)); } catch(e) {}
-  setStatus('saved');
+  let success = true;
+  if (window.TaskQuestStorage) {
+    success = window.TaskQuestStorage.setReflectionDraft(draft);
+  } else {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+    } catch(e) {
+      success = false;
+    }
+  }
+  if (success) {
+    setStatus('saved');
+  } else {
+    setStatus('error');
+  }
 }
 
 function loadDraft() {
@@ -1307,18 +1331,33 @@ function saveSession() {
     const entry = { id: Date.now(), date: new Date().toISOString(), ach, act, ref, mood: currentMood,
       words: countWords(ach) + countWords(act) + countWords(ref) };
     vault.unshift(entry);
-    persistVault();
-    renderVault();
-    updateStats();
+    const success = persistVault();
 
     btn.innerHTML = '<i class="ri-save-3-line"></i> Save Session';
     btn.disabled = false;
-    toast('Session saved to vault! 🎉', 'success');
+
+    if (success) {
+      renderVault();
+      updateStats();
+      toast('Session saved to vault! 🎉', 'success');
+    } else {
+      vault.shift(); // Remove the failed entry from the local array
+      toast('Storage full. Please clear space in the Vault.', 'error');
+    }
   }, 600);
 }
 
 function persistVault() {
-  try { localStorage.setItem(VAULT_KEY, JSON.stringify(vault)); } catch(e) {}
+  if (window.TaskQuestStorage) {
+    return window.TaskQuestStorage.setReflectionVault(vault);
+  } else {
+    try {
+      localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
+      return true;
+    } catch(e) {
+      return false;
+    }
+  }
 }
 
 function loadVault() {
@@ -1571,3 +1610,8 @@ renderWeekChart();
 </script>
 </body>
 </html>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('Reflection page fully loaded and parsed.');
+  });
+</script>

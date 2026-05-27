@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Tournaments • TaskQuest</title>
+  <meta name="description" content="Join study tournaments, compete with classmates, and climb the leaderboard." />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #f5c842;
+    --silver: #b8c4cc;
+    --bronze: #cd7f4a;
+    --bg: #0a0c10;
+    --surface: #111419;
+    --surface2: #181d25;
+    --border: #222832;
+    --text: #e8edf5;
+    --muted: #5a6478;
+    --accent: #4af0c4;
+    --red: #f04a6e;
+    --blue: #4a8af0;
+    --purple: #9b4af0;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at 20% 10%, rgba(74,240,196,0.04) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 90%, rgba(155,74,240,0.05) 0%, transparent 60%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    position: relative; z-index: 10;
+    padding: 32px 40px 0;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+  }
+  .logo-block h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px; letter-spacing: 4px;
+    color: var(--gold);
+    text-shadow: 0 0 40px rgba(245,200,66,0.3);
+    line-height: 1;
+  }
+  .logo-block p {
+    font-family: 'Crimson Pro', serif;
+    font-style: italic;
+    color: var(--muted); font-size: 14px; margin-top: 4px;
+  }
+  .week-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 20px; text-align: right;
+  }
+  .week-badge .wk-label { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .week-badge .wk-num { font-family: 'Bebas Neue'; font-size: 36px; color: var(--accent); line-height: 1; }
+  .week-badge .wk-dates { font-size: 11px; color: var(--muted); }
+
+  /* COUNTDOWN */
+  .countdown-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 40px;
+    display: flex; align-items: center; gap: 32px;
+    position: relative; z-index: 10;
+  }
+  .cd-label { font-size: 10px; color: var(--muted); letter-spacing: 2px; }
+  .cd-units { display: flex; gap: 16px; }
+  .cd-unit { text-align: center; }
+  .cd-unit .num { font-family: 'Bebas Neue'; font-size: 28px; color: var(--accent); line-height: 1; }
+  .cd-unit .lbl { font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+  .cd-sep { font-family: 'Bebas Neue'; font-size: 24px; color: var(--border); align-self: flex-start; margin-top: 2px; }
+  .progress-outer {
+    flex: 1; height: 6px;
+    background: var(--border); border-radius: 3px; overflow: hidden;
+  }
+  .progress-inner {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--gold));
+    transition: width 1s ease;
+  }
+  .week-pct { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+  /* MAIN GRID */
+  .main {
+    display: grid;
+    grid-template-columns: 300px 1fr 280px;
+    gap: 0;
+    min-height: calc(100vh - 140px);
+    position: relative; z-index: 5;
+  }
+
+  /* SIDEBAR LEFT - MY PROFILE */
+  .sidebar-left {
+    border-right: 1px solid var(--border);
+    padding: 28px 24px;
+    display: flex; flex-direction: column; gap: 24px;
+  }
+  .section-title {
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 12px;
+  }
+  .profile-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px; padding: 20px;
+  }
+  .avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--blue));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue'; font-size: 24px; color: var(--bg);
+    margin-bottom: 12px;
+  }
+  .profile-name { font-family: 'Crimson Pro'; font-size: 20px; font-weight: 600; }
+  .profile-rank { font-size: 11px; color: var(--accent); margin-top: 2px; }
+  .profile-pts {
+    margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between;
+  }
+  .pts-block .num { font-family: 'Bebas Neue'; font-size: 28px; color: var(--gold); }
+  .pts-block .lbl { font-size: 10px; color: var(--muted); }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 12px;
+  }
+  .stat-card .sv { font-family: 'Bebas Neue'; font-size: 22px; }
+  .stat-card .sl { font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+  .stat-card.green .sv { color: var(--accent); }
+  .stat-card.gold .sv { color: var(--gold); }
+  .stat-card.blue .sv { color: var(--blue); }
+  .stat-card.red .sv { color: var(--red); }
+
+  /* MILESTONES */
+  .milestone-list { display: flex; flex-direction: column; gap: 8px; }
+  .milestone {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px;
+    position: relative; overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .milestone.unlocked { border-color: var(--accent); }
+  .milestone.unlocked::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, rgba(74,240,196,0.05), transparent);
+  }
+  .milestone-icon { font-size: 20px; flex-shrink: 0; }
+  .milestone-info { flex: 1; min-width: 0; }
+  .milestone-name { font-size: 12px; font-weight: 500; }
+  .milestone-req { font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .milestone-bar-outer { height: 3px; background: var(--border); border-radius: 2px; margin-top: 6px; }
+  .milestone-bar-inner { height: 100%; border-radius: 2px; background: var(--accent); transition: width 0.8s ease; }
+  .milestone-badge {
+    font-size: 10px; font-family: 'Bebas Neue'; letter-spacing: 1px;
+    padding: 2px 8px; border-radius: 2px;
+  }
+  .milestone.unlocked .milestone-badge { background: var(--accent); color: var(--bg); }
+  .milestone:not(.unlocked) .milestone-badge { background: var(--border); color: var(--muted); }
+
+  /* CENTER - LEADERBOARD */
+  .center { padding: 28px 32px; }
+  .board-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .filter-tabs { display: flex; gap: 4px; }
+  .tab {
+    padding: 6px 14px; border-radius: 3px; font-size: 11px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--muted); cursor: pointer; transition: all 0.15s;
+    font-family: 'DM Mono'; letter-spacing: 0.5px;
+  }
+  .tab.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .tab:hover:not(.active) { border-color: var(--muted); color: var(--text); }
+
+  .board-row {
+    display: grid;
+    grid-template-columns: 48px 1fr 80px 80px 90px 90px;
+    align-items: center; gap: 8px;
+    padding: 14px 16px; border-radius: 4px;
+    border: 1px solid transparent;
+    transition: all 0.15s; margin-bottom: 4px;
+    background: var(--surface);
+    cursor: pointer;
+    position: relative; overflow: hidden;
+  }
+  .board-row:hover { border-color: var(--border); background: var(--surface2); }
+  .board-row.me { border-color: var(--accent) !important; background: rgba(74,240,196,0.04) !important; }
+  .board-row.me::after {
+    content: 'YOU'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 8px; letter-spacing: 2px; color: var(--accent);
+  }
+  .board-row.top1 { border-color: rgba(245,200,66,0.3); }
+  .board-row.top1::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, rgba(245,200,66,0.04), transparent);
+  }
+  .rank-num {
+    font-family: 'Bebas Neue'; font-size: 22px; text-align: center;
+    color: var(--muted);
+  }
+  .rank-num.r1 { color: var(--gold); }
+  .rank-num.r2 { color: var(--silver); }
+  .rank-num.r3 { color: var(--bronze); }
+  .player-info {}
+  .player-name { font-family: 'Crimson Pro'; font-size: 16px; font-weight: 600; }
+  .player-title { font-size: 10px; color: var(--muted); }
+  .board-val { text-align: right; }
+  .board-val .v { font-family: 'Bebas Neue'; font-size: 18px; }
+  .board-val .l { font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+  .trend { text-align: center; font-size: 13px; }
+  .trend.up { color: var(--accent); }
+  .trend.down { color: var(--red); }
+  .trend.same { color: var(--muted); }
+
+  .board-cols {
+    display: grid;
+    grid-template-columns: 48px 1fr 80px 80px 90px 90px;
+    gap: 8px; padding: 4px 16px 12px;
+    font-size: 9px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  .board-cols > *:not(:first-child):not(:nth-child(2)) { text-align: right; }
+
+  /* PAGINATION */
+  .board-footer {
+    margin-top: 16px; display: flex; align-items: center;
+    justify-content: space-between;
+  }
+  .page-info { font-size: 11px; color: var(--muted); }
+  .page-btns { display: flex; gap: 6px; }
+  .page-btn {
+    padding: 6px 12px; border: 1px solid var(--border); background: transparent;
+    color: var(--muted); font-family: 'DM Mono'; font-size: 11px;
+    border-radius: 3px; cursor: pointer; transition: all 0.15s;
+  }
+  .page-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .page-btn:disabled { opacity: 0.3; cursor: default; }
+
+  /* SIDEBAR RIGHT - ACTIVITY & SUBMIT */
+  .sidebar-right {
+    border-left: 1px solid var(--border);
+    padding: 28px 24px;
+    display: flex; flex-direction: column; gap: 24px;
+  }
+
+  /* SUBMIT TASK */
+  .submit-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 18px;
+  }
+  .task-select, .pts-input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); font-family: 'DM Mono'; font-size: 12px;
+    padding: 8px 12px; border-radius: 3px; margin-bottom: 8px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .task-select:focus, .pts-input:focus { border-color: var(--accent); }
+  .submit-btn {
+    width: 100%; padding: 10px; background: var(--accent);
+    color: var(--bg); border: none; border-radius: 3px;
+    font-family: 'Bebas Neue'; font-size: 16px; letter-spacing: 2px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .submit-btn:hover { background: #6af4d2; transform: translateY(-1px); }
+  .submit-btn:active { transform: translateY(0); }
+
+  /* ACTIVITY FEED */
+  .feed { display: flex; flex-direction: column; gap: 6px; max-height: 340px; overflow-y: auto; }
+  .feed::-webkit-scrollbar { width: 3px; }
+  .feed::-webkit-scrollbar-track { background: transparent; }
+  .feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .feed-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 10px 12px;
+    font-size: 11px; animation: feedIn 0.3s ease;
+  }
+  @keyframes feedIn {
+    from { opacity: 0; transform: translateX(8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .feed-item .fi-who { color: var(--accent); font-weight: 500; }
+  .feed-item .fi-what { color: var(--muted); margin-top: 2px; }
+  .feed-item .fi-pts { color: var(--gold); font-family: 'Bebas Neue'; font-size: 14px; float: right; }
+  .feed-item .fi-time { font-size: 9px; color: var(--muted); margin-top: 4px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 32px; right: 32px; z-index: 1000;
+    background: var(--surface2); border: 1px solid var(--accent);
+    border-radius: 6px; padding: 14px 20px;
+    font-size: 12px; min-width: 220px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast .t-title { font-family: 'Bebas Neue'; font-size: 16px; color: var(--accent); letter-spacing: 1px; }
+  .toast .t-msg { color: var(--muted); margin-top: 2px; }
+
+  /* TROPHIES */
+  .trophy-shelf { display: flex; gap: 8px; flex-wrap: wrap; }
+  .trophy {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 8px 10px; font-size: 18px;
+    transition: transform 0.2s; cursor: default;
+    position: relative;
+  }
+  .trophy:hover { transform: scale(1.15); z-index: 5; }
+  .trophy.locked { filter: grayscale(1) brightness(0.4); }
+  .trophy::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    background: var(--bg); border: 1px solid var(--border);
+    padding: 4px 8px; font-size: 9px; color: var(--muted);
+    white-space: nowrap; border-radius: 3px; pointer-events: none;
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .trophy:hover::after { opacity: 1; }
+
+  /* SPARKLINE */
+  .sparkline-wrap { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 12px; }
+  .sparkline-wrap canvas { width: 100%; height: 60px; }
+
+  /* RESPONSIVE-ISH */
+  @media (max-width: 1100px) {
+    .main { grid-template-columns: 260px 1fr; }
+    .sidebar-right { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-block">
+    <h1>Task Quest</h1>
+    <p>Weekly Productivity Tournament — Season III</p>
+  </div>
+  <div class="week-badge">
+    <div class="wk-label">Current Week</div>
+    <div class="wk-num" id="weekNum">—</div>
+    <div class="wk-dates" id="weekDates">loading…</div>
+  </div>
+</header>
+
+<div class="countdown-bar">
+  <div class="cd-label">RESETS IN</div>
+  <div class="cd-units">
+    <div class="cd-unit"><div class="num" id="cdD">00</div><div class="lbl">DAYS</div></div>
+    <div class="cd-sep">:</div>
+    <div class="cd-unit"><div class="num" id="cdH">00</div><div class="lbl">HRS</div></div>
+    <div class="cd-sep">:</div>
+    <div class="cd-unit"><div class="num" id="cdM">00</div><div class="lbl">MIN</div></div>
+    <div class="cd-sep">:</div>
+    <div class="cd-unit"><div class="num" id="cdS">00</div><div class="lbl">SEC</div></div>
+  </div>
+  <div class="progress-outer">
+    <div class="progress-inner" id="weekProgress" style="width:0%"></div>
+  </div>
+  <div class="week-pct" id="weekPct">0%</div>
+</div>
+
+<div class="main">
+  <!-- LEFT SIDEBAR -->
+  <div class="sidebar-left">
+    <div>
+      <div class="section-title">My Profile</div>
+      <div class="profile-card">
+        <div class="avatar" id="myAvatar">ME</div>
+        <div class="profile-name" id="myName">Alex Chen</div>
+        <div class="profile-rank" id="myRankLabel">#4 · Scholar</div>
+        <div class="profile-pts">
+          <div class="pts-block">
+            <div class="num" id="myPts">0</div>
+            <div class="lbl">WEEK PTS</div>
+          </div>
+          <div class="pts-block">
+            <div class="num" id="myTotal" style="color:var(--accent)">0</div>
+            <div class="lbl">TOTAL PTS</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">Weekly Stats</div>
+      <div class="stat-grid">
+        <div class="stat-card green"><div class="sv" id="statTasks">0</div><div class="sl">TASKS</div></div>
+        <div class="stat-card gold"><div class="sv" id="statStreak">0🔥</div><div class="sl">STREAK</div></div>
+        <div class="stat-card blue"><div class="sv" id="statHours">0</div><div class="sl">HOURS</div></div>
+        <div class="stat-card red"><div class="sv" id="statAccuracy">0%</div><div class="sl">ACCURACY</div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">Milestones</div>
+      <div class="milestone-list" id="milestoneList"></div>
+    </div>
+
+    <div>
+      <div class="section-title">Trophy Cabinet</div>
+      <div class="trophy-shelf" id="trophyShelf"></div>
+    </div>
+
+    <div>
+      <div class="section-title">This Week's Score</div>
+      <div class="sparkline-wrap">
+        <canvas id="sparkCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER - LEADERBOARD -->
+  <div class="center">
+    <div class="board-header">
+      <div>
+        <div class="section-title" style="margin-bottom:4px">Live Leaderboard</div>
+        <div style="font-family:'Crimson Pro';font-style:italic;color:var(--muted);font-size:13px">Updated in real-time · <span id="totalPlayers">0</span> competitors</div>
+      </div>
+      <div class="filter-tabs">
+        <button class="tab active" onclick="filterBoard('week',this)">This Week</button>
+        <button class="tab" onclick="filterBoard('alltime',this)">All Time</button>
+        <button class="tab" onclick="filterBoard('dept',this)">Department</button>
+      </div>
+    </div>
+
+    <div class="board-cols">
+      <div>#</div>
+      <div>Competitor</div>
+      <div style="text-align:right">Points</div>
+      <div style="text-align:right">Tasks</div>
+      <div style="text-align:right">Streak</div>
+      <div style="text-align:right">Trend</div>
+    </div>
+
+    <div id="boardRows"></div>
+
+    <div class="board-footer">
+      <div class="page-info" id="pageInfo">Page 1 of 1</div>
+      <div class="page-btns">
+        <button class="page-btn" id="prevBtn" onclick="changePage(-1)" disabled>← Prev</button>
+        <button class="page-btn" id="nextBtn" onclick="changePage(1)">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div class="sidebar-right">
+    <div>
+      <div class="section-title">Submit Achievement</div>
+      <div class="submit-card">
+        <select class="task-select" id="taskType">
+          <option value="">Select task type…</option>
+          <option value="25">📚 Read chapter (+25 pts)</option>
+          <option value="40">✍️ Write essay (+40 pts)</option>
+          <option value="50">🧠 Solve problem set (+50 pts)</option>
+          <option value="30">🎯 Complete quiz (+30 pts)</option>
+          <option value="60">🔬 Lab experiment (+60 pts)</option>
+          <option value="20">📝 Lecture notes (+20 pts)</option>
+          <option value="80">🏆 Project milestone (+80 pts)</option>
+          <option value="15">💬 Study group (+15 pts)</option>
+        </select>
+        <input type="number" class="pts-input" id="hoursSpent" placeholder="Hours spent (optional)" min="0" max="24" step="0.5">
+        <button class="submit-btn" onclick="submitTask()">SUBMIT ACHIEVEMENT</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">Live Feed</div>
+      <div class="feed" id="activityFeed"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="t-title" id="toastTitle">Achievement!</div>
+  <div class="t-msg" id="toastMsg">You earned points.</div>
+</div>
+
+<script>
+/* ============ DATA ============ */
+const PLAYERS = [
+  {id:0, name:'Pari',   title:'Midnight Scholar',     pts:1840, tasks:42, streak:12, total:18400, dept:'Physics',  initials:'P', isMe:true},
+  {id:1, name:'Priya ',  title:'Data Sage',           pts:2310, tasks:54, streak:18, total:22100, dept:'CS',       initials:'PN'},
+  {id:2, name:'Marcus Webb', title:'Logic Architect',     pts:2105, tasks:49, streak:14, total:19800, dept:'Maths',    initials:'MW'},
+  {id:3, name:'Yuki Tanaka', title:'Syntax Artisan',      pts:1970, tasks:46, streak:10, total:17300, dept:'CS',       initials:'YT'},
+  {id:4, name:'Layla Hassan',title:'Algorithm Oracle',    pts:1780, tasks:38, streak:9,  total:15200, dept:'CS',       initials:'LH'},
+  {id:5, name:'Dev Patel',   title:'Neural Alchemist',    pts:1650, tasks:36, streak:7,  total:14100, dept:'AI',       initials:'DP'},
+  {id:6, name:'Sofia Ruiz',  title:'Theorem Hunter',      pts:1520, tasks:33, streak:6,  total:12900, dept:'Maths',    initials:'SR'},
+  {id:7, name:'James Osei',  title:'Circuit Poet',        pts:1410, tasks:30, streak:5,  total:11500, dept:'ECE',      initials:'JO'},
+  {id:8, name:'Lena Bauer',  title:'Bio Catalyst',        pts:1280, tasks:27, streak:4,  total:10200, dept:'Biology',  initials:'LB'},
+  {id:9, name:'Omar Farouk', title:'Photon Wrangler',     pts:1180, tasks:25, streak:3,  total:9100,  dept:'Physics',  initials:'OF'},
+  {id:10,name:'Chloe Kim',   title:'Data Whisperer',      pts:1060, tasks:22, streak:3,  total:8400,  dept:'Stats',    initials:'CK'},
+  {id:11,name:'Raj Singh',   title:'Proof Mechanic',      pts:970,  tasks:20, streak:2,  total:7800,  dept:'Maths',    initials:'RS'},
+  {id:12,name:'Ana Torres',  title:'Genome Sculptor',     pts:860,  tasks:18, streak:2,  total:6900,  dept:'Biology',  initials:'AT'},
+  {id:13,name:'Kim Lee',     title:'Byte Sorcerer',       pts:740,  tasks:15, streak:1,  total:5700,  dept:'CS',       initials:'KL'},
+  {id:14,name:'Noah Adams',  title:'Field Theorist',      pts:610,  tasks:12, streak:1,  total:4500,  dept:'Physics',  initials:'NA'},
+];
+
+const MILESTONES = [
+  {icon:'🌱', name:'First Steps',    req:100,  label:'DONE'},
+  {icon:'📚', name:'Bibliophile',    req:500,  label:'DONE'},
+  {icon:'🔥', name:'On Fire',        req:1000, label:'DONE'},
+  {icon:'⚡', name:'Speed Scholar',  req:1500, label:'1500'},
+  {icon:'🧠', name:'Deep Thinker',   req:2000, label:'2000'},
+  {icon:'🏆', name:'Champion',       req:3000, label:'3000'},
+];
+
+const TROPHIES = [
+  {icon:'🥇', tip:'Week 1 Winner',    owned:false},
+  {icon:'🥈', tip:'Week 2 Runner-up', owned:true},
+  {icon:'⚡', tip:'Speed Demon',      owned:true},
+  {icon:'🔥', tip:'7-Day Streak',     owned:true},
+  {icon:'📖', tip:'Bookworm',         owned:true},
+  {icon:'🎯', tip:'Perfect Score',    owned:false},
+  {icon:'🌟', tip:'All-Rounder',      owned:false},
+  {icon:'🤝', tip:'Team Player',      owned:true},
+];
+
+const FEED_TEMPLATES = [
+  (p,pts) => `${p} just completed a lab experiment`,
+  (p,pts) => `${p} finished a problem set`,
+  (p,pts) => `${p} logged a study session`,
+  (p,pts) => `${p} hit a new streak milestone`,
+  (p,pts) => `${p} submitted an essay`,
+  (p,pts) => `${p} crushed a quiz`,
+];
+
+let myPlayer = PLAYERS.find(p => p.isMe);
+let currentFilter = 'week';
+let currentPage = 0;
+const PAGE_SIZE = 8;
+let weeklyScoreHistory = [0,0,0,0,0,0,0];
+
+/* ============ WEEK CALC ============ */
+function getWeekInfo() {
+  const now = new Date();
+  const start = new Date(now); start.setHours(0,0,0,0);
+  start.setDate(start.getDate() - start.getDay()); // Sunday
+  const end = new Date(start); end.setDate(end.getDate() + 7);
+  const elapsed = now - start;
+  const total = end - start;
+  const pct = Math.min(100, (elapsed / total) * 100);
+  const weekNum = Math.ceil((now - new Date(now.getFullYear(),0,1)) / 604800000);
+  const fmt = d => d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return { start, end, pct, weekNum, label: `${fmt(start)} – ${fmt(new Date(end-86400000))}`, remaining: end - now };
+}
+
+function updateWeekUI() {
+  const wi = getWeekInfo();
+  document.getElementById('weekNum').textContent = wi.weekNum;
+  document.getElementById('weekDates').textContent = wi.label;
+  document.getElementById('weekProgress').style.width = wi.pct + '%';
+  document.getElementById('weekPct').textContent = wi.pct.toFixed(1) + '% elapsed';
+}
+
+/* ============ COUNTDOWN ============ */
+function updateCountdown() {
+  const wi = getWeekInfo();
+  let rem = Math.max(0, wi.remaining);
+  const d = Math.floor(rem / 86400000); rem %= 86400000;
+  const h = Math.floor(rem / 3600000);  rem %= 3600000;
+  const m = Math.floor(rem / 60000);    rem %= 60000;
+  const s = Math.floor(rem / 1000);
+  document.getElementById('cdD').textContent = String(d).padStart(2,'0');
+  document.getElementById('cdH').textContent = String(h).padStart(2,'0');
+  document.getElementById('cdM').textContent = String(m).padStart(2,'0');
+  document.getElementById('cdS').textContent = String(s).padStart(2,'0');
+}
+
+/* ============ PROFILE ============ */
+function renderProfile() {
+  document.getElementById('myName').textContent = myPlayer.name;
+  document.getElementById('myAvatar').textContent = myPlayer.initials;
+  const rank = getSorted().findIndex(p=>p.id===myPlayer.id)+1;
+  document.getElementById('myRankLabel').textContent = `#${rank} · ${myPlayer.title}`;
+  animCount('myPts', myPlayer.pts, 800);
+  animCount('myTotal', myPlayer.total, 800);
+  animCount('statTasks', myPlayer.tasks, 600);
+  document.getElementById('statStreak').textContent = myPlayer.streak + '🔥';
+  document.getElementById('statHours').textContent = (myPlayer.tasks * 1.2).toFixed(0);
+  document.getElementById('statAccuracy').textContent = Math.min(99,78 + myPlayer.streak) + '%';
+}
+
+function animCount(id, target, dur) {
+  const el = document.getElementById(id);
+  const start = parseInt(el.textContent) || 0;
+  const startTime = performance.now();
+  function step(now) {
+    const p = Math.min(1,(now-startTime)/dur);
+    el.textContent = Math.round(start + (target-start)*p);
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ============ MILESTONES ============ */
+function renderMilestones() {
+  const pts = myPlayer.pts;
+  document.getElementById('milestoneList').innerHTML = MILESTONES.map(m => {
+    const done = pts >= m.req;
+    const pct = Math.min(100,(pts/m.req)*100);
+    return `<div class="milestone ${done?'unlocked':''}">
+      <div class="milestone-icon">${m.icon}</div>
+      <div class="milestone-info">
+        <div class="milestone-name">${m.name}</div>
+        <div class="milestone-req">${m.req} pts required</div>
+        <div class="milestone-bar-outer">
+          <div class="milestone-bar-inner" style="width:${pct}%"></div>
+        </div>
+      </div>
+      <div class="milestone-badge">${done?'✓':m.label}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ============ TROPHIES ============ */
+function renderTrophies() {
+  document.getElementById('trophyShelf').innerHTML = TROPHIES.map(t =>
+    `<div class="trophy ${t.owned?'':'locked'}" data-tip="${t.tip}">${t.icon}</div>`
+  ).join('');
+}
+
+/* ============ LEADERBOARD ============ */
+function getSorted() {
+  return [...PLAYERS].sort((a,b) => {
+    if(currentFilter==='alltime') return b.total - a.total;
+    if(currentFilter==='dept') return b.pts - a.pts; // same dept filter simplified
+    return b.pts - a.pts;
+  });
+}
+
+const TRENDS = ['up','up','same','down','up','same','up','down','up','same','up','down','same','up','down'];
+
+function renderBoard() {
+  const sorted = getSorted();
+  const start = currentPage * PAGE_SIZE;
+  const page = sorted.slice(start, start + PAGE_SIZE);
+  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+
+  document.getElementById('totalPlayers').textContent = sorted.length;
+  document.getElementById('pageInfo').textContent = `Page ${currentPage+1} of ${totalPages}`;
+  document.getElementById('prevBtn').disabled = currentPage===0;
+  document.getElementById('nextBtn').disabled = currentPage>=totalPages-1;
+
+  document.getElementById('boardRows').innerHTML = page.map((p,i) => {
+    const rank = start + i + 1;
+    const rankClass = rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
+    const rowClass = (p.isMe?'me ':'') + (rank===1?'top1':'');
+    const trend = TRENDS[p.id % TRENDS.length];
+    const trendIcon = trend==='up'?'▲':trend==='down'?'▼':'—';
+    const pts = currentFilter==='alltime' ? p.total : p.pts;
+    return `<div class="board-row ${rowClass}">
+      <div class="rank-num ${rankClass}">${rank}</div>
+      <div class="player-info">
+        <div class="player-name">${p.name}</div>
+        <div class="player-title">${p.title} · ${p.dept}</div>
+      </div>
+      <div class="board-val"><div class="v" style="color:var(--gold)">${pts.toLocaleString()}</div><div class="l">PTS</div></div>
+      <div class="board-val"><div class="v">${p.tasks}</div><div class="l">TASKS</div></div>
+      <div class="board-val"><div class="v" style="color:var(--red)">${p.streak}🔥</div><div class="l">STREAK</div></div>
+      <div class="trend ${trend}">${trendIcon}</div>
+    </div>`;
+  }).join('');
+}
+
+function filterBoard(f, btn) {
+  currentFilter = f;
+  currentPage = 0;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderBoard();
+}
+
+function changePage(dir) {
+  const sorted = getSorted();
+  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+  currentPage = Math.max(0, Math.min(totalPages-1, currentPage+dir));
+  renderBoard();
+}
+
+/* ============ SUBMIT TASK ============ */
+function submitTask() {
+  const sel = document.getElementById('taskType');
+  const hrs = parseFloat(document.getElementById('hoursSpent').value) || 0;
+  const pts = parseInt(sel.value);
+  if(!pts) { showToast('⚠️ Select a Task','Please choose a task type first.'); return; }
+
+  myPlayer.pts += pts;
+  myPlayer.total += pts;
+  myPlayer.tasks += 1;
+  if(hrs > 0) myPlayer.streak = Math.min(myPlayer.streak + 1, 99);
+
+  weeklyScoreHistory.push(myPlayer.pts);
+  if(weeklyScoreHistory.length > 7) weeklyScoreHistory.shift();
+
+  const taskText = sel.options[sel.selectedIndex].text;
+  addFeedItem('You', taskText.replace(/\(.*\)/,'').trim(), pts);
+
+  sel.value = '';
+  document.getElementById('hoursSpent').value = '';
+
+  renderProfile();
+  renderMilestones();
+  renderBoard();
+  drawSparkline();
+
+  const milestoneHit = MILESTONES.find(m => myPlayer.pts >= m.req && (myPlayer.pts - pts) < m.req);
+  if(milestoneHit) {
+    showToast('🏆 Milestone Reached!', `You unlocked "${milestoneHit.name}"! Keep going!`);
+  } else {
+    showToast('✅ Submitted!', `+${pts} pts added. You're at ${myPlayer.pts.toLocaleString()} this week!`);
+  }
+}
+
+/* ============ FEED ============ */
+const FAKE_NAMES = ['Priya N.','Marcus W.','Yuki T.','Layla H.','Dev P.','Sofia R.'];
+let feedItems = [];
+
+function addFeedItem(who, what, pts) {
+  const now = new Date();
+  const time = now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  const el = document.createElement('div');
+  el.className = 'feed-item';
+  el.innerHTML = `<span class="fi-pts">+${pts}</span><span class="fi-who">${who}</span><div class="fi-what">${what}</div><div class="fi-time">${time}</div>`;
+  const feed = document.getElementById('activityFeed');
+  feed.prepend(el);
+  while(feed.children.length > 12) feed.removeChild(feed.lastChild);
+}
+
+function simulateFeed() {
+  const name = FAKE_NAMES[Math.floor(Math.random()*FAKE_NAMES.length)];
+  const pts = [15,20,25,30,40,50,60][Math.floor(Math.random()*7)];
+  const tmpl = FEED_TEMPLATES[Math.floor(Math.random()*FEED_TEMPLATES.length)];
+  addFeedItem(name, tmpl(name,pts), pts);
+
+  // Bump random player pts slightly
+  const rp = PLAYERS[Math.floor(Math.random()*PLAYERS.length)];
+  if(!rp.isMe) { rp.pts += pts; rp.total += pts; rp.tasks += 1; }
+  renderBoard();
+
+  setTimeout(simulateFeed, 4000 + Math.random()*6000);
+}
+
+/* ============ TOAST ============ */
+let toastTimer;
+function showToast(title, msg) {
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastMsg').textContent = msg;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+/* ============ SPARKLINE ============ */
+function drawSparkline() {
+  const canvas = document.getElementById('sparkCanvas');
+  const w = canvas.parentElement.clientWidth - 24;
+  const h = 60;
+  canvas.width = w * (window.devicePixelRatio||1);
+  canvas.height = h * (window.devicePixelRatio||1);
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(window.devicePixelRatio||1, window.devicePixelRatio||1);
+
+  const data = weeklyScoreHistory;
+  const minV = Math.min(...data);
+  const maxV = Math.max(...data) || 1;
+  const pts = data.map((v,i) => ({
+    x: (i/(data.length-1||1)) * (w-4) + 2,
+    y: h - 4 - ((v-minV)/(maxV-minV||1)) * (h-12)
+  }));
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,'rgba(74,240,196,0.3)');
+  grad.addColorStop(1,'rgba(74,240,196,0)');
+
+  ctx.beginPath();
+  pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x, h);
+  ctx.lineTo(pts[0].x, h);
+  ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+
+  ctx.beginPath();
+  pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+  ctx.strokeStyle = '#4af0c4'; ctx.lineWidth = 2;
+  ctx.lineJoin = 'round'; ctx.stroke();
+
+  // Dots
+  pts.forEach(p => {
+    ctx.beginPath(); ctx.arc(p.x,p.y,3,0,Math.PI*2);
+    ctx.fillStyle = '#4af0c4'; ctx.fill();
+  });
+}
+
+/* ============ INIT ============ */
+function init() {
+  updateWeekUI();
+  renderProfile();
+  renderMilestones();
+  renderTrophies();
+  renderBoard();
+
+  // Seed sparkline with current pts
+  weeklyScoreHistory = [0, 200, 450, 800, 1100, 1480, myPlayer.pts];
+  drawSparkline();
+
+  // Seed initial feed
+  FAKE_NAMES.slice(0,4).forEach((n,i) => {
+    const pts = [25,50,30,40][i];
+    addFeedItem(n, FEED_TEMPLATES[i](n,pts), pts);
+  });
+
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+  setInterval(updateWeekUI, 30000);
+  setTimeout(simulateFeed, 2000);
+}
+
+window.addEventListener('load', init);
+window.addEventListener('resize', drawSparkline);
+</script>
+</body>
+</html>
+<style>
+.bracket-line {
+  border-right: 2px solid #ccc;
+  border-top: 2px solid #ccc;
+  border-top-right-radius: 4px;
+}
+</style>

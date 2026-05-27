@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle Arena • TaskQuest</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@600;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f0c26;
+            --card: rgba(255, 255, 255, 0.04);
+            --border: rgba(255, 255, 255, 0.1);
+            --primary: #a855f7;
+            --secondary: #06b6d4;
+            --accent: #f59e0b;
+            --text: #ffffff;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            background-image: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #0f0c26 100%);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .glass {
+            background: var(--card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: white;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            color: var(--primary);
+            text-shadow: 0 0 20px var(--primary);
+        }
+
+        .logo h1 { font-family: 'Poppins', sans-serif; font-size: 1.5rem; letter-spacing: -0.5px; }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: white; }
+        .btn-outline:hover { background: var(--card); }
+
+        .battle-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 24px;
+        }
+
+        /* ARENA */
+        .arena { padding: 40px; text-align: center; position: relative; overflow: hidden; }
+        
+        .arena-bg-glow {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
+            z-index: 0; pointer-events: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .timer-display {
+            font-family: 'Poppins', sans-serif;
+            font-size: 5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(to bottom, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .score-counter {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        .battle-controls { display: flex; justify-content: center; gap: 16px; position: relative; z-index: 1; }
+
+        /* LEADERBOARD */
+        .sidebar-panel { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+        .panel-title { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 700; }
+        .panel-title i { color: var(--accent); }
+
+        .ranking-list { display: flex; flex-direction: column; gap: 12px; }
+        .rank-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            transition: transform 0.2s;
+        }
+        .rank-item.me { border-color: var(--primary); background: rgba(168, 85, 247, 0.05); }
+        .rank-num { font-weight: 800; width: 24px; color: var(--text-muted); }
+        .rank-info { flex: 1; }
+        .rank-name { display: block; font-weight: 600; font-size: 0.9rem; }
+        .rank-score { font-size: 0.8rem; color: var(--text-muted); }
+
+        /* TASKS IN BATTLE */
+        .battle-tasks { margin-top: 30px; text-align: left; }
+        .task-item {
+            display: flex; align-items: center; gap: 12px; padding: 15px;
+            border-radius: 12px; margin-bottom: 10px; background: rgba(255,255,255,0.03);
+        }
+        .task-item.done { opacity: 0.5; text-decoration: line-through; border-left: 4px solid var(--success); }
+
+        .battle-header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+        
+        .search-box-battle {
+            position: relative;
+            flex: 0 1 250px;
+        }
+
+        .search-box-battle input {
+            width: 100%;
+            padding: 10px 10px 10px 35px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: white;
+            outline: none;
+        }
+
+        .search-box-battle i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .quick-add-battle {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .quick-add-battle input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: white;
+            outline: none;
+        }
+
+        .timer-config {
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .glass-select {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 12px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* Challenge Toast */
+        #challengeToast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: var(--primary);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 100px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 50px rgba(168, 85, 247, 0.5);
+            text-align: center;
+        }
+
+        #challengeToast.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        @media (max-width: 900px) {
+            .battle-layout { grid-template-columns: 1fr; }
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="index.html" class="logo">
+                <i class="ri-sword-fill"></i>
+                <h1>BattleArena</h1>
+            </a>
+            <div class="user-meta">
+                <span id="playerName" style="font-weight: 600; color: var(--text-muted);">Joining as Scholar...</span>
+            </div>
+            <a href="index.html" class="btn btn-outline"><i class="ri-arrow-left-line"></i> Back to Quests</a>
+        </header>
+
+        <div class="battle-layout">
+            <main>
+                <!-- LOBBY STATE -->
+                <div id="lobbySection" class="arena glass">
+                    <div class="arena-bg-glow"></div>
+                    <div class="status-badge">Battle Lobby</div>
+                    <h2 style="font-size: 2.5rem; margin-bottom: 10px; font-family: 'Poppins';">The Arena Awaits</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 40px; max-width: 500px; margin-inline: auto;">
+                        Challenge other students to a 5-minute focus sprint. Complete your tasks to earn Battle Points and climb the ranks.
+                    </p>
+                    
+                    <div class="timer-config">
+                        <label for="durationSelect" style="font-weight: 600;">Edit Timer:</label>
+                        <select id="durationSelect" class="glass-select">
+                            <option value="120">2 Minutes</option>
+                            <option value="300" selected>5 Minutes</option>
+                            <option value="600">10 Minutes</option>
+                            <option value="900">15 Minutes</option>
+                            <option value="1800">30 Minutes</option>
+                        </select>
+                    </div>
+
+                    <div class="battle-controls">
+                        <button id="startBattleBtn" class="btn btn-primary" style="padding: 15px 40px; font-size: 1.1rem;">
+                            <i class="ri-play-circle-fill"></i> Start Battle Now
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ACTIVE BATTLE STATE -->
+                <div id="battleSection" class="arena glass hidden">
+                    <div class="arena-bg-glow"></div>
+                    <div class="status-badge" style="color: var(--danger); border-color: var(--danger); background: rgba(239, 68, 68, 0.1);">Battle in Progress</div>
+                    <div id="timer" class="timer-display">05:00</div>
+                    <div class="score-counter">Current Score: <span id="myScore">0</span> BP</div>
+                    
+                    <div class="battle-header-actions">
+                        <div class="quick-add-battle">
+                            <input type="text" id="battleQuickAdd" placeholder="Add a new challenge task...">
+                            <button id="addBattleTaskBtn" class="btn btn-primary">Add Task</button>
+                        </div>
+                        <div class="search-box-battle">
+                            <i class="ri-search-line"></i>
+                            <input type="text" id="battleSearch" placeholder="Search tasks...">
+                        </div>
+                    </div>
+
+                    <div class="battle-tasks">
+                        <h3 style="margin-bottom: 15px;">Active Quests</h3>
+                        <div id="battleTaskList">
+                            <!-- Tasks from main storage show up here -->
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <aside>
+                <div class="sidebar-panel glass">
+                    <div class="panel-title">
+                        <i class="ri-medal-fill"></i>
+                        <span>Live Rankings</span>
+                    </div>
+                    <div id="rankingList" class="ranking-list">
+                        <div class="empty-state" style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.9rem;">
+                            No other scholars in the arena...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-panel glass" style="margin-top: 20px;">
+                    <div class="panel-title">
+                        <i class="ri-information-line" style="color: var(--secondary);"></i>
+                        <span>Battle Rules</span>
+                    </div>
+                    <ul style="font-size: 0.85rem; color: var(--text-muted); padding-left: 20px; line-height: 1.6;">
+                        <li>5 minutes on the clock.</li>
+                        <li>+100 BP for every completed quest.</li>
+                        <li>+1 BP for every 2 seconds focused.</li>
+                        <li>Highest score wins the Reward Chest.</li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <div id="challengeToast">Challenge for task</div>
+
+    <script>
+        const battleChannel = new BroadcastChannel('taskquest_battle_arena');
+        const myId = Math.random().toString(36).substr(2, 9);
+        
+        let profile = JSON.parse(localStorage.getItem('quests_profile') || '{"name": "Anonymous Scholar"}');
+        let tasks = JSON.parse(localStorage.getItem('quests') || '[]');
+        
+        let battleActive = false;
+        let score = 0;
+        let timeLeft = 300; // 5 mins
+        let timerInterval = null;
+        let competitors = {};
+
+        // 1. Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('playerName').textContent = `Scholar: ${profile.name}`;
+            announcePresence();
+            renderBattleTasks();
+            
+            // Pulse presence every 3 seconds
+            setInterval(announcePresence, 3000);
+        });
+
+        // 2. Battle Logic
+        document.getElementById('startBattleBtn').addEventListener('click', () => {
+            startBattle(true);
+        });
+
+        document.getElementById('battleSearch').addEventListener('input', (e) => {
+            renderBattleTasks(e.target.value);
+        });
+
+        document.getElementById('addBattleTaskBtn').addEventListener('click', () => {
+            const input = document.getElementById('battleQuickAdd');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            const newTask = { id: Date.now(), text: text, completed: false, category: 'Battle' };
+            tasks.push(newTask);
+            localStorage.setItem('quests', JSON.stringify(tasks));
+            
+            showChallengeToast(text);
+            input.value = '';
+            renderBattleTasks();
+        });
+
+        function startBattle(isHost, hostDuration) {
+            if (battleActive) return;
+            
+            timeLeft = hostDuration || parseInt(document.getElementById('durationSelect').value);
+            updateTimerDisplay();
+
+            if (isHost) {
+                battleChannel.postMessage({ type: 'BATTLE_START', hostId: myId, duration: timeLeft });
+            }
+
+            battleActive = true;
+            score = 0;
+            
+            document.getElementById('lobbySection').classList.add('hidden');
+            document.getElementById('battleSection').classList.remove('hidden');
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                // Add passive focus points
+                if (timeLeft % 2 === 0) {
+                    score += 1;
+                    updateMyScore();
+                }
+                
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    endBattle();
+                }
+            }, 1000);
+        }
+
+        function showChallengeToast(taskName) {
+            const toast = document.getElementById('challengeToast');
+            toast.textContent = `Challenge for ${taskName} task`;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function endBattle() {
+            clearInterval(timerInterval);
+            battleActive = false;
+            alert(`Battle Finished! Final Score: ${score} BP`);
+            
+            // Give rewards if score > 0
+            if (score > 0) {
+                let coins = parseInt(localStorage.getItem('coins') || '0');
+                localStorage.setItem('coins', coins + Math.floor(score / 2));
+            }
+            
+            location.reload(); // Reset state
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            document.getElementById('timer').textContent = 
+                `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        function updateMyScore() {
+            document.getElementById('myScore').textContent = score;
+            announcePresence();
+        }
+
+        // 3. Real-time Communication
+        function announcePresence() {
+            battleChannel.postMessage({
+                type: 'PRESENCE',
+                id: myId,
+                name: profile.name,
+                score: score,
+                status: battleActive ? 'fighting' : 'lobby',
+                timestamp: Date.now()
+            });
+        }
+
+        battleChannel.onmessage = (event) => {
+            const data = event.data;
+
+            if (data.type === 'BATTLE_START' && data.hostId !== myId) {
+                startBattle(false, data.duration);
+            } else if (data.type === 'PRESENCE' && data.id !== myId) {
+                competitors[data.id] = data;
+                renderLeaderboard();
+            }
+        };
+
+        function renderLeaderboard() {
+            const list = document.getElementById('rankingList');
+            list.innerHTML = '';
+
+            let players = Object.values(competitors);
+            players.push({ id: myId, name: profile.name + " (You)", score: score, isMe: true });
+
+            // Sort by score
+            players.sort((a, b) => b.score - a.score);
+
+            players.forEach((p, index) => {
+                const item = document.createElement('div');
+                item.className = `rank-item ${p.isMe ? 'me' : ''}`;
+                item.innerHTML = `
+                    <div class="rank-num">#${index + 1}</div>
+                    <div class="rank-info">
+                        <span class="rank-name">${p.name}</span>
+                        <span class="rank-score">${p.score} Battle Points</span>
+                    </div>
+                    ${index === 0 ? '<i class="ri-vip-crown-fill" style="color:var(--accent)"></i>' : ''}
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function renderBattleTasks(query = "") {
+            const list = document.getElementById('battleTaskList');
+            list.innerHTML = '';
+            
+            const activeTasks = tasks.filter(t => 
+                !t.completed && 
+                t.text.toLowerCase().includes(query.toLowerCase())
+            ).slice(0, 10);
+
+            if (activeTasks.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No active quests to complete!</p>';
+                return;
+            }
+
+            activeTasks.forEach(task => {
+                const div = document.createElement('div');
+                div.className = 'task-item';
+                div.innerHTML = `
+                    <input type="checkbox" onclick="completeBattleTask(this, ${task.id})">
+                    <span>${task.text}</span>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        window.completeBattleTask = (el, id) => {
+            if (!battleActive) return;
+            
+            el.parentElement.classList.add('done');
+            el.disabled = true;
+            
+            score += 100; // Big bonus for completing a task during battle
+            updateMyScore();
+            
+            // Sync with main storage (optional, but good for progression)
+            const mainTasks = JSON.parse(localStorage.getItem('quests') || '[]');
+            const taskIdx = mainTasks.findIndex(t => t.id === id);
+            if (taskIdx !== -1) {
+                mainTasks[taskIdx].completed = true;
+                localStorage.setItem('quests', JSON.stringify(mainTasks));
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,12 +1,24 @@
 /* ===== GLOBAL STATE ===== */
-let globalScore = 0;
-let globalStreak = 0;
+const _S = window.TaskQuestStorage;
+let globalScore = _S ? _S.getCoins() : 0;
+if (isNaN(globalScore)) globalScore = 0;
+let globalStreak = _S ? _S.getStreak() : 0;
+
 function addScore(n){
   globalScore += n;
   globalStreak++;
   document.getElementById('global-score').textContent = globalScore;
   document.getElementById('global-streak').textContent = globalStreak;
+  if (_S) {
+    _S.setCoins(globalScore);
+    _S.setStreak(globalStreak);
+  }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('global-score').textContent = globalScore;
+  document.getElementById('global-streak').textContent = globalStreak;
+});
 function openGame(id){
   document.getElementById('overlay-'+id).classList.remove('hidden');
   document.body.style.overflow='hidden';
@@ -232,6 +244,7 @@ function skipWord(){
   wordIdx++;
   setTimeout(showWord,1200);
 }
+"use strict";
 document.addEventListener('DOMContentLoaded',()=>{
   const wi=document.getElementById('word-input');
   if(wi)wi.addEventListener('keydown',e=>{if(e.key==='Enter')checkWord();});

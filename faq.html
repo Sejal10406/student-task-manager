@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FAQ - Study Task Tracker</title>
+  <title>Frequently Asked Questions • TaskQuest</title>
+  <meta name="description" content="Find answers to common questions about features, gamification, sync, and storage." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -34,12 +35,11 @@
     .faq-answer {
       max-height: 0;
       overflow: hidden;
-      transition: max-height 0.3s ease-out;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
       color: var(--text-muted);
       padding-right: 2rem;
     }
     .faq-item.active .faq-answer {
-      max-height: 200px;
       padding-top: 1rem;
     }
     .faq-icon {
@@ -51,6 +51,7 @@
   </style>
 </head>
 <body class="legal-page">
+<main>
   <!-- BACKGROUND -->
   <div class="bg blur1"></div>
   <div class="bg blur2"></div>
@@ -88,41 +89,41 @@
   <main class="container">
     <div class="faq-accordion">
       <div class="faq-item">
-        <button class="faq-question">
+        <button class="faq-question" aria-expanded="false" aria-controls="faq-ans-2">
           <span>How is my data saved?</span>
           <span class="faq-icon">▼</span>
         </button>
-        <div class="faq-answer">
+        <div class="faq-answer" id="faq-ans-2" role="region">
           <p>We use your browser's Local Storage to save tasks. This means your data stays on your machine and is never uploaded to any server.</p>
         </div>
       </div>
 
       <div class="faq-item">
-        <button class="faq-question">
+        <button class="faq-question" aria-expanded="false" aria-controls="faq-ans-3">
           <span>Will I lose my tasks if I close the tab?</span>
           <span class="faq-icon">▼</span>
         </button>
-        <div class="faq-answer">
+        <div class="faq-answer" id="faq-ans-3" role="region">
           <p>No! Local Storage persists even after you close the browser or restart your computer. However, clearing browser history/cache might delete them.</p>
         </div>
       </div>
 
       <div class="faq-item">
-        <button class="faq-question">
+        <button class="faq-question" aria-expanded="false" aria-controls="faq-ans-4">
           <span>Is there a mobile app?</span>
           <span class="faq-icon">▼</span>
         </button>
-        <div class="faq-answer">
+        <div class="faq-answer" id="faq-ans-4" role="region">
           <p>This is a web-based tool, but it is fully responsive and works perfectly on mobile browsers. You can even "Add to Home Screen" for an app-like experience.</p>
         </div>
       </div>
 
       <div class="faq-item">
-        <button class="faq-question">
+        <button class="faq-question" aria-expanded="false" aria-controls="faq-ans-1">
           <span>Can I sync my tasks across devices?</span>
           <span class="faq-icon">▼</span>
         </button>
-        <div class="faq-answer">
+        <div class="faq-answer" id="faq-ans-1" role="region">
           <p>Currently, no. Since we value privacy and don't require accounts, tasks are specific to the device and browser where they were created.</p>
         </div>
       </div>
@@ -133,9 +134,10 @@
     <p>&copy; 2026 Study Task Tracker. Simple. Private. Fast.</p>
   </footer>
 
+  <script src="storage.js"></script>
   <script>
     const themeSwitcher = document.getElementById("themeSwitcher");
-    const savedTheme = localStorage.getItem("quests_theme") || "cosmic";
+    const savedTheme = (window.TaskQuestStorage ? window.TaskQuestStorage.getTheme() : localStorage.getItem("taskquest_v1.theme")) || "cosmic";
     document.body.setAttribute("data-theme", savedTheme);
     if (savedTheme === "sunset") document.body.classList.add("light");
     themeSwitcher.value = savedTheme;
@@ -144,16 +146,30 @@
       const theme = e.target.value;
       document.body.setAttribute("data-theme", theme);
       if (theme === "sunset") document.body.classList.add("light"); else document.body.classList.remove("light");
-      localStorage.setItem("quests_theme", theme);
+      if (window.TaskQuestStorage) { window.TaskQuestStorage.setTheme(theme); } else { localStorage.setItem("taskquest_v1.theme", theme); }
     });
 
-    // Accordion Logic
+    // Accordion Logic with ScrollHeight and ARIA updates
     document.querySelectorAll('.faq-question').forEach(button => {
       button.addEventListener('click', () => {
         const item = button.parentElement;
+        const answer = button.nextElementSibling;
+        const isExpanded = button.getAttribute('aria-expanded') === 'true';
+        
         item.classList.toggle('active');
+        button.setAttribute('aria-expanded', !isExpanded);
+        
+        if (!isExpanded) {
+          answer.style.maxHeight = answer.scrollHeight + "px";
+        } else {
+          answer.style.maxHeight = "0";
+        }
       });
     });
   </script>
 </body>
 </html>
+
+<div class="support-section">
+  <p>Still have questions? <a href="mailto:support@example.com">Contact Support</a></p>
+</div>

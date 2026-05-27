@@ -103,6 +103,7 @@ input[type=range].vol{width:72px;accent-color:var(--accent)}
 </style>
 </head>
 <body>
+<main>
 
 <div class="hub">
 
@@ -407,6 +408,11 @@ function stopAudio() {
   oscillators.forEach(({osc,lfo})=>{try{osc.stop();}catch(e){}try{if(lfo)lfo.stop();}catch(e){}});
   oscillators=[];
   if(gainNode){try{gainNode.disconnect();}catch(e){}gainNode=null;}
+  // Suspend the AudioContext to release the audio hardware thread and
+  // stop background processing — fixes the memory/battery leak (#377).
+  if(audioCtx && audioCtx.state==='running'){
+    audioCtx.suspend().catch(e=>console.warn('AudioContext suspend failed:',e));
+  }
 }
 
 function togglePlay() {
@@ -569,6 +575,22 @@ function rotateQuote() {
   },500);
 }
 setInterval(rotateQuote,8000);
+
+// Suspend/resume audio when the tab is hidden/shown to save battery (#377).
+document.addEventListener('visibilitychange',()=>{
+  if(!audioCtx) return;
+  if(document.hidden){
+    if(audioCtx.state==='running') audioCtx.suspend().catch(()=>{});
+  } else {
+    if(isPlaying && audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
+  }
+});
+
+// Close the AudioContext entirely when the page is unloaded to prevent
+// zombie contexts from persisting in the browser's audio engine (#377).
+window.addEventListener('beforeunload',()=>{
+  if(audioCtx) audioCtx.close().catch(()=>{});
+});
 
 window.addEventListener('load',()=>{
   drawAmbient();
