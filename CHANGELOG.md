@@ -4,6 +4,14 @@ All notable changes to **TaskQuest (formerly Student Task Manager)** will be doc
 
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) conventions.
 
+### Conventional Tags
+- `Added` for new features.
+- `Changed` for changes in existing functionality.
+- `Deprecated` for soon-to-be removed features.
+- `Removed` for now removed features.
+- `Fixed` for any bug fixes.
+- `Security` in case of vulnerability patches.
+
 ---
 
 ## [Unreleased]
