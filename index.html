@@ -284,8 +284,7 @@
                   id="taskInput"
                   placeholder="Enter your next task..."
                 />
-                <label for="dependsSelect" style="display:none">Depends on (optional)</label>
-                <select id="dependsSelect" aria-label="Depends on (optional)" multiple size="1" style="min-width: 160px;">
+                <select id="dependsSelect" aria-label="Depends on (optional)">
                   <option value="">No prerequisite</option>
                 </select>
               </div>
@@ -2090,24 +2089,8 @@
     }
 
     function saveEntries(entries) {
-      var success = true;
-      if (window.TaskQuestStorage) {
-        success = window.TaskQuestStorage.setTimetable(entries);
-      } else {
-        try {
-          localStorage.setItem('taskquest_v1.timetable', JSON.stringify(entries));
-        } catch (e) {
-          success = false;
-        }
-      }
-      if (!success) {
-        if (window.showToast) {
-          window.showToast("Storage full. Please clear space in the Vault.", "error");
-        } else {
-          alert("Storage full. Please clear space in the Vault.");
-        }
-      }
-      return success;
+      if (window.TaskQuestStorage) { window.TaskQuestStorage.setTimetable(entries); }
+      else { localStorage.setItem('taskquest_v1.timetable', JSON.stringify(entries)); }
     }
 
     function render() {
@@ -2149,12 +2132,11 @@
       if (start >= end) { alert('End time must be after start time.'); return; }
       var entries = loadEntries();
       entries.push({ id: Date.now(), day: day, subject: subject, start: start, end: end });
-      if (saveEntries(entries)) {
-        document.getElementById('ttSubjectInput').value = '';
-        document.getElementById('ttStartTimeInput').value = '';
-        document.getElementById('ttEndTimeInput').value = '';
-        render();
-      }
+      saveEntries(entries);
+      document.getElementById('ttSubjectInput').value = '';
+      document.getElementById('ttStartTimeInput').value = '';
+      document.getElementById('ttEndTimeInput').value = '';
+      render();
     }
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -2171,5 +2153,4 @@
 </body>
 </html>
 
-<!-- Back to top button placeholder -->
-<div id="backToTop" class="hidden"></div>
+<style> html { scroll-behavior: smooth; } </style>
