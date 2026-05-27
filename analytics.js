@@ -125,7 +125,7 @@
   function getChartColors() {
     const primary = getComputedStyle(document.documentElement).getPropertyValue("--primary").trim() || "#a855f7";
     const secondary = getComputedStyle(document.documentElement).getPropertyValue("--secondary").trim() || "#06b6d4";
-    const text = getComputedStyle(document.documentElement).getPropertyValue("--text").trim() || "#e2e8f0";
+    const text = getComputedStyle(document.documentElement).getPropertyValue("--text-color").trim() || getComputedStyle(document.documentElement).getPropertyValue("--text").trim() || "#e2e8f0";
     return { primary, secondary, text };
   }
 
