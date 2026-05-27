@@ -217,6 +217,7 @@ if (statusSelect) {
       if (userStatusEl) {
         userStatusEl.textContent = statusSelect.options[statusSelect.selectedIndex].text;
       }
+      console.log('[Collab] Status changed to:', statusSelect.value);
       announcePresence('status_change');
   });
 }
