@@ -393,3 +393,10 @@ function handleTyping(){
     addScore(wpm>=40?15:10);
   }
 }
+const saveGameState = (gameId, state) => {
+  try {
+    localStorage.setItem(`gameState_${gameId}`, JSON.stringify(state));
+  } catch (e) {
+    console.warn('Could not save game state');
+  }
+};

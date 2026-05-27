@@ -120,5 +120,5 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full contribution guide includi
 
 This project is open-source and available under the [MIT License](./License.md).
 
-## Architecture Overview
-This project is structured around a modular HTML/CSS/JS frontend.
+## Community
+Join our community and help us build a better task manager for students.

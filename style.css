@@ -7693,12 +7693,7 @@ body.light .drag-handle:hover {
   gap: 8px;
 }
 
-/* Accessibility: Focus-visible states */
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid var(--secondary, #06b6d4);
-  outline-offset: 3px;
+:root {
+  --primary-color-new: #007bff;
+  --transition-speed: 0.3s;
 }

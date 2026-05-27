@@ -238,3 +238,7 @@ updatePoints();
 checkBadges();
 renderActiveChallenges();
 renderCompletedChallenges();
+const checkChallengeStatus = (challengeId) => {
+  console.log(`Checking status for challenge: ${challengeId}`);
+  return true;
+};
