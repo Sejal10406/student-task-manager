@@ -546,6 +546,16 @@ function loadData() {
         } else {
           task.tags = parseTags(task.tags.join(", "));
         }
+        // Normalize recurrence fields
+        if (!task.recurrence) task.recurrence = null;
+        if (!task.masterId && task.recurrence) {
+          // create a lightweight masterId if missing for compatibility
+          task.masterId = `rt-${task.id}`;
+          // ensure template exists
+          if (!recurringTemplates.find(t => t.id === task.masterId)) {
+            recurringTemplates.push({ id: task.masterId, text: task.text, category: task.category, priority: task.priority, recurrence: task.recurrence, active: true, startDate: task.createdAt || new Date().toISOString() });
+          }
+        }
       });
     } catch (e) {
       tasks = [];
@@ -1534,6 +1544,39 @@ function createTaskEl(task) {
       if (e) triggerCoinExplosion(e);
       showTaskPopup(`QUEST CONQUERED! Gained +${coinReward} Coins & +${xpReward} XP 🏆`);
       try { playSound('complete'); } catch (err) {}
+      // If this task is part of a recurring schedule, generate the next occurrence
+      try {
+        const recurrenceType = task.recurrence || (task.masterId && (recurringTemplates.find(t => t.id === task.masterId) || {}).recurrence);
+        const masterId = task.masterId;
+        if (recurrenceType && recurrenceType !== 'none') {
+          // compute next deadline based on current task deadline or createdAt
+          const base = task.deadline ? new Date(task.deadline) : new Date();
+          const next = computeNextDeadline(recurrenceType, base);
+          if (next) {
+            const nextTask = {
+              id: Date.now() + Math.floor(Math.random() * 1000),
+              text: task.text,
+              category: task.category,
+              priority: task.priority,
+              completed: false,
+              createdAt: getFormattedDateTime(new Date()),
+              deadline: next.toISOString().slice(0,16),
+              penaltyApplied: false,
+              tags: Array.isArray(task.tags) ? task.tags.slice() : (typeof task.tags === 'string' ? parseTags(task.tags) : []),
+              recurrence: recurrenceType,
+              masterId: masterId || null
+            };
+            // ensure template exists
+            if (masterId && !recurringTemplates.find(t => t.id === masterId)) {
+              recurringTemplates.push({ id: masterId, text: task.text, category: task.category, priority: task.priority, recurrence: recurrenceType, active: true, startDate: task.createdAt || new Date().toISOString() });
+            }
+            tasks.push(nextTask);
+            if (window && window.showToast) window.showToast(`Next recurring task scheduled (${recurrenceType})`, 'success');
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to schedule next recurring task', err);
+      }
     } else {
       coins = Math.max(0, coins - 10);
       streak = Math.max(0, streak - 1);
@@ -1632,6 +1675,30 @@ function createTaskEl(task) {
   setupTouchDrag(div, task);
 
   return div;
+}
+
+// Compute next deadline Date for recurrence types
+function computeNextDeadline(type, fromDate) {
+  if (!fromDate || !(fromDate instanceof Date)) return null;
+  const d = new Date(fromDate.getTime());
+  if (type === 'daily') {
+    d.setDate(d.getDate() + 1);
+    return d;
+  }
+  if (type === 'weekly') {
+    d.setDate(d.getDate() + 7);
+    return d;
+  }
+  if (type === 'monthly') {
+    const day = d.getDate();
+    d.setMonth(d.getMonth() + 1);
+    // handle month rollover (e.g., Jan 31 -> Feb 28)
+    if (d.getDate() !== day) {
+      d.setDate(0); // go to last day of previous month
+    }
+    return d;
+  }
+  return null;
 }
 
 let touchDraggedEl = null;
