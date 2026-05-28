@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,6 +27,30 @@
       align-items: center;
       gap: 0.5rem;
     }
+    .data-manager-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    #clearDataBtn {
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      align-self: flex-start;
+      transition: background 0.2s;
+    }
+    #clearDataBtn:hover {
+      background: #dc2626;
+    }
   </style>
 </head>
 <body class="legal-page">
@@ -43,26 +67,22 @@
       <div class="header-brand">
         <h1>🔒 Privacy Policy</h1>
         <p class="header-subtitle">
-          <span id="headerGreeting">👋 Focus Time!</span>
+          <span>👋 Your Data, Your Control</span>
         </p>
-        <section style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 2rem;">
-        <h2><i class="ri-delete-bin-line"></i> 5. Manage Your Data</h2>
-        <p>TaskQuest data resides strictly on your browser. You can inspect the storage size or reset the application data below.</p>
-        <div class="data-manager-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span>Estimated storage usage:</span>
-            <strong id="storageSize">Calculating...</strong>
-          </div>
-          <button id="clearDataBtn" style="background: #ef4444; color: #fff; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; align-self: flex-start; transition: background 0.2s;">
-            <i class="ri-alert-line"></i> Reset All Application Data
-          </button>
-        </div>
-      </section>
-    </div>
+      </div>
       <div class="header-controls">
         <div class="stats-pill">
           <span class="stats-pill-label">Status</span>
           <span class="stats-pill-value">🔒 Secure</span>
+        </div>
+        <div class="theme-pill">
+          <span class="theme-pill-label">Theme</span>
+          <select id="themeSwitcher" class="theme-dropdown" aria-label="Switch Theme">
+            <option value="cosmic">🌌 Cosmic</option>
+            <option value="aurora">🍃 Aurora</option>
+            <option value="cyberpunk">🌸 Cyberpunk</option>
+            <option value="sunset">🌅 Sunset</option>
+          </select>
         </div>
       </div>
     </div>
@@ -89,6 +109,20 @@
         <h2><i class="ri-lock-2-line"></i> 4. Data Security</h2>
         <p>Your data is as secure as your browser and device. Clearing your browser cache or site data will remove your progress permanently unless you use the Export feature.</p>
       </section>
+
+      <section style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 2rem;">
+        <h2><i class="ri-delete-bin-line"></i> 5. Manage Your Data</h2>
+        <p>TaskQuest data resides strictly on your browser. You can inspect the storage size or reset the application data below.</p>
+        <div class="data-manager-card">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Estimated storage usage:</span>
+            <strong id="storageSize">Calculating...</strong>
+          </div>
+          <button id="clearDataBtn">
+            <i class="ri-alert-line"></i> Reset All Application Data
+          </button>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -97,6 +131,43 @@
   </footer>
 
   <script>
+    function applyTheme(theme) {
+      document.body.setAttribute("data-theme", theme);
+      if (theme === "sunset") {
+        document.body.classList.add("light");
+      } else {
+        document.body.classList.remove("light");
+      }
+    }
+
+    function getStoredTheme() {
+      if (window.TaskQuestStorage && typeof window.TaskQuestStorage.getTheme === 'function') {
+        return window.TaskQuestStorage.getTheme();
+      }
+      return localStorage.getItem("taskquest_v1.theme") || "cosmic";
+    }
+
+    function setStoredTheme(theme) {
+      if (window.TaskQuestStorage && typeof window.TaskQuestStorage.setTheme === 'function') {
+        window.TaskQuestStorage.setTheme(theme);
+      } else {
+        localStorage.setItem("taskquest_v1.theme", theme);
+      }
+    }
+
+    const themeSwitcher = document.getElementById("themeSwitcher");
+    const savedTheme = getStoredTheme();
+    applyTheme(savedTheme);
+    if (themeSwitcher) themeSwitcher.value = savedTheme;
+
+    if (themeSwitcher) {
+      themeSwitcher.addEventListener("change", (e) => {
+        const theme = e.target.value;
+        applyTheme(theme);
+        setStoredTheme(theme);
+      });
+    }
+
     function updateStorageSize() {
       let total = 0;
       for (let x in localStorage) {
@@ -105,17 +176,21 @@
         }
       }
       const kb = (total / 1024).toFixed(2);
-      document.getElementById("storageSize").textContent = kb + " KB";
+      const storageSizeEl = document.getElementById("storageSize");
+      if (storageSizeEl) storageSizeEl.textContent = kb + " KB";
     }
     updateStorageSize();
 
-    document.getElementById("clearDataBtn").addEventListener("click", () => {
-      if (confirm("Are you absolutely sure you want to delete all your tasks, coins, XP, and stats? This cannot be undone.")) {
-        localStorage.clear();
-        alert("All application data has been successfully reset.");
-        window.location.href = "index.html";
-      }
-    });
+    const clearDataBtn = document.getElementById("clearDataBtn");
+    if (clearDataBtn) {
+      clearDataBtn.addEventListener("click", () => {
+        if (confirm("Are you absolutely sure you want to delete all your tasks, coins, XP, and stats? This cannot be undone.")) {
+          localStorage.clear();
+          alert("All application data has been successfully reset.");
+          window.location.href = "index.html";
+        }
+      });
+    }
   </script>
 </body>
 </html>

@@ -84,6 +84,43 @@
 
   <script src="storage.js"></script>
   <script>
+    function applyTheme(theme) {
+      document.body.setAttribute("data-theme", theme);
+      if (theme === "sunset") {
+        document.body.classList.add("light");
+      } else {
+        document.body.classList.remove("light");
+      }
+    }
+
+    function getStoredTheme() {
+      if (window.TaskQuestStorage && typeof window.TaskQuestStorage.getTheme === 'function') {
+        return window.TaskQuestStorage.getTheme();
+      }
+      return localStorage.getItem("taskquest_v1.theme") || "cosmic";
+    }
+
+    function setStoredTheme(theme) {
+      if (window.TaskQuestStorage && typeof window.TaskQuestStorage.setTheme === 'function') {
+        window.TaskQuestStorage.setTheme(theme);
+      } else {
+        localStorage.setItem("taskquest_v1.theme", theme);
+      }
+    }
+
+    const themeSwitcher = document.getElementById("themeSwitcher");
+    const savedTheme = getStoredTheme();
+    applyTheme(savedTheme);
+    if (themeSwitcher) themeSwitcher.value = savedTheme;
+
+    if (themeSwitcher) {
+      themeSwitcher.addEventListener("change", (e) => {
+        const theme = e.target.value;
+        applyTheme(theme);
+        setStoredTheme(theme);
+      });
+    }
+
     const docSearch = document.getElementById("docSearch");
     if (docSearch) {
       docSearch.addEventListener("input", (e) => {
@@ -98,24 +135,6 @@
         });
       });
     }
-
-    const themeSwitcher = document.getElementById("themeSwitcher");
-    const savedTheme = (window.TaskQuestStorage ? window.TaskQuestStorage.getTheme() : localStorage.getItem("taskquest_v1.theme")) || "cosmic";
-    document.body.setAttribute("data-theme", savedTheme);
-    if (savedTheme === "sunset") document.body.classList.add("light");
-    themeSwitcher.value = savedTheme;
-
-    themeSwitcher.addEventListener("change", (e) => {
-      const theme = e.target.value;
-      document.body.setAttribute("data-theme", theme);
-      if (theme === "sunset") document.body.classList.add("light"); else document.body.classList.remove("light");
-      if (window.TaskQuestStorage) { window.TaskQuestStorage.setTheme(theme); } else { localStorage.setItem("taskquest_v1.theme", theme); }
-    });
   </script>
 </body>
 </html>
-
-<section id="api-reference">
-  <h2>API Reference</h2>
-  <p>API documentation will be available in future releases.</p>
-</section>
