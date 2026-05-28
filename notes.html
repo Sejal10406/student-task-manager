@@ -149,11 +149,11 @@
                 <i class="ri-search-line"></i>
                 <input type="text" id="noteSearch" placeholder="Search revision material..." oninput="renderNotes()">
             </div>
-            <div class="filters">
-                <button class="filter-btn active" onclick="setFilter('All', this)">All</button>
-                <button class="filter-btn" onclick="setFilter('Formula', this)">Formulas</button>
-                <button class="filter-btn" onclick="setFilter('Summary', this)">Summaries</button>
-                <button class="filter-btn" onclick="setFilter('Important', this)">Important</button>
+            <div class="filters" role="group" aria-label="Filter revision notes">
+                <button class="filter-btn active" onclick="setFilter('All', this)" aria-pressed="true">All</button>
+                <button class="filter-btn" onclick="setFilter('Formula', this)" aria-pressed="false">Formulas</button>
+                <button class="filter-btn" onclick="setFilter('Summary', this)" aria-pressed="false">Summaries</button>
+                <button class="filter-btn" onclick="setFilter('Important', this)" aria-pressed="false">Important</button>
             </div>
         </div>
 
@@ -218,8 +218,12 @@
 
         function setFilter(cat, btn) {
             currentFilter = cat;
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-pressed', 'false');
+            });
             btn.classList.add('active');
+            btn.setAttribute('aria-pressed', 'true');
             renderNotes();
         }
 
