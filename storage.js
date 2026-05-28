@@ -81,6 +81,13 @@
       return true;
     } catch (e) {
       console.warn("[TaskQuest Storage] Failed to write key:", key, e);
+      if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+        console.error("[TaskQuest Storage] LocalStorage quota exceeded!");
+        // Try clearing older non-critical keys to make room if possible
+        try {
+          localStorage.removeItem("taskquest_v1.collab");
+        } catch (err) {}
+      }
       return false;
     }
   }

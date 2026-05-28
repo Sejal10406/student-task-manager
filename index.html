@@ -27,6 +27,7 @@
 </head>
 
 <body>
+  <a href="#quests-tab" class="skip-to-content" style="position: absolute; top: -100px; left: 10px; background: var(--primary); color: #fff; padding: 8px 16px; border-radius: 4px; z-index: 10000; transition: top 0.2s;" onfocus="this.style.top='10px'" onblur="this.style.top='-100px'">Skip to content</a>
 
   <!-- GLOBAL HEADER -->
   <header class="site-header" style="position: sticky; top: 0; z-index: 1000; padding: 12px 0; border-bottom: 1px solid var(--border); background: rgba(15, 12, 38, 0.6); backdrop-filter: blur(15px);">
@@ -36,6 +37,7 @@
         <h1 style="font-size: 18px; margin: 0; font-family: 'Poppins', sans-serif;">TaskQuest</h1>
       </a>
       <nav class="header-nav" style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <a href="notes.html" class="view-btn small" style="text-decoration: none;"><i class="ri-sticky-note-line"></i> Revision Notes</a>
         <a href="Challenge.html" class="view-btn small" style="text-decoration: none;"><i class="ri-trophy-line"></i> Challenges</a>
         <a href="leaderboard.html" class="view-btn small" style="text-decoration: none;"><i class="ri-medal-line"></i> Leaderboard</a>
         <a href="reflection.html" class="view-btn small" style="text-decoration: none;"><i class="ri-focus-3-line"></i> Reflection</a>
@@ -311,14 +313,7 @@
                 aria-label="Task tags"
               />
               <datalist id="taskTagSuggestionsList"></datalist>
-              <input
-                type="text"
-                id="taskTagsInput"
-                placeholder="Tags (comma separated)"
-                list="taskTagSuggestionsList"
-                aria-label="Task tags"
-              />
-              <datalist id="taskTagSuggestionsList"></datalist>
+             
               <div class="deadline-input-wrapper" style="position: relative; display: inline-flex; align-items: center;">
                 <i class="ri-calendar-event-line" style="position: absolute; left: 10px; color: var(--text-muted); pointer-events: none;"></i>
                 <input
@@ -379,6 +374,9 @@
                 <i class="ri-sort-asc"></i> A-Z
               </button>
 
+              <button class="smart-sort-btn filter-btn" id="smartSortBtn" title="Sort by AI priority score">
+                Smart Sort
+              </button>
               <button class="filter-btn" id="openPriorityTableBtn" title="Open Priority Table">
                 <i class="ri-list-check-2"></i> Priority Table
               </button>
@@ -390,6 +388,7 @@
 
             <!-- DEADLINE ALERTS -->
             <div class="deadline-alerts" id="deadlineAlerts"></div>
+            <div class="smart-suggestion-banner" id="smartSuggestionBanner"></div>
 
             <!-- TASKS -->
             <div class="task-list-wrapper">
@@ -2076,6 +2075,8 @@
   <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
   <script src="storage.js"></script>
+  <script src="analytics.js"></script>
+  <script src="prioritization.js"></script>
   <script src="script.js"></script>
   <script src="toast.js"></script>
   <script src="collaborative.js"></script>
@@ -2153,3 +2154,6 @@
   </button>
 </body>
 </html>
+</html>
+
+<style> html { scroll-behavior: smooth; } </style>

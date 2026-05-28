@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes & Quick Revision • TaskQuest</title>
+    <meta name="description" content="Store short notes, formulas, summaries, and important revision material for quick learning." />
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Poppins:wght@600;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060814;
+            --card: rgba(15, 12, 38, 0.45);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #a855f7;
+            --secondary: #06b6d4;
+            --text: #ffffff;
+            --text-light: #94a3b8;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+            --radius: 24px;
+        }
+
+        [data-theme="sunset"] {
+            --bg: #fffcf8;
+            --card: rgba(255, 255, 255, 0.75);
+            --border: rgba(0, 0, 0, 0.07);
+            --text: #1e293b;
+            --text-light: #64748b;
+            --primary: #f59e0b;
+            --secondary: #f43f5e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 40px 20px;
+            background-image: radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.05) 0%, var(--bg) 100%);
+        }
+
+        .container { width: 100%; max-width: 1000px; margin: 0 auto; }
+
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; flex-wrap: wrap; gap: 20px; }
+        header h1 { font-family: 'Poppins', sans-serif; font-size: 2.2rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .glass-card { background: var(--card); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: var(--radius); padding: 30px; margin-bottom: 30px; }
+
+        .note-form { display: grid; grid-template-columns: 1fr 1fr 150px auto; gap: 15px; align-items: end; }
+        @media (max-width: 768px) { .note-form { grid-template-columns: 1fr; } }
+
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        .input-group label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-light); }
+
+        input, select, textarea { background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); padding: 12px 16px; border-radius: 12px; color: var(--text); font-size: 14px; outline: none; transition: all 0.3s; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); background: rgba(255, 255, 255, 0.08); }
+        textarea { height: 45px; resize: vertical; }
+
+        .btn { border: none; border-radius: 12px; cursor: pointer; font-weight: 700; padding: 12px 20px; transition: all 0.3s; display: flex; align-items: center; gap: 8px; justify-content: center; text-decoration: none; font-family: 'Poppins', sans-serif; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(168, 85, 247, 0.4); }
+
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 20px; flex-wrap: wrap; }
+        .search-bar { position: relative; flex: 1; max-width: 400px; }
+        .search-bar i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-bar input { padding-left: 40px; width: 100%; }
+
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+        .filter-btn { padding: 8px 16px; border-radius: 20px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); color: var(--text-light); cursor: pointer; font-size: 13px; transition: 0.2s; }
+        .filter-btn:hover { background: rgba(255, 255, 255, 0.1); }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .note-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 24px; transition: all 0.3s; position: relative; display: flex; flex-direction: column; }
+        .note-card:hover { transform: translateY(-5px); border-color: var(--primary); background: rgba(255,255,255,0.02); }
+
+        .note-tag { font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; margin-bottom: 12px; display: inline-block; align-self: flex-start; }
+        .tag-formula { background: rgba(6, 182, 212, 0.15); color: var(--secondary); border: 1px solid rgba(6, 182, 212, 0.2); }
+        .tag-summary { background: rgba(168, 85, 247, 0.15); color: var(--primary); border: 1px solid rgba(168, 85, 247, 0.2); }
+        .tag-note { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.2); }
+        .tag-important { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+
+        .note-title { font-family: 'Poppins', sans-serif; font-size: 1.15rem; font-weight: 700; margin-bottom: 10px; color: var(--text); }
+        .note-content { font-size: 14px; color: var(--text-light); line-height: 1.6; white-space: pre-wrap; flex: 1; }
+
+        .note-actions { margin-top: 15px; display: flex; justify-content: flex-end; gap: 12px; opacity: 0; transition: opacity 0.2s; }
+        .note-card:hover .note-actions { opacity: 1; }
+        .action-btn { background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 1.1rem; transition: 0.2s; }
+        .action-btn:hover { color: var(--text); }
+        .action-btn.delete:hover { color: var(--danger); }
+
+        .revision-overlay { position: fixed; inset: 0; background: rgba(6, 8, 20, 0.95); backdrop-filter: blur(15px); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .revision-card { background: var(--card); border: 2px solid var(--primary); border-radius: 30px; padding: 40px; max-width: 700px; width: 100%; text-align: center; position: relative; box-shadow: 0 0 50px rgba(168, 85, 247, 0.2); animation: cardPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes cardPop { from { transform: scale(0.8); opacity: 0; } }
+
+        .revision-title { font-family: 'Poppins', sans-serif; font-size: 2.2rem; margin-bottom: 20px; color: var(--primary); font-weight: 800; }
+        .revision-content { font-size: 1.3rem; line-height: 1.7; color: var(--text); }
+        .revision-nav { display: flex; gap: 20px; margin-top: 40px; width: 100%; max-width: 400px; }
+        .btn-rev { flex: 1; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border); padding: 15px; border-radius: 15px; font-size: 1.1rem; cursor: pointer; transition: 0.3s; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-rev:hover { background: var(--primary); transform: translateY(-2px); }
+
+        .close-rev { position: absolute; top: 30px; right: 30px; font-size: 2.5rem; color: var(--text-light); cursor: pointer; transition: 0.3s; }
+        .close-rev:hover { color: var(--danger); transform: rotate(90deg); }
+
+        .empty-state { text-align: center; padding: 80px 20px; color: var(--text-light); grid-column: 1 / -1; }
+        .empty-state i { font-size: 4rem; display: block; margin-bottom: 20px; opacity: 0.3; }
+
+        .revision-progress { margin-top: 20px; color: var(--text-light); font-family: 'Poppins'; font-weight: 600; }
+    </style>
+</head>
+<body data-theme="cosmic">
+    <div class="container">
+        <header>
+            <a href="index.html" class="btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text);"><i class="ri-home-4-line"></i> Dashboard</a>
+            <h1>Quick Revision</h1>
+            <button class="btn btn-primary" onclick="startRevision()"><i class="ri-flashlight-line"></i> Start Revision Session</button>
+        </header>
+
+        <div class="glass-card">
+            <div class="note-form">
+                <div class="input-group">
+                    <label for="noteTitle">Topic / Title</label>
+                    <input type="text" id="noteTitle" placeholder="e.g. Euler's Identity">
+                </div>
+                <div class="input-group">
+                    <label for="noteContent">Key Material</label>
+                    <textarea id="noteContent" placeholder="Formulas, summaries, or key points..."></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="noteCategory">Category</label>
+                    <select id="noteCategory">
+                        <option value="Formula">Formula ➗</option>
+                        <option value="Summary">Summary 📝</option>
+                        <option value="Note">Note 📌</option>
+                        <option value="Important">Important ⚠️</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="addNote()"><i class="ri-add-box-line"></i> Store Note</button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="search-bar">
+                <i class="ri-search-line"></i>
+                <input type="text" id="noteSearch" placeholder="Search revision material..." oninput="renderNotes()">
+            </div>
+            <div class="filters">
+                <button class="filter-btn active" onclick="setFilter('All', this)">All</button>
+                <button class="filter-btn" onclick="setFilter('Formula', this)">Formulas</button>
+                <button class="filter-btn" onclick="setFilter('Summary', this)">Summaries</button>
+                <button class="filter-btn" onclick="setFilter('Important', this)">Important</button>
+            </div>
+        </div>
+
+        <div class="notes-grid" id="notesGrid"></div>
+    </div>
+
+    <div class="revision-overlay" id="revisionOverlay">
+        <i class="ri-close-line close-rev" onclick="stopRevision()" title="Close revision"></i>
+        <div class="revision-card">
+            <div class="note-tag" id="revTag"></div>
+            <h2 class="revision-title" id="revTitle">Title</h2>
+            <div class="revision-content" id="revContent">Content</div>
+        </div>
+        <div class="revision-progress" id="revProgress">1 / 10</div>
+        <div class="revision-nav">
+            <button class="btn-rev" onclick="prevNote()"><i class="ri-arrow-left-s-line"></i> Previous</button>
+            <button class="btn-rev" onclick="nextNote()">Next <i class="ri-arrow-right-s-line"></i></button>
+        </div>
+    </div>
+
+    <script>
+        let notes = JSON.parse(localStorage.getItem('taskquest_v1.notes') || '[]');
+        let currentFilter = 'All';
+
+        function addNote() {
+            const title = document.getElementById('noteTitle').value.trim();
+            const content = document.getElementById('noteContent').value.trim();
+            const category = document.getElementById('noteCategory').value;
+
+            if (!title || !content) {
+                alert('Please provide a title and content for your revision material.');
+                return;
+            }
+
+            const note = {
+                id: Date.now(),
+                title,
+                content,
+                category,
+                timestamp: new Date().toISOString()
+            };
+
+            notes.unshift(note);
+            saveNotes();
+            
+            document.getElementById('noteTitle').value = '';
+            document.getElementById('noteContent').value = '';
+            
+            renderNotes();
+        }
+
+        function saveNotes() {
+            localStorage.setItem('taskquest_v1.notes', JSON.stringify(notes));
+        }
+
+        function deleteNote(id) {
+            if (!confirm('Are you sure you want to delete this revision material?')) return;
+            notes = notes.filter(n => n.id !== id);
+            saveNotes();
+            renderNotes();
+        }
+
+        function setFilter(cat, btn) {
+            currentFilter = cat;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderNotes();
+        }
+
+        function renderNotes() {
+            const grid = document.getElementById('notesGrid');
+            const search = document.getElementById('noteSearch').value.toLowerCase();
+            
+            const filtered = notes.filter(n => {
+                const matchesSearch = n.title.toLowerCase().includes(search) || n.content.toLowerCase().includes(search);
+                const matchesFilter = currentFilter === 'All' || n.category === currentFilter;
+                return matchesSearch && matchesFilter;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="ri-sticky-note-2-line"></i>
+                        <p>No revision material found. Add formulas or summaries to start your knowledge base!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(n => `
+                <div class="note-card">
+                    <span class="note-tag tag-${n.category.toLowerCase()}">${n.category}</span>
+                    <h3 class="note-title">${n.title}</h3>
+                    <p class="note-content">${n.content}</p>
+                    <div class="note-actions">
+                        <button class="action-btn delete" onclick="deleteNote(${n.id})" title="Delete note"><i class="ri-delete-bin-line"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        let revIndex = 0;
+        function startRevision() {
+            if (notes.length === 0) {
+                alert('Add some revision notes first!');
+                return;
+            }
+            revIndex = 0;
+            document.getElementById('revisionOverlay').style.display = 'flex';
+            updateRevCard();
+        }
+
+        function stopRevision() {
+            document.getElementById('revisionOverlay').style.display = 'none';
+        }
+
+        function updateRevCard() {
+            const n = notes[revIndex];
+            document.getElementById('revTag').textContent = n.category;
+            document.getElementById('revTag').className = `note-tag tag-${n.category.toLowerCase()}`;
+            document.getElementById('revTitle').textContent = n.title;
+            document.getElementById('revContent').textContent = n.content;
+            document.getElementById('revProgress').textContent = `${revIndex + 1} / ${notes.length}`;
+        }
+
+        function nextNote() {
+            revIndex = (revIndex + 1) % notes.length;
+            updateRevCard();
+        }
+
+        function prevNote() {
+            revIndex = (revIndex - 1 + notes.length) % notes.length;
+            updateRevCard();
+        }
+
+        const savedTheme = localStorage.getItem('taskquest_v1.theme') || 'cosmic';
+        document.body.setAttribute('data-theme', savedTheme);
+
+        renderNotes();
+    </script>
+</body>
+</html>

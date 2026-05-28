@@ -32,10 +32,10 @@
   const TOAST_ANIMATION_MS = 300;
 
   const TOAST_TYPES = {
-    success: { icon: "✅", role: "status",  color: "#16a34a", bg: "#f0fdf4", border: "#86efac" },
-    error:   { icon: "❌", role: "alert",   color: "#dc2626", bg: "#fef2f2", border: "#fca5a5" },
-    warning: { icon: "⚠️", role: "alert",   color: "#d97706", bg: "#fffbeb", border: "#fcd34d" },
-    info:    { icon: "ℹ️", role: "status",  color: "#0369a1", bg: "#f0f9ff", border: "#7dd3fc" },
+    success: { icon: '<i class="ri-checkbox-circle-fill"></i>', role: "status",  color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.2)" },
+    error:   { icon: '<i class="ri-close-circle-fill"></i>', role: "alert",   color: "#ef4444", bg: "rgba(239, 68, 68, 0.1)", border: "rgba(239, 68, 68, 0.2)" },
+    warning: { icon: '<i class="ri-error-warning-fill"></i>', role: "alert",   color: "#f59e0b", bg: "rgba(245, 158, 11, 0.1)", border: "rgba(245, 158, 11, 0.2)" },
+    info:    { icon: '<i class="ri-information-fill"></i>', role: "status",  color: "#3b82f6", bg: "rgba(59, 130, 246, 0.1)", border: "rgba(59, 130, 246, 0.2)" },
   };
 
   // ── Style Injection ───────────────────────────────────────────────────────
@@ -164,7 +164,7 @@
     `;
 
     toast.innerHTML = `
-      <span class="toast-icon" aria-hidden="true">${config.icon}</span>
+      <span class="toast-icon" aria-hidden="true" style="display: flex; align-items: center; font-size: 1.2rem;">${config.icon}</span>
       <span class="toast-body">${escapeHTML(message)}</span>
       <button class="toast-close" aria-label="Dismiss notification" title="Dismiss">✕</button>
     `;

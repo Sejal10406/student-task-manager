@@ -4,9 +4,9 @@
 (function () {
   "use strict";
 
-  const QUESTS_KEY = "quests";
-  const TASKS_KEY = "tasks";
-  const STREAK_KEY = "streak";
+  // Storage keys — read from the canonical taskquest_v1 namespace via
+  // window.TaskQuestStorage (storage.js). The legacy "quests" / "tasks" /
+  // "streak" constants are intentionally removed; use the API accessors below.
   const HEATMAP_WEEKS = 15;
   const CATEGORIES = ["Theory", "Practical", "Assignment", "Revision", "General"];
 
@@ -54,24 +54,14 @@
   function loadQuests() {
     let list = [];
     try {
-      const questsRaw = localStorage.getItem(QUESTS_KEY);
-      if (questsRaw) {
-        const parsed = JSON.parse(questsRaw);
-        if (Array.isArray(parsed)) list = parsed;
+      // Use the unified storage API so we always read from the canonical
+      // taskquest_v1.tasks key regardless of any legacy migration state.
+      if (window.TaskQuestStorage && typeof window.TaskQuestStorage.getTasks === "function") {
+        const stored = window.TaskQuestStorage.getTasks();
+        if (Array.isArray(stored)) list = stored;
       }
     } catch (e) {
       list = [];
-    }
-    if (list.length === 0) {
-      try {
-        const tasksRaw = localStorage.getItem(TASKS_KEY);
-        if (tasksRaw) {
-          const parsed = JSON.parse(tasksRaw);
-          if (Array.isArray(parsed)) list = parsed;
-        }
-      } catch (e) {
-        list = [];
-      }
     }
     return list.map(normalizeQuest);
   }
@@ -103,7 +93,12 @@
   }
 
   function calcStreak(quests) {
-    const stored = parseInt(localStorage.getItem(STREAK_KEY), 10);
+    // Read streak from the canonical storage API instead of the legacy "streak" key.
+    const storedStreak =
+      window.TaskQuestStorage && typeof window.TaskQuestStorage.getStreak === "function"
+        ? window.TaskQuestStorage.getStreak()
+        : 0;
+    const stored = parseInt(storedStreak, 10);
     if (!Number.isNaN(stored) && stored > 0) return stored;
     const days = new Set(
       quests
@@ -620,7 +615,13 @@
       el.addEventListener("click", () => setTimeout(refreshAnalytics, 50));
     });
     window.addEventListener("storage", (e) => {
-      if (e.key === QUESTS_KEY || e.key === TASKS_KEY || e.key === STREAK_KEY) refreshAnalytics();
+      // Listen for changes on the canonical versioned keys produced by storage.js.
+      if (
+        e.key === "taskquest_v1.tasks" ||
+        e.key === "taskquest_v1.streak"
+      ) {
+        refreshAnalytics();
+      }
     });
   }
 
@@ -634,3 +635,11 @@
   window.refreshAnalytics = refreshAnalytics;
   window.loadQuests = loadQuests;
 })();
+
+const logEventSafely = (eventName, eventData) => {
+  try {
+    console.log(`[Analytics] ${eventName}:`, eventData);
+  } catch (error) {
+    console.error('Failed to log analytics event');
+  }
+};

@@ -50,3 +50,6 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) co
 | ❌ Removed | Features removed |
 | 🔒 Security | Security patches |
 | ⚠️ Deprecated | Features marked for removal |
+
+## Versioning Strategy
+This project adheres to [Semantic Versioning](https://semver.org/).

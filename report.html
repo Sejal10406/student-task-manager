@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Performance Report • TaskQuest</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Poppins:wght@600;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #060814;
+            --card: rgba(15, 12, 38, 0.45);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #a855f7;
+            --secondary: #06b6d4;
+            --text: #ffffff;
+            --text-light: #94a3b8;
+            --success: #22c55e;
+            --radius: 24px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 40px 20px;
+            background-image: radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.05) 0%, var(--bg) 100%);
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 30px; }
+        .glass-card { background: var(--card); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: var(--radius); padding: 30px; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+        header h1 { font-family: 'Poppins', sans-serif; font-size: 2rem; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .report-date { color: var(--text-light); font-size: 14px; }
+
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .metric-item { text-align: center; padding: 20px; border-radius: 20px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); }
+        .metric-item h3 { font-size: 12px; text-transform: uppercase; color: var(--text-light); letter-spacing: 1px; margin-bottom: 10px; }
+        .metric-item .value { font-size: 32px; font-weight: 800; color: var(--primary); }
+
+        .section-title { font-family: 'Poppins', sans-serif; font-size: 1.2rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .section-title i { color: var(--secondary); }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; padding: 12px; color: var(--text-light); font-size: 13px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        td { padding: 15px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 14px; }
+        .percentage-pill { padding: 4px 10px; border-radius: 20px; font-weight: 700; font-size: 12px; }
+        .high { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+        .low { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+        .charts-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 25px; }
+        .chart-container { height: 300px; width: 100%; }
+
+        .btn-print { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+        .btn-print:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(168, 85, 247, 0.4); }
+
+        @media print {
+            body { background: white; color: black; }
+            .btn-print { display: none; }
+            .glass-card { background: white; border: 1px solid #ddd; box-shadow: none; color: black; }
+            header h1 { -webkit-text-fill-color: black; }
+        }
+        @media (max-width: 800px) { .charts-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1 id="userName">Academic Report</h1>
+                <p class="report-date" id="reportDate"></p>
+            </div>
+            <button class="btn-print" onclick="window.print()"><i class="ri-printer-line"></i> Print Report</button>
+        </header>
+
+        <div class="metrics-grid">
+            <div class="glass-card metric-item">
+                <h3>Study Time</h3>
+                <div class="value" id="totalStudyHours">0h</div>
+            </div>
+            <div class="glass-card metric-item">
+                <h3>Avg. Score</h3>
+                <div class="value" id="avgScore">0%</div>
+            </div>
+            <div class="glass-card metric-item">
+                <h3>Quests Finished</h3>
+                <div class="value" id="completedQuests">0</div>
+            </div>
+            <div class="glass-card metric-item">
+                <h3>Active Streak</h3>
+                <div class="value" id="currentStreak">0d</div>
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <div class="glass-card">
+                <h2 class="section-title"><i class="ri-line-chart-line"></i> Study Consistency</h2>
+                <div class="chart-container">
+                    <canvas id="studyConsistencyChart"></canvas>
+                </div>
+            </div>
+            <div class="glass-card">
+                <h2 class="section-title"><i class="ri-pie-chart-line"></i> Task Distribution</h2>
+                <div class="chart-container">
+                    <canvas id="taskDistChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <h2 class="section-title"><i class="ri-medal-line"></i> Subject Performance</h2>
+            <table id="performanceTable">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Obtained</th>
+                        <th>Total</th>
+                        <th>Percentage</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load Data from LocalStorage
+            const analytics = JSON.parse(localStorage.getItem('quests_analytics') || '{}');
+            const performance = JSON.parse(localStorage.getItem('quests_performance') || '[]');
+            const tasks = JSON.parse(localStorage.getItem('quests') || '[]');
+            const profile = JSON.parse(localStorage.getItem('quests_profile') || '{"name": "Scholar"}');
+
+            // Setup Header
+            document.getElementById('userName').textContent = `${profile.name}'s Academic Report`;
+            document.getElementById('reportDate').textContent = `Generated on ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
+
+            // Calculate Metrics
+            const studyMins = Object.values(analytics.dailyStudyMinutes || {}).reduce((a, b) => a + b, 0);
+            document.getElementById('totalStudyHours').textContent = `${(studyMins / 60).toFixed(1)}h`;
+            
+            const compQuests = tasks.filter(t => t.completed).length;
+            document.getElementById('completedQuests').textContent = compQuests;
+            document.getElementById('currentStreak').textContent = `${analytics.currentStreak || 0}d`;
+
+            if (performance.length > 0) {
+                const avg = performance.reduce((acc, curr) => acc + curr.percentage, 0) / performance.length;
+                document.getElementById('avgScore').textContent = `${avg.toFixed(1)}%`;
+            }
+
+            // Render Performance Table
+            const tbody = document.querySelector('#performanceTable tbody');
+            if (performance.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-light);">No subject data available.</td></tr>';
+            } else {
+                performance.forEach(p => {
+                    const status = p.percentage >= 45 ? 'On Track' : 'Needs Focus';
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td style="font-weight:600;">${p.name}</td>
+                        <td>${p.obtained}</td>
+                        <td>${p.total}</td>
+                        <td><span class="percentage-pill ${p.percentage >= 75 ? 'high' : (p.percentage < 45 ? 'low' : '')}">${p.percentage.toFixed(1)}%</span></td>
+                        <td style="color: ${p.percentage >= 45 ? 'var(--success)' : '#ef4444'}; font-weight:600;">${status}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            // Chart 1: Study Consistency (Last 7 Days)
+            const ctxLine = document.getElementById('studyConsistencyChart').getContext('2d');
+            const last7Days = [...Array(7)].map((_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                return d.toISOString().split('T')[0];
+            }).reverse();
+
+            const studyData = last7Days.map(date => analytics.dailyStudyMinutes?.[date] || 0);
+
+            new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: last7Days.map(d => new Date(d).toLocaleDateString(undefined, {weekday: 'short'})),
+                    datasets: [{
+                        label: 'Study Minutes',
+                        data: studyData,
+                        borderColor: '#a855f7',
+                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, border: { display: false } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // Chart 2: Task Distribution
+            const ctxPie = document.getElementById('taskDistChart').getContext('2d');
+            const cats = analytics.categoryStats || {};
+            const catLabels = Object.keys(cats);
+            const catData = Object.values(cats).map(c => c.completed || 0);
+
+            new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: catLabels,
+                    datasets: [{
+                        data: catData,
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#a855f7'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#94a3b8', padding: 20, font: { family: 'Inter', size: 11 } }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
