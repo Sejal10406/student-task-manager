@@ -98,9 +98,22 @@
   function getCurrentPlayerData() {
     try {
       const profile = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null");
-      const tasks = JSON.parse(localStorage.getItem(TASKS_KEY) || "[]");
+
+      // Read tasks from the unified key first (post-#358 migration), then
+      // fall back to the legacy key. Without this, syncMyStats always reads
+      // completedTasks as 0 on the leaderboard page if the main app has
+      // already migrated its data to taskquest_v1.tasks.
+      const tasksRaw = localStorage.getItem("taskquest_v1.tasks")
+        || localStorage.getItem(TASKS_KEY)
+        || "[]";
+      const tasks = JSON.parse(tasksRaw);
       const completedTasks = Array.isArray(tasks) ? tasks.filter(task => task.completed).length : 0;
 
+      const coins  = parseInt(localStorage.getItem(COINS_KEY),  10) || 0;
+      const streak = parseInt(localStorage.getItem(STREAK_KEY), 10) || 0;
+      const xp     = parseInt(localStorage.getItem(XP_KEY),     10) || 0;
+      const name   = profile?.name || "You";
+      const score  = coins + completedTasks * 30 + streak * 20 + Math.floor(xp / 10);
       // parseInt(null, 10) returns NaN — the || 0 guard does NOT catch it
       // because NaN is falsy but the || short-circuit only fires for falsy
       // values produced by the overall expression, not NaN from parseInt.
@@ -195,14 +208,30 @@
 
   function syncMyStats() {
     const entries = loadLeaderboard();
-    const currentPlayer = getCurrentPlayerData();
+    const liveData = getCurrentPlayerData();
     const existingIndex = entries.findIndex(entry => entry.id === "me");
 
     if (existingIndex >= 0) {
-      entries[existingIndex] = currentPlayer;
+      const existing = entries[existingIndex];
+      // Merge live-computed fields onto the existing entry rather than
+      // replacing it wholesale. This preserves any score that was manually
+      // set via addOrUpdatePlayer and prevents syncMyStats from zeroing out
+      // the user's completedTasks count when the tasks key has not yet been
+      // migrated to the unified namespace on the leaderboard page.
+      // Only update a field if the live value is strictly greater than the
+      // stored value, so a sync never reduces a player's standing.
+      entries[existingIndex] = {
+        ...existing,
+        name: liveData.name,
+        score: Math.max(existing.score, liveData.score),
+        completedTasks: Math.max(existing.completedTasks, liveData.completedTasks),
+        streak: Math.max(existing.streak, liveData.streak),
+        lastUpdated: currentTimestamp()
+      };
     } else {
-      entries.push(currentPlayer);
+      entries.push(liveData);
     }
+
     saveLeaderboard(entries);
     renderLeaderboard();
   }
