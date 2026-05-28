@@ -372,6 +372,13 @@ let currentView = "list";
 let smartSortEnabled = false; 
 let performanceData = [];
 let timetable = [];
+
+// Flashcards state
+let flashcards = [];
+let flashcardOrder = [];
+let currentFlashIndex = 0;
+let flashShuffleEnabled = false;
+let flashSubjectFilter = "All";
 let calendarEvents = [];
 let subjects = [];
 let currentCalendarDate = new Date();
@@ -2949,6 +2956,9 @@ tabBtns.forEach(btn => {
     if (btn.dataset.tab === "subject-tracker") {
       renderSubjectTracker();
     }
+    if (btn.dataset.tab === "flashcards") {
+      renderFlashcardView();
+    }
 
     // Re-render assignments on tab activation
     if (btn.dataset.tab === "assignments") {
@@ -3419,6 +3429,7 @@ function updateAnalyticsDashboard() {
   initTimetableNotifier();
   initCalendarNotifier();
   initDeadlineUpdater();
+  initFlashcards();
 
   const addTaskBtnEl = document.getElementById("addTaskBtn");
   if (addTaskBtnEl) {
@@ -4358,6 +4369,228 @@ function renderTasks() {
   if (typeof renderTagFilters === "function") renderTagFilters();
   if (typeof updateStats === "function") updateStats();
   try { if (typeof renderDependsSelect === "function") renderDependsSelect(); } catch (e) {}
+}
+
+// ==========================
+// Flashcards Study Mode
+// ==========================
+function loadFlashcards() {
+  try {
+    if (window.TaskQuestStorage && window.TaskQuestStorage.getFlashcards) {
+      flashcards = window.TaskQuestStorage.getFlashcards();
+    } else {
+      flashcards = JSON.parse(localStorage.getItem("taskquest_v1.flashcards") || "[]");
+    }
+  } catch (e) {
+    flashcards = [];
+  }
+  if (!Array.isArray(flashcards)) flashcards = [];
+}
+
+function saveFlashcards() {
+  try {
+    if (window.TaskQuestStorage && window.TaskQuestStorage.setFlashcards) {
+      window.TaskQuestStorage.setFlashcards(flashcards);
+    } else {
+      localStorage.setItem("taskquest_v1.flashcards", JSON.stringify(flashcards));
+    }
+  } catch (e) {
+    console.warn("[TaskQuest] Failed to persist flashcards.", e);
+  }
+}
+
+function getActiveFlashcards() {
+  if (flashSubjectFilter === "All") return flashcards;
+  return flashcards.filter(card => card.subject === flashSubjectFilter);
+}
+
+function rebuildFlashcardOrder() {
+  const active = getActiveFlashcards();
+  flashcardOrder = active.map(card => card.id);
+  if (flashShuffleEnabled) {
+    for (let i = flashcardOrder.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [flashcardOrder[i], flashcardOrder[j]] = [flashcardOrder[j], flashcardOrder[i]];
+    }
+  }
+  currentFlashIndex = 0;
+}
+
+function getCurrentFlashcard() {
+  const active = getActiveFlashcards();
+  if (active.length === 0) return null;
+  const id = flashcardOrder[currentFlashIndex] || active[0].id;
+  return active.find(card => card.id === id) || active[0];
+}
+
+function renderFlashcardSubjects() {
+  const select = document.getElementById("flashSubjectFilter");
+  if (!select) return;
+  const subjects = Array.from(new Set(flashcards.map(card => card.subject))).sort();
+  const options = ['All', ...subjects];
+  select.innerHTML = options.map(sub => `<option value="${escapeHtml(sub)}">${escapeHtml(sub)}</option>`).join("");
+  select.value = flashSubjectFilter;
+}
+
+function updateFlashcardCounters() {
+  const active = getActiveFlashcards();
+  const learnedCount = active.filter(card => card.status === "learned").length;
+  const counterEl = document.getElementById("flashcardCounter");
+  const progressEl = document.getElementById("flashcardProgressText");
+  if (counterEl) {
+    const displayIndex = active.length ? currentFlashIndex + 1 : 0;
+    counterEl.textContent = `Card ${displayIndex} / ${active.length}`;
+  }
+  if (progressEl) {
+    progressEl.textContent = `${learnedCount} / ${active.length} learned`;
+  }
+}
+
+function renderFlashcardView() {
+  renderFlashcardSubjects();
+  rebuildFlashcardOrder();
+  updateFlashcardDisplay();
+}
+
+function updateFlashcardDisplay() {
+  const cardEl = document.getElementById("flashcardCard");
+  const qEl = document.getElementById("flashQuestionText");
+  const aEl = document.getElementById("flashAnswerText");
+  if (!cardEl || !qEl || !aEl) return;
+
+  cardEl.classList.remove("is-flipped");
+  const card = getCurrentFlashcard();
+  if (!card) {
+    qEl.textContent = "Add a flashcard to begin.";
+    aEl.textContent = "Your answer will appear here.";
+    updateFlashcardCounters();
+    return;
+  }
+
+  qEl.textContent = card.question;
+  aEl.textContent = card.answer;
+  updateFlashcardCounters();
+}
+
+function goToFlashcard(delta) {
+  const active = getActiveFlashcards();
+  if (active.length === 0) return;
+  currentFlashIndex = (currentFlashIndex + delta + active.length) % active.length;
+  updateFlashcardDisplay();
+}
+
+function toggleFlashcardFlip() {
+  const cardEl = document.getElementById("flashcardCard");
+  if (cardEl) cardEl.classList.toggle("is-flipped");
+}
+
+function updateFlashcardStatus(status) {
+  const card = getCurrentFlashcard();
+  if (!card) return;
+  card.status = status;
+  saveFlashcards();
+  updateFlashcardCounters();
+  goToFlashcard(1);
+}
+
+function initFlashcards() {
+  loadFlashcards();
+  renderFlashcardSubjects();
+  rebuildFlashcardOrder();
+  updateFlashcardDisplay();
+
+  const addBtn = document.getElementById("addFlashcardBtn");
+  const subjectInput = document.getElementById("flashSubjectInput");
+  const questionInput = document.getElementById("flashQuestionInput");
+  const answerInput = document.getElementById("flashAnswerInput");
+  const filterSelect = document.getElementById("flashSubjectFilter");
+  const shuffleBtn = document.getElementById("flashShuffleBtn");
+  const prevBtn = document.getElementById("flashPrevBtn");
+  const nextBtn = document.getElementById("flashNextBtn");
+  const flipBtn = document.getElementById("flashFlipBtn");
+  const learnedBtn = document.getElementById("flashLearnedBtn");
+  const reviewBtn = document.getElementById("flashReviewBtn");
+  const cardEl = document.getElementById("flashcardCard");
+
+  if (addBtn && subjectInput && questionInput && answerInput) {
+    addBtn.addEventListener("click", () => {
+      const subject = subjectInput.value.trim();
+      const question = questionInput.value.trim();
+      const answer = answerInput.value.trim();
+      if (!subject || !question || !answer) {
+        if (window.showToast) window.showToast("Please fill subject, question, and answer.", "warning");
+        return;
+      }
+      const card = {
+        id: `fc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        subject,
+        question,
+        answer,
+        status: "new",
+        createdAt: new Date().toISOString()
+      };
+      flashcards.push(card);
+      saveFlashcards();
+      subjectInput.value = "";
+      questionInput.value = "";
+      answerInput.value = "";
+      flashSubjectFilter = "All";
+      renderFlashcardView();
+      if (window.showToast) window.showToast("Flashcard added.", "success");
+    });
+  }
+
+  if (filterSelect) {
+    filterSelect.addEventListener("change", () => {
+      flashSubjectFilter = filterSelect.value || "All";
+      renderFlashcardView();
+    });
+  }
+
+  if (shuffleBtn) {
+    shuffleBtn.addEventListener("click", () => {
+      flashShuffleEnabled = !flashShuffleEnabled;
+      shuffleBtn.setAttribute("aria-pressed", flashShuffleEnabled ? "true" : "false");
+      shuffleBtn.classList.toggle("active", flashShuffleEnabled);
+      rebuildFlashcardOrder();
+      updateFlashcardDisplay();
+    });
+  }
+
+  prevBtn?.addEventListener("click", () => goToFlashcard(-1));
+  nextBtn?.addEventListener("click", () => goToFlashcard(1));
+  flipBtn?.addEventListener("click", toggleFlashcardFlip);
+  learnedBtn?.addEventListener("click", () => updateFlashcardStatus("learned"));
+  reviewBtn?.addEventListener("click", () => updateFlashcardStatus("review"));
+  cardEl?.addEventListener("click", toggleFlashcardFlip);
+
+  document.addEventListener("keydown", (e) => {
+    const activeTab = document.querySelector(".tab-content.active");
+    if (!activeTab || activeTab.id !== "flashcards-tab") return;
+    const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName || "");
+    if (isTyping) return;
+
+    if (e.key === " " || e.key === "Spacebar") {
+      e.preventDefault();
+      toggleFlashcardFlip();
+    } else if (e.key === "ArrowRight") {
+      goToFlashcard(1);
+    } else if (e.key === "ArrowLeft") {
+      goToFlashcard(-1);
+    } else if (e.key.toLowerCase() === "l") {
+      updateFlashcardStatus("learned");
+    } else if (e.key.toLowerCase() === "r") {
+      updateFlashcardStatus("review");
+    } else if (e.key.toLowerCase() === "s") {
+      flashShuffleEnabled = !flashShuffleEnabled;
+      if (shuffleBtn) {
+        shuffleBtn.setAttribute("aria-pressed", flashShuffleEnabled ? "true" : "false");
+        shuffleBtn.classList.toggle("active", flashShuffleEnabled);
+      }
+      rebuildFlashcardOrder();
+      updateFlashcardDisplay();
+    }
+  });
 }
 
 function updateStats() {
