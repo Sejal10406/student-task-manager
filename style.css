@@ -7693,6 +7693,214 @@ body.light .drag-handle:hover {
   gap: 8px;
 }
 
+/* Leaderboard specific styles */
+.leaderboard-list-header {
+  display: grid;
+  grid-template-columns: 72px 1fr 100px 80px 80px; /* Rank, Player, Score, Completed, Streak */
+  gap: 18px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+  color: var(--textLight);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: 72px 1fr 100px 80px 80px; /* Rank, Player, Score, Completed, Streak */
+  gap: 18px;
+  align-items: center;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: var(--transition);
+  animation: fadeIn 0.4s ease;
+}
+
+.leaderboard-row:hover {
+  transform: translateY(-2px);
+  border-color: rgba(139, 92, 246, 0.2);
+  background: rgba(139, 92, 246, 0.08);
+}
+
+.leaderboard-row.highlight-row {
+  border-color: var(--primary);
+  background: rgba(var(--primary-rgb), 0.15);
+  box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.2);
+}
+
+.row-rank {
+  font-family: 'Poppins', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.row-player {
+  min-width: 0;
+}
+
+.player-name {
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  display: flex;
+  align-items: center;
+}
+
+.player-subtitle {
+  color: var(--textLight);
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.row-score, .row-completed, .row-streak {
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--secondary);
+}
+
+.row-completed, .row-streak {
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Top 3 specific styling */
+.rank-1 { background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 170, 0, 0.05)) !important; border-color: #ffd700 !important; }
+.rank-2 { background: linear-gradient(135deg, rgba(192, 192, 192, 0.1), rgba(160, 160, 160, 0.05)) !important; border-color: #c0c0c0 !important; }
+.rank-3 { background: linear-gradient(135deg, rgba(205, 127, 50, 0.1), rgba(139, 69, 19, 0.05)) !important; border-color: #cd7f32 !important; }
+
+.rank-1 .row-rank { color: #ffd700; font-size: 24px; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+.rank-2 .row-rank { color: #c0c0c0; }
+.rank-3 .row-rank { color: #cd7f32; }
+
+.action-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.action-card:last-child {
+  margin-bottom: 0;
+}
+
+.action-card-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.stats-list {
+  display: grid;
+  gap: 14px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stat-item span {
+  color: var(--textLight);
+  font-size: 14px;
+}
+
+.stat-item strong {
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.primary-btn,
+.secondary-btn {
+  border-radius: 18px;
+  padding: 14px 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Responsive adjustments for leaderboard */
+@media (max-width: 980px) {
+  .leaderboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .leaderboard-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .leaderboard-list-header,
+  .leaderboard-row {
+    grid-template-columns: 1fr; /* Stack elements on small screens */
+    text-align: left;
+  }
+
+  .row-score, .row-completed, .row-streak {
+    text-align: left;
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .leaderboard-header h1 {
+    font-size: 32px;
+  }
+  .leaderboard-main {
+    padding: 24px;
+  }
+  .leaderboard-panel, .action-card {
+    padding: 20px;
+  }
+  .leaderboard-row {
+    padding: 14px 16px;
+  }
+  .row-rank {
+    font-size: 18px;
+  }
+  .player-name {
+    font-size: 16px;
+  }
+  .player-subtitle {
+    font-size: 12px;
+  }
+  .row-score, .row-completed, .row-streak {
+    font-size: 16px;
+  }
+  .action-card-title {
+    font-size: 18px;
+  }
+  .stat-item strong {
+    font-size: 16px;
+  }
+}
 :root {
   --primary-color-new: #007bff;
   --transition-speed: 0.3s;

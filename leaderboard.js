@@ -1,26 +1,15 @@
 "use strict";
 (function() {
-  const STORAGE_KEY = "taskquest_leaderboard_v1";
-  const PROFILE_KEY = "quests_profile";
-  const COINS_KEY = "coins";
-  const TASKS_KEY = "quests";
-  const STREAK_KEY = "streak";
-  const XP_KEY = "xp";
   // Maximum score any single player entry may hold in the leaderboard store.
-  // Prevents simulateScoreBoost from inflating scores without bound across
-  // repeated clicks, which permanently corrupts the persisted leaderboard
-  // and makes it diverge arbitrarily from real task-derived scores.
   const MAX_PLAYER_SCORE = 9999;
 
   // Rate-limit simulateScoreBoost: minimum milliseconds between invocations.
-  // Rapid successive clicks previously allowed unbounded inflation in a single
-  // session with no cooldown.
   const BOOST_COOLDOWN_MS = 3000;
   let _lastBoostAt = 0;
   // Use unified storage keys when available, fall back to legacy keys
   const _S = window.TaskQuestStorage;
   const STORAGE_KEY = _S ? _S.KEYS.LEADERBOARD    : "taskquest_leaderboard_v1";
-  const PROFILE_KEY = _S ? _S.KEYS.PROFILE         : "quests_profile";
+  const PROFILE_KEY = _S ? _S.KEYS.PROFILE         : "quests_profile"; // This is correct
   const COINS_KEY   = _S ? _S.KEYS.COINS            : "coins";
   const TASKS_KEY   = _S ? _S.KEYS.TASKS            : "quests";
   const STREAK_KEY  = _S ? _S.KEYS.STREAK           : "streak";
@@ -100,29 +89,17 @@
       const profile = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null");
 
       // Read tasks from the unified key first (post-#358 migration), then
-      // fall back to the legacy key. Without this, syncMyStats always reads
-      // completedTasks as 0 on the leaderboard page if the main app has
-      // already migrated its data to taskquest_v1.tasks.
-      const tasksRaw = localStorage.getItem("taskquest_v1.tasks")
+      const tasksRaw = (_S ? _S.getTasks() : null)
+        || localStorage.getItem("taskquest_v1.tasks")
         || localStorage.getItem(TASKS_KEY)
         || "[]";
-      const tasks = JSON.parse(tasksRaw);
+      
+      const tasks = typeof tasksRaw === 'string' ? JSON.parse(tasksRaw) : tasksRaw;
       const completedTasks = Array.isArray(tasks) ? tasks.filter(task => task.completed).length : 0;
 
-      const coins  = parseInt(localStorage.getItem(COINS_KEY),  10) || 0;
-      const streak = parseInt(localStorage.getItem(STREAK_KEY), 10) || 0;
-      const xp     = parseInt(localStorage.getItem(XP_KEY),     10) || 0;
-      const name   = profile?.name || "You";
-      const score  = coins + completedTasks * 30 + streak * 20 + Math.floor(xp / 10);
-      // parseInt(null, 10) returns NaN — the || 0 guard does NOT catch it
-      // because NaN is falsy but the || short-circuit only fires for falsy
-      // values produced by the overall expression, not NaN from parseInt.
-      // NaN propagates through the arithmetic and makes score === NaN,
-      // breaking the sort comparator and displaying "NaN" in the UI.
-      // Number() correctly coerces null, "null", undefined, and "" to 0.
-      const coins  = Math.max(0, Number(localStorage.getItem(COINS_KEY))  || 0);
-      const streak = Math.max(0, Number(localStorage.getItem(STREAK_KEY)) || 0);
-      const xp     = Math.max(0, Number(localStorage.getItem(XP_KEY))     || 0);
+      const coins = _S ? _S.getCoins() : (parseInt(localStorage.getItem(COINS_KEY), 10) || 0);
+      const streak = _S ? _S.getStreak() : (parseInt(localStorage.getItem(STREAK_KEY), 10) || 0);
+      const xp = _S ? _S.getXP() : (parseInt(localStorage.getItem(XP_KEY), 10) || 0);
 
       const name = profile?.name || "You";
       const rawScore = coins + completedTasks * 30 + streak * 20 + Math.floor(xp / 10);
@@ -153,20 +130,23 @@
 
   function buildRow(entry, rank, highlight) {
     const row = document.createElement("tr");
-    row.className = `leaderboard-row${highlight ? " highlight-row" : ""}`;
+    let rowClass = `leaderboard-row${highlight ? " highlight-row" : ""}`;
+    if (rank <= 3) rowClass += ` rank-${rank}`;
+    row.className = rowClass;
     const safeName  = escapeHtml(entry.name);
     const safeScore = Number.isFinite(entry.score) ? entry.score : 0;
     const safeTasks  = Number.isFinite(entry.completedTasks) ? entry.completedTasks : 0;
     const safeStreak = Number.isFinite(entry.streak) ? entry.streak : 0;
+    const crown = rank === 1 ? '<i class="ri-vip-crown-fill" style="margin-left:8px; color:#ffd700"></i>' : '';
     row.innerHTML = `
       <td class="row-rank">#${rank}</td>
       <td class="row-player">
-        <div class="player-name">${entry.name}</div>
-        <div class="player-subtitle">Score ${entry.score} • ${entry.completedTasks} tasks • ${entry.streak}-day streak</div>
+        <div class="player-name">${safeName}${crown}</div>
+        <div class="player-subtitle">Score ${safeScore} • ${safeTasks} tasks • ${safeStreak}-day streak</div>
       </td>
-      <td class="row-score">${entry.score}</td>
-      <td class="row-completed">${entry.completedTasks}</td>
-      <td class="row-streak">${entry.streak}</td>
+      <td class="row-score">${safeScore}</td>
+      <td class="row-completed">${safeTasks}</td>
+      <td class="row-streak">${safeStreak}</td>
     `;
     return row;
   }
@@ -186,7 +166,7 @@
     elements.leaderboardBody.innerHTML = "";
 
     sorted.forEach((entry, index) => {
-      const isCurrentUser = entry.id === "me";
+      const isCurrentUser = entry.id === "me" || (entry.name === currentUser.name && entry.score === currentUser.score); // More robust check
       elements.leaderboardBody.appendChild(buildRow(entry, index + 1, isCurrentUser));
     });
 
@@ -219,10 +199,10 @@
       // the user's completedTasks count when the tasks key has not yet been
       // migrated to the unified namespace on the leaderboard page.
       // Only update a field if the live value is strictly greater than the
-      // stored value, so a sync never reduces a player's standing.
+      // stored value, so a sync never reduces a player's standing. (Except name)
       entries[existingIndex] = {
         ...existing,
-        name: liveData.name,
+        name: liveData.name, // Name can always be updated
         score: Math.max(existing.score, liveData.score),
         completedTasks: Math.max(existing.completedTasks, liveData.completedTasks),
         streak: Math.max(existing.streak, liveData.streak),
@@ -244,11 +224,13 @@
     const streak = Number(elements.playerStreakInput.value) || 0;
 
     if (!name) {
-      alert("Please enter a player name.");
+      elements.playerNameInput.classList.add('input-invalid');
+      elements.playerNameInput.focus();
+      alert("Please enter a player name."); // Use alert for now, can integrate with toast later
       return;
     }
 
-    const entries = loadLeaderboard();
+    const entries = loadLeaderboard(); // Load current entries
     const normalizedName = name.toLowerCase().replace(/[^a-z0-9]+/gi, "-");
     const existing = entries.find(entry => entry.name.toLowerCase() === name.toLowerCase());
 
@@ -274,6 +256,7 @@
     elements.playerScoreInput.value = "";
     elements.playerCompletedInput.value = "";
     elements.playerStreakInput.value = "";
+    elements.playerStreakInput.value = ""; // Clear streak input too
   }
 
   function simulateScoreBoost() {
@@ -293,7 +276,7 @@
     // Clamp score to MAX_PLAYER_SCORE so repeated boosts cannot inflate
     // the persisted value beyond a defined ceiling.
     randomPlayer.score = Math.min(MAX_PLAYER_SCORE, randomPlayer.score + boost);
-    randomPlayer.completedTasks += Math.random() > 0.5 ? 1 : 0;
+    randomPlayer.completedTasks += Math.random() > 0.5 ? 1 : 0; // Small chance to increment tasks/streak
     randomPlayer.streak += Math.random() > 0.6 ? 1 : 0;
     randomPlayer.lastUpdated = currentTimestamp();
 
@@ -307,7 +290,7 @@
     elements.randomBoostBtn.addEventListener("click", simulateScoreBoost);
     elements.refreshBtn.addEventListener("click", renderLeaderboard);
 
-    window.addEventListener("storage", event => {
+    window.addEventListener("storage", event => { // Listen for changes in other tabs/windows
       if (event.key === STORAGE_KEY || event.key === PROFILE_KEY || event.key === COINS_KEY || event.key === TASKS_KEY || event.key === STREAK_KEY || event.key === XP_KEY) {
         renderLeaderboard();
       }
@@ -319,7 +302,7 @@
       createSampleData();
     }
 
-    renderLeaderboard();
+    renderLeaderboard(); // Initial render
     attachEvents();
     setInterval(renderLeaderboard, REFRESH_INTERVAL);
   }

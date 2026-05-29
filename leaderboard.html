@@ -4,14 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Global Leaderboard • TaskQuest</title>
-  <meta name="description" content="See where you rank among focus warriors and check daily study streaks." />
-
+  <meta name="description" content="Real-time TaskQuest leaderboard with live score updates and rankings." />
   <link rel="stylesheet" href="style.css" />
-
-  <meta
-    name="description"
-    content="Real-time TaskQuest leaderboard with live score updates and rankings."
-  />
 </head>
 
 <body>
@@ -26,12 +20,11 @@
       <!-- HEADER -->
       <header class="leaderboard-header">
         <div>
-          <a
-            class="back-link"
+          <a class="view-btn small"
             href="index.html"
             aria-label="Back to TaskQuest home page"
           >
-            ← Back to TaskQuest
+            <i class="ri-arrow-left-line"></i> Back to Dashboard
           </a>
 
           <h1>Real-Time Leaderboard</h1>
@@ -49,7 +42,7 @@
           <span class="status-chip" id="liveStatus">
             Live
           </span>
-
+          
           <span class="status-chip" id="lastUpdatedText">
             Updated just now
           </span>
@@ -63,43 +56,26 @@
         <section
           class="leaderboard-panel glass"
           aria-labelledby="leaderboardHeading"
-        >
+        > 
           <div class="panel-title">
             <div>
               <h2 id="leaderboardHeading">Top Players</h2>
 
-              <p>
+              <p class="panel-subtitle">
                 Sorted by score, completed tasks, and streak.
               </p>
             </div>
           </div>
 
-          <div class="leaderboard-table-wrapper">
-
-            <table
-              class="leaderboard-table"
-              id="leaderboardTable"
-              aria-label="Leaderboard table"
-            >
-              <thead>
-                <tr>
-                  <th scope="col">Rank</th>
-                  <th scope="col">Player</th>
-                  <th scope="col">Score</th>
-                  <th scope="col">Completed</th>
-                  <th scope="col">Streak</th>
-                </tr>
-              </thead>
-
-              <tbody id="leaderboardBody">
-                <tr class="empty-state">
-                  <td colspan="5">
-                    No leaderboard data available yet.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-
+          <div class="leaderboard-list-header">
+            <div class="header-rank">Rank</div>
+            <div class="header-player">Player</div>
+            <div class="header-score">Score</div>
+            <div class="header-completed">Completed</div>
+            <div class="header-streak">Streak</div>
+          </div>
+          <div class="leaderboard-list" id="leaderboardBody">
+            <!-- Leaderboard rows will be dynamically populated here -->
           </div>
         </section>
 
@@ -107,7 +83,7 @@
         <aside class="leaderboard-actions">
 
           <!-- YOUR RANK -->
-          <section class="action-card glass">
+          <section class="action-card glass" aria-labelledby="yourRankHeading">
             <h3>Your Rank</h3>
 
             <div class="stats-list">
@@ -137,16 +113,16 @@
             <button
               id="syncStatsBtn"
               class="primary-btn"
-              type="button"
+              type="button" 
               aria-label="Sync my TaskQuest stats"
             >
-              Sync My TaskQuest Stats
+              <i class="ri-refresh-line"></i> Sync My TaskQuest Stats
             </button>
           </section>
-
+          
           <!-- PLAYER FORM -->
           <section class="action-card glass">
-            <h3>Simulate Live Updates</h3>
+            <h3 class="action-card-title">Add / Update Player</h3>
 
             <form id="playerForm" novalidate>
 
@@ -208,17 +184,17 @@
                   id="addPlayerBtn"
                   class="primary-btn"
                   type="submit"
-                >
-                  Add / Update Player
+                > 
+                  <i class="ri-user-add-line"></i> Add / Update Player
                 </button>
 
               </fieldset>
             </form>
           </section>
-
+          
           <!-- LIVE SIMULATION -->
           <section class="action-card glass">
-            <h3>Live Simulation</h3>
+            <h3 class="action-card-title">Live Simulation</h3>
 
             <p>
               Click to simulate a new challenge and make the board move.
@@ -230,16 +206,16 @@
                 id="randomBoostBtn"
                 class="secondary-btn"
                 type="button"
-              >
-                Simulate Score Boost
+              > 
+                <i class="ri-arrow-up-circle-line"></i> Simulate Score Boost
               </button>
 
               <button
                 id="refreshBtn"
                 class="secondary-btn"
                 type="button"
-              >
-                Refresh Now
+              > 
+                <i class="ri-refresh-line"></i> Refresh Now
               </button>
 
             </div>
@@ -254,11 +230,3 @@
   <script src="leaderboard.js"></script>
 </body>
 </html>
-<style>
-.top-3 {
-  background: linear-gradient(135deg, #ffd700, #ffaa00);
-  color: #fff;
-  font-weight: 800;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-}
-</style>
