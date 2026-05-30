@@ -79,6 +79,30 @@ function getMyStats() {
 /* ═══════════════════════ BROADCAST CHANNEL ═══════════════════════ */
 const channel = new BroadcastChannel('taskquest_study_room');
 
+function broadcast(msg) {
+  try {
+    channel.postMessage(msg);
+  } catch (e) {
+    console.warn("Broadcast failed", e);
+  }
+}
+
+function announcePresence(action = 'pulse') {
+  const stats = getMyStats();
+  const statusSel = document.getElementById('statusSelect');
+  const status = statusSel ? statusSel.value : 'Studying';
+  broadcast({
+    type: 'presence',
+    tabId: TAB_ID,
+    user: myProfile.name,
+    level: stats.level,
+    xp: stats.xp,
+    streak: stats.streak,
+    status: status,
+    action: action
+  });
+}
+
 channel.onmessage = ({ data }) => {
   if (!data || !data.type) return;
   switch (data.type) {
@@ -560,7 +584,9 @@ document.addEventListener('DOMContentLoaded', () => {
   /* — Room status update — */
   const roomStatus = q('roomStatus');
   if (roomStatus) {
-    setTimeout(() => { roomStatus.textContent = 'Connected — messages sync across tabs'; }, 800);
+    setTimeout(() => {
+      roomStatus.innerHTML = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;margin-right:8px;box-shadow:0 0 8px #10b981;vertical-align:middle;margin-top:-2px;"></span>Connected — messages sync across tabs';
+    }, 800);
   }
 });
 
