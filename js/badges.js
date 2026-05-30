@@ -11,6 +11,15 @@
     { id: 'zero_overdue_week', title: 'Zero Overdue Week', icon: '🚀', desc: 'No missed days in the last 7 days.' },
   ];
 
+  const BADGE_LOOKUP = BADGES.reduce((acc, b) => {
+    acc[b.id] = b;
+    return acc;
+  }, {});
+
+  function getBadgeById(id) {
+    return BADGE_LOOKUP[id] || { id, title: 'Unknown Badge', icon: '❓', desc: 'No description available.' };
+  }
+
   function loadUnlocked() {
     try {
       return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
@@ -115,7 +124,7 @@
       // render and notify
       renderBadges(unlocked);
       changed.forEach(id => {
-        const b = BADGES.find(x=>x.id===id);
+        const b = getBadgeById(id);
         try { window.showToast(`Unlocked badge: ${b.title} ${b.icon}`, 'success'); } catch(e){}
       });
     } else {
