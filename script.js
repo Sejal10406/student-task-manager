@@ -4058,6 +4058,215 @@ function applySyllabusToTasks(syllabusTopics, defaultCategory = "Theory", defaul
   return { added: addedCount, skipped: skippedCount };
 }
 
+// ==========================================================================
+// MOBILE DRAWER FUNCTIONS - FIX FOR ISSUE #5
+// ==========================================================================
+
+function closeDrawer() {
+  const drawerOverlay = document.getElementById('drawerOverlay');
+  const quickDrawer = document.getElementById('quickDrawer');
+  
+  if (drawerOverlay) {
+    drawerOverlay.classList.remove('active');
+  }
+  if (quickDrawer) {
+    quickDrawer.classList.remove('active');
+  }
+  
+  if (drawerOverlay) {
+    drawerOverlay.style.display = '';
+  }
+  if (quickDrawer) {
+    quickDrawer.style.display = '';
+  }
+  
+  document.body.style.overflow = '';
+}
+
+function openDrawer() {
+  const drawerOverlay = document.getElementById('drawerOverlay');
+  const quickDrawer = document.getElementById('quickDrawer');
+  
+  if (drawerOverlay) {
+    drawerOverlay.classList.add('active');
+  }
+  if (quickDrawer) {
+    quickDrawer.classList.add('active');
+  }
+ 
+  document.body.style.overflow = 'hidden';
+  
+  const drawerTaskInput = document.getElementById('drawerTaskInput');
+  if (drawerTaskInput) {
+    setTimeout(() => {
+      drawerTaskInput.focus();
+    }, 100);
+  }
+}
+
+function initMobileDrawer() {
+  const mobileAddTaskBtn = document.getElementById('mobileAddTaskBtn');
+  if (mobileAddTaskBtn) {
+    const newBtn = mobileAddTaskBtn.cloneNode(true);
+    mobileAddTaskBtn.parentNode.replaceChild(newBtn, mobileAddTaskBtn);
+    
+    newBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openDrawer();
+    });
+  }
+  
+  const closeDrawerBtn = document.getElementById('closeDrawerBtn');
+  if (closeDrawerBtn) {
+    const newCloseBtn = closeDrawerBtn.cloneNode(true);
+    closeDrawerBtn.parentNode.replaceChild(newCloseBtn, closeDrawerBtn);
+    
+    newCloseBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeDrawer();
+    });
+  }
+  
+  const drawerOverlay = document.getElementById('drawerOverlay');
+  if (drawerOverlay) {
+    const newOverlay = drawerOverlay.cloneNode(true);
+    drawerOverlay.parentNode.replaceChild(newOverlay, drawerOverlay);
+    
+    newOverlay.addEventListener('click', (e) => {
+      if (e.target === newOverlay) {
+        closeDrawer();
+      }
+    });
+  }
+  
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const drawer = document.getElementById('quickDrawer');
+      if (drawer && drawer.classList.contains('active')) {
+        closeDrawer();
+      }
+    }
+  });
+  
+  const drawerAddTaskBtn = document.getElementById('drawerAddTaskBtn');
+  if (drawerAddTaskBtn) {
+    const newDrawerBtn = drawerAddTaskBtn.cloneNode(true);
+    drawerAddTaskBtn.parentNode.replaceChild(newDrawerBtn, drawerAddTaskBtn);
+    
+    newDrawerBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      const drawerTaskInput = document.getElementById('drawerTaskInput');
+      const drawerCategorySelect = document.getElementById('drawerCategorySelect');
+      const drawerPrioritySelect = document.getElementById('drawerPrioritySelect');
+      const drawerTagsInput = document.getElementById('drawerTagsInput');
+      const drawerDeadlineInput = document.getElementById('drawerDeadlineInput');
+      const drawerRecurrenceSelect = document.getElementById('drawerRecurrenceSelect');
+      
+      const text = drawerTaskInput ? drawerTaskInput.value.trim() : '';
+      let category = "Theory";
+      let priority = "Medium";
+      
+      if (drawerCategorySelect && drawerCategorySelect.value && drawerCategorySelect.value.trim() !== "") {
+        category = drawerCategorySelect.value;
+      }
+      
+      if (drawerPrioritySelect && drawerPrioritySelect.value && drawerPrioritySelect.value.trim() !== "") {
+        priority = drawerPrioritySelect.value;
+      }
+      
+      const tags = drawerTagsInput ? parseTags(drawerTagsInput.value) : [];
+      const deadline = drawerDeadlineInput ? drawerDeadlineInput.value : "";
+      const recurrence = drawerRecurrenceSelect ? (drawerRecurrenceSelect.value || 'none') : 'none';
+      
+      if (text === "") {
+        if (drawerTaskInput) {
+          drawerTaskInput.classList.add("input-invalid");
+          setTimeout(() => {
+            drawerTaskInput.classList.remove("input-invalid");
+          }, 400);
+        }
+        announce("Failed to add task. Please enter a task description.");
+        return;
+      }
+      
+      if (text.length > 200) {
+        if (window.showToast) window.showToast("Task description is too long (maximum 200 characters).", "warning");
+        return;
+      }
+      
+      const task = {
+        id: Date.now(),
+        text,
+        category,
+        priority,
+        completed: false,
+        createdAt: getFormattedDateTime(new Date()),
+        deadline: deadline || null,
+        penaltyApplied: false,
+        tags
+      };
+      
+      if (recurrence && recurrence !== 'none') {
+        task.recurrence = recurrence;
+        const template = {
+          id: `rt-${Date.now()}`,
+          text,
+          category,
+          priority,
+          recurrence,
+          active: true,
+          startDate: deadline || new Date().toISOString()
+        };
+        recurringTemplates.push(template);
+        task.masterId = template.id;
+      }
+      
+      tasks.push(task);
+      
+      if (drawerTaskInput) drawerTaskInput.value = "";
+      if (drawerTagsInput) drawerTagsInput.value = "";
+      if (drawerDeadlineInput) drawerDeadlineInput.value = "";
+      if (drawerRecurrenceSelect) drawerRecurrenceSelect.value = "none";
+      
+      storeRecentTags(tags);
+      
+      if (!analyticsData.categoryStats[category]) {
+        analyticsData.categoryStats[category] = { created: 0, completed: 0 };
+      }
+      analyticsData.categoryStats[category].created += 1;
+      
+      saveData();
+      renderTasks();
+      renderCalendar();
+      updateDeadlineAlerts();
+      
+      sendNotification("Quest Assigned", `COMPLETE ${text} TASK ASAP`);
+      showTaskPopup(`COMPLETE ${text.toUpperCase()} TASK ASAP`);
+      announce(`Task added: "${text}". Category: ${category}, Priority: ${priority}.`);
+      
+      closeDrawer();
+    });
+  }
+  
+  const drawerTaskInput = document.getElementById('drawerTaskInput');
+  if (drawerTaskInput) {
+    drawerTaskInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const drawerAddBtn = document.getElementById('drawerAddTaskBtn');
+        if (drawerAddBtn) {
+          drawerAddBtn.click();
+        }
+      }
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initMobileDrawer();
+});
+
 try {
   const _raw = window.TaskQuestStorage
     ? window.TaskQuestStorage.getTasks()
