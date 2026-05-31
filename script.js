@@ -4001,12 +4001,63 @@ if (addExamBtn) {
   });
 }
 
-// --- State Management ---
-// Guard against corrupt or malformed JSON in storage. A bare JSON.parse at
-// the top level throws a SyntaxError before any function is defined, leaving
-// `tasks` undefined and making the entire app non-functional until the user
-// manually clears localStorage. The try/catch recovers silently with an
-// empty array so the app always boots into a usable state.
+function applySyllabusToTasks(syllabusTopics, defaultCategory = "Theory", defaultPriority = "Medium") {
+  if (!syllabusTopics || !Array.isArray(syllabusTopics) || syllabusTopics.length === 0) {
+    console.warn("No syllabus topics provided for import");
+    return { added: 0, skipped: 0 };
+  }
+  
+  let addedCount = 0;
+  let skippedCount = 0;
+  
+  const existingTaskTexts = new Set();
+  tasks.forEach(task => {
+    if (task.text) {
+      existingTaskTexts.add(task.text.toLowerCase().trim());
+    }
+  });
+  
+  for (const topic of syllabusTopics) {
+    if (!topic || typeof topic !== 'string') continue;
+    
+    const topicText = topic.trim();
+    if (topicText === "") continue;
+    
+    if (existingTaskTexts.has(topicText.toLowerCase())) {
+      skippedCount++;
+      continue;
+    }
+    
+    const newTask = {
+      id: Date.now() + Math.floor(Math.random() * 1000) + addedCount,
+      text: topicText,
+      category: defaultCategory,
+      priority: defaultPriority,
+      completed: false,
+      createdAt: getFormattedDateTime(new Date()),
+      deadline: null,
+      penaltyApplied: false,
+      tags: ["syllabus", defaultCategory.toLowerCase()]
+    };
+    
+    tasks.push(newTask);
+    existingTaskTexts.add(topicText.toLowerCase());
+    addedCount++;
+  }
+  
+  if (addedCount > 0) {
+    saveData();
+    renderTasks();
+    showTaskPopup(`📚 Imported ${addedCount} syllabus ${addedCount === 1 ? 'topic' : 'topics'} as tasks! ${skippedCount > 0 ? `(${skippedCount} skipped - already exist)` : ''}`);
+    announce(`Imported ${addedCount} syllabus topics as tasks.`);
+  } else if (skippedCount > 0) {
+    showTaskPopup(`📋 All ${skippedCount} syllabus topics already exist in your task list.`);
+    announce(`No new syllabus topics to import. All ${skippedCount} topics already exist.`);
+  }
+  
+  return { added: addedCount, skipped: skippedCount };
+}
+
 try {
   const _raw = window.TaskQuestStorage
     ? window.TaskQuestStorage.getTasks()
