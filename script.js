@@ -1,4 +1,3 @@
-
 // Core Elements
 const taskInput = document.getElementById("taskInput");
 const addTaskBtn = document.getElementById("addTaskBtn");
@@ -1387,11 +1386,18 @@ document.getElementById("claimMilestoneBtn")?.addEventListener("click", (e) => {
 // ==========================================================================
 
 function addTask() {
-  const text = taskInput.value.trim();
-  const category = categorySelect.value;
-
+  let category = "Theory";
+  if (categorySelect && categorySelect.value && categorySelect.value.trim() !== "") {
+    category = categorySelect.value;
+  }
+  
+  let priority = "Medium";
   const prioritySelect = document.getElementById("prioritySelect");
-  const priority = prioritySelect ? prioritySelect.value : "Medium";
+  if (prioritySelect && prioritySelect.value && prioritySelect.value.trim() !== "") {
+    priority = prioritySelect.value;
+  }
+  
+  const text = taskInput.value.trim();
   const tags = parseTags(taskTagsInput ? taskTagsInput.value : "");
 
   const deadlineInput = document.getElementById("deadlineInput");
@@ -3995,12 +4001,272 @@ if (addExamBtn) {
   });
 }
 
-// --- State Management ---
-// Guard against corrupt or malformed JSON in storage. A bare JSON.parse at
-// the top level throws a SyntaxError before any function is defined, leaving
-// `tasks` undefined and making the entire app non-functional until the user
-// manually clears localStorage. The try/catch recovers silently with an
-// empty array so the app always boots into a usable state.
+function applySyllabusToTasks(syllabusTopics, defaultCategory = "Theory", defaultPriority = "Medium") {
+  if (!syllabusTopics || !Array.isArray(syllabusTopics) || syllabusTopics.length === 0) {
+    console.warn("No syllabus topics provided for import");
+    return { added: 0, skipped: 0 };
+  }
+  
+  let addedCount = 0;
+  let skippedCount = 0;
+  
+  const existingTaskTexts = new Set();
+  tasks.forEach(task => {
+    if (task.text) {
+      existingTaskTexts.add(task.text.toLowerCase().trim());
+    }
+  });
+  
+  for (const topic of syllabusTopics) {
+    if (!topic || typeof topic !== 'string') continue;
+    
+    const topicText = topic.trim();
+    if (topicText === "") continue;
+    
+    if (existingTaskTexts.has(topicText.toLowerCase())) {
+      skippedCount++;
+      continue;
+    }
+    
+    const newTask = {
+      id: Date.now() + Math.floor(Math.random() * 1000) + addedCount,
+      text: topicText,
+      category: defaultCategory,
+      priority: defaultPriority,
+      completed: false,
+      createdAt: getFormattedDateTime(new Date()),
+      deadline: null,
+      penaltyApplied: false,
+      tags: ["syllabus", defaultCategory.toLowerCase()]
+    };
+    
+    tasks.push(newTask);
+    existingTaskTexts.add(topicText.toLowerCase());
+    addedCount++;
+  }
+  
+  if (addedCount > 0) {
+    saveData();
+    renderTasks();
+    showTaskPopup(`📚 Imported ${addedCount} syllabus ${addedCount === 1 ? 'topic' : 'topics'} as tasks! ${skippedCount > 0 ? `(${skippedCount} skipped - already exist)` : ''}`);
+    announce(`Imported ${addedCount} syllabus topics as tasks.`);
+  } else if (skippedCount > 0) {
+    showTaskPopup(`📋 All ${skippedCount} syllabus topics already exist in your task list.`);
+    announce(`No new syllabus topics to import. All ${skippedCount} topics already exist.`);
+  }
+  
+  return { added: addedCount, skipped: skippedCount };
+}
+
+// ==========================================================================
+// MOBILE DRAWER FUNCTIONS - FIX FOR ISSUE #5
+// ==========================================================================
+
+function closeDrawer() {
+  const drawerOverlay = document.getElementById('drawerOverlay');
+  const quickDrawer = document.getElementById('quickDrawer');
+  
+  if (drawerOverlay) {
+    drawerOverlay.classList.remove('active');
+  }
+  if (quickDrawer) {
+    quickDrawer.classList.remove('active');
+  }
+  
+  if (drawerOverlay) {
+    drawerOverlay.style.display = '';
+  }
+  if (quickDrawer) {
+    quickDrawer.style.display = '';
+  }
+  
+  document.body.style.overflow = '';
+}
+
+function openDrawer() {
+  const drawerOverlay = document.getElementById('drawerOverlay');
+  const quickDrawer = document.getElementById('quickDrawer');
+  
+  if (drawerOverlay) {
+    drawerOverlay.classList.add('active');
+  }
+  if (quickDrawer) {
+    quickDrawer.classList.add('active');
+  }
+ 
+  document.body.style.overflow = 'hidden';
+  
+  const drawerTaskInput = document.getElementById('drawerTaskInput');
+  if (drawerTaskInput) {
+    setTimeout(() => {
+      drawerTaskInput.focus();
+    }, 100);
+  }
+}
+
+function initMobileDrawer() {
+  const mobileAddTaskBtn = document.getElementById('mobileAddTaskBtn');
+  if (mobileAddTaskBtn) {
+    const newBtn = mobileAddTaskBtn.cloneNode(true);
+    mobileAddTaskBtn.parentNode.replaceChild(newBtn, mobileAddTaskBtn);
+    
+    newBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openDrawer();
+    });
+  }
+  
+  const closeDrawerBtn = document.getElementById('closeDrawerBtn');
+  if (closeDrawerBtn) {
+    const newCloseBtn = closeDrawerBtn.cloneNode(true);
+    closeDrawerBtn.parentNode.replaceChild(newCloseBtn, closeDrawerBtn);
+    
+    newCloseBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeDrawer();
+    });
+  }
+  
+  const drawerOverlay = document.getElementById('drawerOverlay');
+  if (drawerOverlay) {
+    const newOverlay = drawerOverlay.cloneNode(true);
+    drawerOverlay.parentNode.replaceChild(newOverlay, drawerOverlay);
+    
+    newOverlay.addEventListener('click', (e) => {
+      if (e.target === newOverlay) {
+        closeDrawer();
+      }
+    });
+  }
+  
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const drawer = document.getElementById('quickDrawer');
+      if (drawer && drawer.classList.contains('active')) {
+        closeDrawer();
+      }
+    }
+  });
+  
+  const drawerAddTaskBtn = document.getElementById('drawerAddTaskBtn');
+  if (drawerAddTaskBtn) {
+    const newDrawerBtn = drawerAddTaskBtn.cloneNode(true);
+    drawerAddTaskBtn.parentNode.replaceChild(newDrawerBtn, drawerAddTaskBtn);
+    
+    newDrawerBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      const drawerTaskInput = document.getElementById('drawerTaskInput');
+      const drawerCategorySelect = document.getElementById('drawerCategorySelect');
+      const drawerPrioritySelect = document.getElementById('drawerPrioritySelect');
+      const drawerTagsInput = document.getElementById('drawerTagsInput');
+      const drawerDeadlineInput = document.getElementById('drawerDeadlineInput');
+      const drawerRecurrenceSelect = document.getElementById('drawerRecurrenceSelect');
+      
+      const text = drawerTaskInput ? drawerTaskInput.value.trim() : '';
+      let category = "Theory";
+      let priority = "Medium";
+      
+      if (drawerCategorySelect && drawerCategorySelect.value && drawerCategorySelect.value.trim() !== "") {
+        category = drawerCategorySelect.value;
+      }
+      
+      if (drawerPrioritySelect && drawerPrioritySelect.value && drawerPrioritySelect.value.trim() !== "") {
+        priority = drawerPrioritySelect.value;
+      }
+      
+      const tags = drawerTagsInput ? parseTags(drawerTagsInput.value) : [];
+      const deadline = drawerDeadlineInput ? drawerDeadlineInput.value : "";
+      const recurrence = drawerRecurrenceSelect ? (drawerRecurrenceSelect.value || 'none') : 'none';
+      
+      if (text === "") {
+        if (drawerTaskInput) {
+          drawerTaskInput.classList.add("input-invalid");
+          setTimeout(() => {
+            drawerTaskInput.classList.remove("input-invalid");
+          }, 400);
+        }
+        announce("Failed to add task. Please enter a task description.");
+        return;
+      }
+      
+      if (text.length > 200) {
+        if (window.showToast) window.showToast("Task description is too long (maximum 200 characters).", "warning");
+        return;
+      }
+      
+      const task = {
+        id: Date.now(),
+        text,
+        category,
+        priority,
+        completed: false,
+        createdAt: getFormattedDateTime(new Date()),
+        deadline: deadline || null,
+        penaltyApplied: false,
+        tags
+      };
+      
+      if (recurrence && recurrence !== 'none') {
+        task.recurrence = recurrence;
+        const template = {
+          id: `rt-${Date.now()}`,
+          text,
+          category,
+          priority,
+          recurrence,
+          active: true,
+          startDate: deadline || new Date().toISOString()
+        };
+        recurringTemplates.push(template);
+        task.masterId = template.id;
+      }
+      
+      tasks.push(task);
+      
+      if (drawerTaskInput) drawerTaskInput.value = "";
+      if (drawerTagsInput) drawerTagsInput.value = "";
+      if (drawerDeadlineInput) drawerDeadlineInput.value = "";
+      if (drawerRecurrenceSelect) drawerRecurrenceSelect.value = "none";
+      
+      storeRecentTags(tags);
+      
+      if (!analyticsData.categoryStats[category]) {
+        analyticsData.categoryStats[category] = { created: 0, completed: 0 };
+      }
+      analyticsData.categoryStats[category].created += 1;
+      
+      saveData();
+      renderTasks();
+      renderCalendar();
+      updateDeadlineAlerts();
+      
+      sendNotification("Quest Assigned", `COMPLETE ${text} TASK ASAP`);
+      showTaskPopup(`COMPLETE ${text.toUpperCase()} TASK ASAP`);
+      announce(`Task added: "${text}". Category: ${category}, Priority: ${priority}.`);
+      
+      closeDrawer();
+    });
+  }
+  
+  const drawerTaskInput = document.getElementById('drawerTaskInput');
+  if (drawerTaskInput) {
+    drawerTaskInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const drawerAddBtn = document.getElementById('drawerAddTaskBtn');
+        if (drawerAddBtn) {
+          drawerAddBtn.click();
+        }
+      }
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initMobileDrawer();
+});
+
 try {
   const _raw = window.TaskQuestStorage
     ? window.TaskQuestStorage.getTasks()
