@@ -1,4 +1,3 @@
-
 // Core Elements
 const taskInput = document.getElementById("taskInput");
 const addTaskBtn = document.getElementById("addTaskBtn");
@@ -1387,11 +1386,18 @@ document.getElementById("claimMilestoneBtn")?.addEventListener("click", (e) => {
 // ==========================================================================
 
 function addTask() {
-  const text = taskInput.value.trim();
-  const category = categorySelect.value;
-
+  let category = "Theory";
+  if (categorySelect && categorySelect.value && categorySelect.value.trim() !== "") {
+    category = categorySelect.value;
+  }
+  
+  let priority = "Medium";
   const prioritySelect = document.getElementById("prioritySelect");
-  const priority = prioritySelect ? prioritySelect.value : "Medium";
+  if (prioritySelect && prioritySelect.value && prioritySelect.value.trim() !== "") {
+    priority = prioritySelect.value;
+  }
+  
+  const text = taskInput.value.trim();
   const tags = parseTags(taskTagsInput ? taskTagsInput.value : "");
 
   const deadlineInput = document.getElementById("deadlineInput");
