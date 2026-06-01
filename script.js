@@ -340,6 +340,48 @@ document.addEventListener('DOMContentLoaded', () => {
       window.removeEventListener('click', resumeOnInteract);
     };
     window.addEventListener('click', resumeOnInteract);
+
+    // Search input wiring for both top and embedded task search fields
+    [
+      document.getElementById('taskSearchInput'),
+      document.getElementById('searchInput')
+    ].forEach(input => {
+      if (!input) return;
+      input.addEventListener('input', (e) => {
+        searchQuery = e.target.value.trim().toLowerCase();
+        renderTasks();
+      });
+    });
+
+    // Notifications
+    loadNotifications();
+    renderNotificationPanel();
+    updateNotificationBadge();
+
+    document.getElementById('notificationBell')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleNotificationPanel();
+    });
+    document.getElementById('markAllReadBtn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      markAllRead();
+    });
+    document.getElementById('clearAllNotifBtn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      clearAllNotifications();
+    });
+
+    document.getElementById('goToStudyTogetherBtn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const collTabBtn = document.querySelector('.tab-btn[data-tab="collaborative"]');
+      if (collTabBtn) collTabBtn.click();
+      document.getElementById('openStudyTogetherFab')?.click();
+    });
+    document.getElementById('openStudyTogetherFab')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const collTabBtn = document.querySelector('.tab-btn[data-tab="collaborative"]');
+      if (collTabBtn) collTabBtn.click();
+    });
   } catch (e) {}
 });
 
@@ -3439,13 +3481,16 @@ function updateAnalyticsDashboard() {
     }
   });
 
-  const searchInput = document.getElementById("searchInput");
-  if (searchInput) {
-    searchInput.addEventListener("input", (e) => {
+  [
+    document.getElementById("taskSearchInput"),
+    document.getElementById("searchInput")
+  ].forEach(input => {
+    if (!input) return;
+    input.addEventListener("input", (e) => {
       searchQuery = e.target.value.trim().toLowerCase();
       renderTasks();
     });
-  }
+  });
 
   document.querySelectorAll('.filters .filter-btn[data-filter]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -3512,8 +3557,12 @@ function updateAnalyticsDashboard() {
     currentTagFilter = 'All';
   
     const searchInputEl = document.getElementById('searchInput');
+    const taskSearchInputEl = document.getElementById('taskSearchInput');
     if (searchInputEl) {
       searchInputEl.value = '';
+    }
+    if (taskSearchInputEl) {
+      taskSearchInputEl.value = '';
     }
     
     saveData();
@@ -3990,7 +4039,6 @@ if (addExamBtn) {
 // `tasks` undefined and making the entire app non-functional until the user
 // manually clears localStorage. The try/catch recovers silently with an
 // empty array so the app always boots into a usable state.
-let tasks = [];
 try {
   const _raw = window.TaskQuestStorage
     ? window.TaskQuestStorage.getTasks()
@@ -4031,308 +4079,3 @@ function generateTaskId() {
   return Date.now() + '_' + (++_idCounter) + '_' + Math.random().toString(36).slice(2, 11);
 }
 
-// --- Selectors ---
-const taskForm = document.getElementById("taskForm");
-const taskInput = document.getElementById("taskInput");
-const taskList = document.getElementById("taskList");
-const taskStats = document.getElementById("taskStats");
-const errorMsg = document.getElementById("errorMsg");
-const celebration = document.getElementById("celebration");
-const themeSwitcher = document.getElementById("themeSwitcher");
-
-// --- Initialization ---
-"use strict";
-document.addEventListener("DOMContentLoaded", () => {
-  renderTasks();
-  initTheme();
-  const filterOverdueBtn = document.getElementById('filterOverdueBtn');
-  if (filterOverdueBtn){
-    filterOverdueBtn.addEventListener('click', ()=>{
-      const isActive = filterOverdueBtn.classList.contains('active');
-      if (isActive){
-        filterOverdueBtn.classList.remove('active'); activeFilter = 'All';
-      } else {
-        // deactivate other filters briefly if needed
-        document.querySelectorAll('.filter-btn.active')?.forEach(b=>b.classList.remove('active'));
-        filterOverdueBtn.classList.add('active'); activeFilter = 'Overdue';
-      }
-      renderTasks();
-    });
-  }
-});
-
-// --- Core Functions ---
-
-function addTask() {
-  const text = taskInput.value.trim();
-  
-  if (text === "") {
-    errorMsg.textContent = "Please enter a task.";
-    return;
-  }
-
-  if (text.length > MAX_TASK_LENGTH) {
-    errorMsg.textContent = `Task is too long. Please keep it under ${MAX_TASK_LENGTH} characters (currently ${text.length}).`;
-    return;
-  }
-
-  errorMsg.textContent = "";
-
-  const now = new Date();
-  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const day = dayNames[now.getDay()];
-  const date = `${now.getDate()} ${now.toLocaleString("default", { month: "long" })} ${now.getFullYear()}`;
-  const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-  const deadlineVal = document.getElementById('deadlineInput')?.value || null;
-  const deadlineIso = deadlineVal ? new Date(deadlineVal).toISOString() : null;
-  const dependsSel = document.getElementById('dependsSelect');
-  const dependsVals = dependsSel ? Array.from(dependsSel.selectedOptions).map(o => o.value).filter(v => v !== '') : [];
-  const newTask = {
-    id: generateTaskId(),
-    text: text,
-    completed: false,
-    timestamp: `(${day}, ${date} at ${time})`,
-    deadline: deadlineIso
-    , depends: dependsVals.map(v => parseInt(v)).filter(Boolean)
-  };
-
-  tasks.push(newTask);
-  saveAndRender();
-  taskInput.value = "";
-}
-
-function removeTask(id) {
-  // Remove references from other tasks' dependency lists
-  tasks.forEach(t => {
-    if (Array.isArray(t.depends) && t.depends.includes(id)) {
-      t.depends = t.depends.filter(d => d !== id);
-    }
-    if (t.dependsOn && t.dependsOn === id) {
-      delete t.dependsOn;
-    }
-  });
-  tasks = tasks.filter(task => task.id !== id);
-  saveAndRender();
-}
-
-function toggleTask(id) {
-  const task = tasks.find(t => t.id === id);
-  if (!task) return;
-  // Prevent completing if blocked by an incomplete prerequisite
-  if (!task.completed && (Array.isArray(task.depends) ? task.depends.length > 0 : task.dependsOn)) {
-    const deps = Array.isArray(task.depends) ? task.depends : (task.dependsOn ? [task.dependsOn] : []);
-    const blocked = deps.some(did => {
-      const pre = tasks.find(t => t.id === did);
-      return pre && !pre.completed;
-    });
-    if (blocked) {
-      const pending = deps.map(did => tasks.find(t => t.id === did)).filter(Boolean).filter(t => !t.completed).map(t => t.text);
-      try { window.showToast(`Blocked — complete: ${pending.join(', ')}`, 'warning'); } catch(e){}
-      return;
-    }
-  }
-  tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
-  saveAndRender();
-}
-
-function editTask(id) {
-  const task = tasks.find(t => t.id === id);
-  if (!task) return;
-  const newText = prompt("Edit task:", task.text);
-  if (newText !== null && newText.trim() !== "") {
-    if (newText.trim().length > MAX_TASK_LENGTH) {
-      alert(`Task is too long. Please keep it under ${MAX_TASK_LENGTH} characters.`);
-      return;
-    }
-    task.text = newText.trim();
-  }
-  // prompt for dependency selection (minimal UI): allow selecting multiple by comma-separated indices
-  const choices = tasks.filter(t => t.id !== id).map((t, i) => `${i+1}. ${t.text} (id:${t.id}${t.completed? ' ✓':''})`);
-  const sel = prompt(`Select prerequisite numbers (comma separated) or empty = none:\n${choices.join('\n')}`);
-  if (sel !== null) {
-    if (sel.trim() === '') {
-      task.depends = [];
-    } else {
-      const parts = sel.split(/[,\s]+/).map(s => Number(s)).filter(n => Number.isFinite(n) && n>=1 && n<=choices.length);
-      const chosen = parts.map(n => tasks.filter(t => t.id !== id)[n-1]).filter(Boolean).map(t => t.id);
-      // filter out circular dependencies
-      task.depends = chosen.filter(did => !hasCircularDependency(task.id, did));
-    }
-  }
-  saveAndRender();
-}
-
-function saveAndRender() {
-  try {
-    if (window.TaskQuestStorage) {
-      window.TaskQuestStorage.setTasks(tasks);
-    } else {
-      localStorage.setItem("taskquest_v1.tasks", JSON.stringify(tasks));
-    }
-  } catch (e) {
-    console.warn("[TaskQuest] Failed to persist tasks.", e);
-  }
-  renderTasks();
-  // Notify other modules (badges, analytics) that tasks changed
-  try { document.dispatchEvent(new CustomEvent('tasksUpdated')); } catch (e) {}
-}
-
-function updateOverdueFlags(){
-  const now = Date.now();
-  tasks = tasks.map(t => {
-    const copy = { ...t };
-    copy.overdue = false;
-    if (!copy.completed && copy.deadline){
-      try{
-        const d = new Date(copy.deadline).getTime();
-        if (!isNaN(d) && d < now) copy.overdue = true;
-      }catch(e){}
-    }
-    return copy;
-  });
-}
-
-function renderTasks() {
-  taskList.innerHTML = "";
-
-  // refresh depends select for creation
-  populateDependsSelect();
-
-  tasks.forEach(task => {
-    // apply filter
-    if (activeFilter === 'Overdue' && !task.overdue) return;
-
-    const li = document.createElement("li");
-    if (task.completed) li.classList.add("completed");
-    if (task.overdue) li.classList.add('overdue');
-
-    const deadlineLabel = task.deadline ? new Date(task.deadline).toLocaleString() : '';
-    const prereq = task.dependsOn ? tasks.find(t=>t.id===task.dependsOn) : null;
-    const depBadge = prereq ? (prereq.completed ? `<span class="dep-badge ready">Ready</span>` : `<span class="dep-badge blocked">Blocked</span>`) : '';
-    const depInfo = prereq ? `<div class="dep-info">Depends on: ${escapeHtml(prereq.text)}</div>` : '';
-    const allTasks = tasks; // Using the global tasks array
-    const relatedCount = CorrelationEngine.getCorrelationCount(task, allTasks);
-    let correlationBadge = '';
-    if (relatedCount > 0) {
-        correlationBadge = `
-            <span class="correlation-badge" 
-                  style="font-size: 0.7rem; background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px; margin-left: 8px; vertical-align: middle;" 
-                  title="${relatedCount} related task(s) in this subject">
-                  🔗 ${relatedCount}
-            </span>`;
-    }
-    li.innerHTML = `
-      <input type="checkbox" ${task.completed ? "checked" : ""} onchange="toggleTask('${task.id}')">
-      <span>
-        ${task.text}
-        ${depBadge}
-        ${correlationBadge}
-        <small style="display: block; font-size: 0.75rem; opacity: 0.7;">${task.timestamp}</small>
-        ${deadlineLabel ? `<div class="task-deadline ${task.overdue ? 'overdue' : ''}">Due: ${deadlineLabel}</div>` : ''}
-        ${depInfo}
-    const deps = Array.isArray(task.depends) ? task.depends : (task.dependsOn ? [task.dependsOn] : []);
-    const depTasks = deps.map(did => tasks.find(t => t.id === did)).filter(Boolean);
-    const blocked = depTasks.some(d => !d.completed);
-    const depBadge = deps.length ? (blocked ? `<span class="dep-badge blocked">Blocked</span>` : `<span class="dep-badge ready">Ready</span>`) : '';
-    const depInfo = deps.length ? `<div class="dep-info">Depends on: ${depTasks.map(d => escapeHtml(d.text) + (d.completed ? ' ✓' : '')).join(', ')}</div>` : '';
-    li.innerHTML = `
-      <input type="checkbox" ${task.completed ? "checked" : ""} onchange="toggleTask(${task.id})">
-      <span>
-        ${escapeHtml(task.text)}
-        <small style="display: block; font-size: 0.75rem; opacity: 0.7;">${escapeHtml(task.timestamp)}</small>
-      </span>
-      <div style="display: flex; gap: 5px;">
-        <button onclick="editTask('${task.id}')" style="padding: 0.5rem; font-size: 0.8rem;">Edit</button>
-        <button onclick="removeTask('${task.id}')" style="padding: 0.5rem; font-size: 0.8rem; background: var(--error-color, #ef4444);">Remove</button>
-      </div>
-    `;
-
-    taskList.appendChild(li);
-  });
-
-  updateStats();
-}
-
-function updateStats() {
-  const completedCount = tasks.filter(t => t.completed).length;
-  const totalCount = tasks.length;
-  const overdueCount = tasks.filter(t => t.overdue).length;
-
-  if (taskStats) {
-    taskStats.innerText = `✅ ${completedCount} / ${totalCount} completed`;
-  }
-
-  const overdueEl = document.getElementById('overdueCount');
-  if (overdueEl) {
-    overdueEl.innerText = overdueCount;
-    const sc = overdueEl.closest('.stat-card');
-    if (sc) sc.classList.toggle('overdue', overdueCount>0);
-  }
-
-  if (celebration) {
-    if (totalCount > 0 && completedCount === totalCount) {
-      celebration.classList.remove("hidden");
-      setTimeout(() => celebration.classList.add("show"), 10);
-    } else {
-      celebration.classList.remove("show");
-      celebration.classList.add("hidden");
-    }
-  }
-}
-
-// --- Theme Management ---
-
-function initTheme() {
-  let savedTheme = "cosmic";
-  try {
-    savedTheme = (window.TaskQuestStorage
-      ? window.TaskQuestStorage.getTheme()
-      : localStorage.getItem("taskquest_v1.theme") || localStorage.getItem("quests_theme")) || "cosmic";
-  } catch (e) {
-    console.warn("[TaskQuest] Could not read theme from storage.", e);
-  }
-  document.documentElement.setAttribute("data-theme", savedTheme);
-
-  if (themeSwitcher) {
-    themeSwitcher.value = savedTheme;
-    themeSwitcher.addEventListener("change", (e) => {
-      const selectedTheme = e.target.value;
-      document.documentElement.setAttribute("data-theme", selectedTheme);
-      try {
-        if (window.TaskQuestStorage) {
-          window.TaskQuestStorage.setTheme(selectedTheme);
-        } else {
-          localStorage.setItem("taskquest_v1.theme", selectedTheme);
-        }
-      } catch (err) {
-        console.warn("[TaskQuest] Failed to persist theme.", err);
-      }
-    });
-  }
-}
-
-function populateDependsSelect(){
-  const sel = document.getElementById('dependsSelect');
-  if (!sel) return;
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">No prerequisite</option>';
-  tasks.forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = t.id;
-    opt.text = `${t.text}${t.completed? ' ✓':''}`;
-    sel.appendChild(opt);
-  });
-  if (prev) sel.value = prev;
-}
-
-function escapeHtml(str){
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-/* Export JSON Logic */
-document.getElementById('exportJsonBtn')?.addEventListener('click', () => { const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tasks, null, 2)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute('href', dataStr); dlAnchorElem.setAttribute('download', 'taskquest_backup.json'); dlAnchorElem.click(); });
-
-window.addEventListener('error', (e) => console.error('Global Error:', e.message));
-
-window.addEventListener('error', (e) => console.error('Global Error:', e.message));
