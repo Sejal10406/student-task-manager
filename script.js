@@ -414,6 +414,13 @@ let currentView = "list";
 let smartSortEnabled = false; 
 let performanceData = [];
 let timetable = [];
+
+// Flashcards state
+let flashcards = [];
+let flashcardOrder = [];
+let currentFlashIndex = 0;
+let flashShuffleEnabled = false;
+let flashSubjectFilter = "All";
 let calendarEvents = [];
 let subjects = [];
 let currentCalendarDate = new Date();
@@ -2991,6 +2998,9 @@ tabBtns.forEach(btn => {
     if (btn.dataset.tab === "subject-tracker") {
       renderSubjectTracker();
     }
+    if (btn.dataset.tab === "flashcards") {
+      renderFlashcardView();
+    }
 
     // Re-render assignments on tab activation
     if (btn.dataset.tab === "assignments") {
@@ -3461,6 +3471,7 @@ function updateAnalyticsDashboard() {
   initTimetableNotifier();
   initCalendarNotifier();
   initDeadlineUpdater();
+  initFlashcards();
 
   const addTaskBtnEl = document.getElementById("addTaskBtn");
   if (addTaskBtnEl) {
@@ -4078,4 +4089,639 @@ let _idCounter = 0;
 function generateTaskId() {
   return Date.now() + '_' + (++_idCounter) + '_' + Math.random().toString(36).slice(2, 11);
 }
+
+
+// --- Selectors ---
+const taskForm = document.getElementById("taskForm");
+const taskInput = document.getElementById("taskInput");
+const taskList = document.getElementById("taskList");
+const taskStats = document.getElementById("taskStats");
+const errorMsg = document.getElementById("errorMsg");
+const celebration = document.getElementById("celebration");
+const themeSwitcher = document.getElementById("themeSwitcher");
+
+// --- Initialization ---
+"use strict";
+document.addEventListener("DOMContentLoaded", () => {
+  renderTasks();
+  initTheme();
+  const filterOverdueBtn = document.getElementById('filterOverdueBtn');
+  if (filterOverdueBtn){
+    filterOverdueBtn.addEventListener('click', ()=>{
+      const isActive = filterOverdueBtn.classList.contains('active');
+      if (isActive){
+        filterOverdueBtn.classList.remove('active'); activeFilter = 'All';
+      } else {
+        // deactivate other filters briefly if needed
+        document.querySelectorAll('.filter-btn.active')?.forEach(b=>b.classList.remove('active'));
+        filterOverdueBtn.classList.add('active'); activeFilter = 'Overdue';
+      }
+      renderTasks();
+    });
+  }
+});
+
+// --- Core Functions ---
+
+function addTask() {
+  const text = taskInput.value.trim();
+  const category = categorySelect ? categorySelect.value : "Theory";
+  const prioritySelect = document.getElementById("prioritySelect");
+  const priority = prioritySelect ? prioritySelect.value : "Medium";
+  const tags = typeof parseTags === "function" && taskTagsInput ? parseTags(taskTagsInput.value) : [];
+
+  const deadlineInput = document.getElementById("deadlineInput");
+  const deadline = deadlineInput ? deadlineInput.value : "";
+  const recurrenceSelect = document.getElementById("recurrenceSelect");
+  const recurrence = recurrenceSelect ? (recurrenceSelect.value || "none") : "none";
+
+  if (text === "") {
+    errorMsg.textContent = "Please enter a task.";
+    return;
+  }
+
+  if (text.length > MAX_TASK_LENGTH) {
+    errorMsg.textContent = `Task is too long. Please keep it under ${MAX_TASK_LENGTH} characters (currently ${text.length}).`;
+    return;
+  }
+
+  errorMsg.textContent = "";
+
+  const newTask = {
+    id: generateTaskId(),
+    text: text,
+    category,
+    priority,
+    completed: false,
+    createdAt: typeof getFormattedDateTime === "function" ? getFormattedDateTime(new Date()) : new Date().toLocaleString(),
+    deadline: deadline || null,
+    penaltyApplied: false,
+    tags
+  };
+
+  if (recurrence && recurrence !== "none") {
+    newTask.recurrence = recurrence;
+    const template = {
+      id: `rt-${Date.now()}`,
+      text,
+      category,
+      priority,
+      recurrence,
+      active: true,
+      startDate: deadline || new Date().toISOString()
+    };
+    recurringTemplates.push(template);
+    newTask.masterId = template.id;
+  }
+
+  try {
+    const dependsSel = document.getElementById("dependsSelect");
+    if (dependsSel) {
+      const selected = Array.from(dependsSel.selectedOptions).map(o => o.value).filter(v => v !== "");
+      newTask.depends = selected.map(v => parseInt(v)).filter(Boolean);
+      const safeDeps = [];
+      newTask.depends.forEach(did => {
+        if (typeof hasCircularDependency === "function" && hasCircularDependency(newTask.id, did)) {
+          if (window && window.showToast) window.showToast("Dependency removed to avoid circular reference", "warning");
+        } else {
+          safeDeps.push(did);
+        }
+      });
+      newTask.depends = safeDeps;
+    } else {
+      newTask.depends = [];
+    }
+  } catch (e) {
+    newTask.depends = [];
+  }
+
+  tasks.push(newTask);
+  taskInput.value = "";
+  if (taskTagsInput) taskTagsInput.value = "";
+  if (deadlineInput) deadlineInput.value = "";
+
+  if (typeof storeRecentTags === "function") storeRecentTags(tags);
+
+  if (analyticsData && analyticsData.categoryStats) {
+    if (!analyticsData.categoryStats[category]) {
+      analyticsData.categoryStats[category] = { created: 0, completed: 0 };
+    }
+    analyticsData.categoryStats[category].created += 1;
+  }
+
+  if (typeof saveData === "function") saveData();
+  renderTasks();
+
+  if (typeof renderCalendar === "function") renderCalendar();
+  if (typeof updateDeadlineAlerts === "function") updateDeadlineAlerts();
+
+  if (typeof sendNotification === "function") sendNotification("Quest Assigned", `COMPLETE ${text} TASK ASAP`);
+  if (typeof showTaskPopup === "function") showTaskPopup(`COMPLETE ${text.toUpperCase()} TASK ASAP`);
+  if (typeof announce === "function") announce(`Task added: "${text}". Category: ${category}, Priority: ${priority}.`);
+}
+
+function removeTask(id) {
+  // Remove references from other tasks' dependency lists
+  tasks.forEach(t => {
+    if (Array.isArray(t.depends) && t.depends.includes(id)) {
+      t.depends = t.depends.filter(d => d !== id);
+    }
+    if (t.dependsOn && t.dependsOn === id) {
+      delete t.dependsOn;
+    }
+  });
+  tasks = tasks.filter(task => task.id !== id);
+  saveAndRender();
+}
+
+function toggleTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  // Prevent completing if blocked by an incomplete prerequisite
+  if (!task.completed && (Array.isArray(task.depends) ? task.depends.length > 0 : task.dependsOn)) {
+    const deps = Array.isArray(task.depends) ? task.depends : (task.dependsOn ? [task.dependsOn] : []);
+    const blocked = deps.some(did => {
+      const pre = tasks.find(t => t.id === did);
+      return pre && !pre.completed;
+    });
+    if (blocked) {
+      const pending = deps.map(did => tasks.find(t => t.id === did)).filter(Boolean).filter(t => !t.completed).map(t => t.text);
+      try { window.showToast(`Blocked — complete: ${pending.join(', ')}`, 'warning'); } catch(e){}
+      return;
+    }
+  }
+  tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+  saveAndRender();
+}
+
+function editTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  const newText = prompt("Edit task:", task.text);
+  if (newText !== null && newText.trim() !== "") {
+    if (newText.trim().length > MAX_TASK_LENGTH) {
+      alert(`Task is too long. Please keep it under ${MAX_TASK_LENGTH} characters.`);
+      return;
+    }
+    task.text = newText.trim();
+  }
+  // prompt for dependency selection (minimal UI): allow selecting multiple by comma-separated indices
+  const choices = tasks.filter(t => t.id !== id).map((t, i) => `${i+1}. ${t.text} (id:${t.id}${t.completed? ' ✓':''})`);
+  const sel = prompt(`Select prerequisite numbers (comma separated) or empty = none:\n${choices.join('\n')}`);
+  if (sel !== null) {
+    if (sel.trim() === '') {
+      task.depends = [];
+    } else {
+      const parts = sel.split(/[,\s]+/).map(s => Number(s)).filter(n => Number.isFinite(n) && n>=1 && n<=choices.length);
+      const chosen = parts.map(n => tasks.filter(t => t.id !== id)[n-1]).filter(Boolean).map(t => t.id);
+      // filter out circular dependencies
+      task.depends = chosen.filter(did => !hasCircularDependency(task.id, did));
+    }
+  }
+  saveAndRender();
+}
+
+function saveAndRender() {
+  try {
+    if (window.TaskQuestStorage) {
+      window.TaskQuestStorage.setTasks(tasks);
+    } else {
+      localStorage.setItem("taskquest_v1.tasks", JSON.stringify(tasks));
+    }
+  } catch (e) {
+    console.warn("[TaskQuest] Failed to persist tasks.", e);
+  }
+  renderTasks();
+  // Notify other modules (badges, analytics) that tasks changed
+  try { document.dispatchEvent(new CustomEvent('tasksUpdated')); } catch (e) {}
+}
+
+function updateOverdueFlags(){
+  const now = Date.now();
+  tasks = tasks.map(t => {
+    const copy = { ...t };
+    copy.overdue = false;
+    if (!copy.completed && copy.deadline){
+      try{
+        const d = new Date(copy.deadline).getTime();
+        if (!isNaN(d) && d < now) copy.overdue = true;
+      }catch(e){}
+    }
+    return copy;
+  });
+}
+
+function renderTasks() {
+  const taskListEl = document.getElementById("taskList");
+  const boardColumns = document.getElementById("boardColumns");
+  const filtersDiv = document.querySelector(".filters");
+
+  if (!taskListEl) return;
+
+  // Ensure new tasks always have a category for Kanban grouping
+  tasks = tasks.map(task => {
+    if (!task.category) task.category = "Theory";
+    if (!task.priority) task.priority = "Medium";
+    if (!task.tags) task.tags = [];
+    return task;
+  });
+
+  if (currentView === "list" || !boardColumns) {
+    taskListEl.style.display = "flex";
+    if (boardColumns) boardColumns.style.display = "none";
+    if (filtersDiv) filtersDiv.style.display = "flex";
+
+    taskListEl.innerHTML = "";
+
+    let filteredTasks = tasks;
+    if (typeof taskMatchesFilters === "function") {
+      filteredTasks = filteredTasks.filter(task => taskMatchesFilters(task));
+    } else if (typeof activeFilter !== "undefined" && activeFilter === "Overdue") {
+      filteredTasks = filteredTasks.filter(task => task.overdue);
+    }
+
+    if (smartSortEnabled && window.Prioritization) {
+      filteredTasks = window.Prioritization.getSortedTasksByPriority(filteredTasks);
+    }
+
+    if (currentSort === "priority") {
+      const priorityOrder = { High: 1, Medium: 2, Low: 3 };
+      filteredTasks.sort((a, b) => (priorityOrder[a.priority] || 99) - (priorityOrder[b.priority] || 99));
+    } else if (currentSort === "alphabetical") {
+      filteredTasks.sort((a, b) => a.text.localeCompare(b.text));
+    } else if (currentSort === "deadline") {
+      filteredTasks.sort((a, b) => {
+        const aD = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+        const bD = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+        return aD - bD;
+      });
+    }
+
+    if (filteredTasks.length === 0) {
+      taskListEl.innerHTML = `
+        <div class="empty-state">
+          <i class="ri-ghost-2-line"></i>
+          <h3>No Quests Yet</h3>
+          <p>Add tasks and begin your productivity journey ✨</p>
+        </div>
+      `;
+    } else {
+      filteredTasks.forEach(task => {
+        if (typeof createTaskEl === "function") {
+          taskListEl.appendChild(createTaskEl(task));
+        } else {
+          const li = document.createElement("li");
+          li.textContent = task.text;
+          taskListEl.appendChild(li);
+        }
+      });
+    }
+  } else {
+    taskListEl.style.display = "none";
+    boardColumns.style.display = "grid";
+    if (filtersDiv) filtersDiv.style.display = "none";
+
+    boardColumns.innerHTML = "";
+    const categories = ["Theory", "Practical", "Assignment", "Revision"];
+
+    categories.forEach(cat => {
+      const colDiv = document.createElement("div");
+      colDiv.className = "board-column";
+      colDiv.setAttribute("data-category", cat);
+
+      const colTasks = tasks.filter(t => (t.category || "Theory") === cat);
+      const catEmoji = typeof getCategoryEmoji === "function" ? getCategoryEmoji(cat) : "📌";
+
+      colDiv.innerHTML = `
+        <div class="board-column-header">
+          <div class="column-title">${catEmoji} ${cat}</div>
+          <div class="column-count">${colTasks.length}</div>
+        </div>
+        <div class="board-column-body" data-category="${cat}"></div>
+      `;
+
+      const bodyDiv = colDiv.querySelector(".board-column-body");
+      colTasks.forEach(task => {
+        if (typeof createTaskEl === "function") {
+          bodyDiv.appendChild(createTaskEl(task));
+        }
+      });
+
+      if (typeof setupColumnDragOver === "function") {
+        setupColumnDragOver(bodyDiv);
+      }
+      boardColumns.appendChild(colDiv);
+    });
+  }
+
+  if (typeof renderTagSuggestions === "function") renderTagSuggestions();
+  if (typeof renderTagFilters === "function") renderTagFilters();
+  if (typeof updateStats === "function") updateStats();
+  try { if (typeof renderDependsSelect === "function") renderDependsSelect(); } catch (e) {}
+}
+
+// ==========================
+// Flashcards Study Mode
+// ==========================
+function loadFlashcards() {
+  try {
+    if (window.TaskQuestStorage && window.TaskQuestStorage.getFlashcards) {
+      flashcards = window.TaskQuestStorage.getFlashcards();
+    } else {
+      flashcards = JSON.parse(localStorage.getItem("taskquest_v1.flashcards") || "[]");
+    }
+  } catch (e) {
+    flashcards = [];
+  }
+  if (!Array.isArray(flashcards)) flashcards = [];
+}
+
+function saveFlashcards() {
+  try {
+    if (window.TaskQuestStorage && window.TaskQuestStorage.setFlashcards) {
+      window.TaskQuestStorage.setFlashcards(flashcards);
+    } else {
+      localStorage.setItem("taskquest_v1.flashcards", JSON.stringify(flashcards));
+    }
+  } catch (e) {
+    console.warn("[TaskQuest] Failed to persist flashcards.", e);
+  }
+}
+
+function getActiveFlashcards() {
+  if (flashSubjectFilter === "All") return flashcards;
+  return flashcards.filter(card => card.subject === flashSubjectFilter);
+}
+
+function rebuildFlashcardOrder() {
+  const active = getActiveFlashcards();
+  flashcardOrder = active.map(card => card.id);
+  if (flashShuffleEnabled) {
+    for (let i = flashcardOrder.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [flashcardOrder[i], flashcardOrder[j]] = [flashcardOrder[j], flashcardOrder[i]];
+    }
+  }
+  currentFlashIndex = 0;
+}
+
+function getCurrentFlashcard() {
+  const active = getActiveFlashcards();
+  if (active.length === 0) return null;
+  const id = flashcardOrder[currentFlashIndex] || active[0].id;
+  return active.find(card => card.id === id) || active[0];
+}
+
+function renderFlashcardSubjects() {
+  const select = document.getElementById("flashSubjectFilter");
+  if (!select) return;
+  const subjects = Array.from(new Set(flashcards.map(card => card.subject))).sort();
+  const options = ['All', ...subjects];
+  select.innerHTML = options.map(sub => `<option value="${escapeHtml(sub)}">${escapeHtml(sub)}</option>`).join("");
+  select.value = flashSubjectFilter;
+}
+
+function updateFlashcardCounters() {
+  const active = getActiveFlashcards();
+  const learnedCount = active.filter(card => card.status === "learned").length;
+  const counterEl = document.getElementById("flashcardCounter");
+  const progressEl = document.getElementById("flashcardProgressText");
+  if (counterEl) {
+    const displayIndex = active.length ? currentFlashIndex + 1 : 0;
+    counterEl.textContent = `Card ${displayIndex} / ${active.length}`;
+  }
+  if (progressEl) {
+    progressEl.textContent = `${learnedCount} / ${active.length} learned`;
+  }
+}
+
+function renderFlashcardView() {
+  renderFlashcardSubjects();
+  rebuildFlashcardOrder();
+  updateFlashcardDisplay();
+}
+
+function updateFlashcardDisplay() {
+  const cardEl = document.getElementById("flashcardCard");
+  const qEl = document.getElementById("flashQuestionText");
+  const aEl = document.getElementById("flashAnswerText");
+  if (!cardEl || !qEl || !aEl) return;
+
+  cardEl.classList.remove("is-flipped");
+  const card = getCurrentFlashcard();
+  if (!card) {
+    qEl.textContent = "Add a flashcard to begin.";
+    aEl.textContent = "Your answer will appear here.";
+    updateFlashcardCounters();
+    return;
+  }
+
+  qEl.textContent = card.question;
+  aEl.textContent = card.answer;
+  updateFlashcardCounters();
+}
+
+function goToFlashcard(delta) {
+  const active = getActiveFlashcards();
+  if (active.length === 0) return;
+  currentFlashIndex = (currentFlashIndex + delta + active.length) % active.length;
+  updateFlashcardDisplay();
+}
+
+function toggleFlashcardFlip() {
+  const cardEl = document.getElementById("flashcardCard");
+  if (cardEl) cardEl.classList.toggle("is-flipped");
+}
+
+function updateFlashcardStatus(status) {
+  const card = getCurrentFlashcard();
+  if (!card) return;
+  card.status = status;
+  saveFlashcards();
+  updateFlashcardCounters();
+  goToFlashcard(1);
+}
+
+function initFlashcards() {
+  loadFlashcards();
+  renderFlashcardSubjects();
+  rebuildFlashcardOrder();
+  updateFlashcardDisplay();
+
+  const addBtn = document.getElementById("addFlashcardBtn");
+  const subjectInput = document.getElementById("flashSubjectInput");
+  const questionInput = document.getElementById("flashQuestionInput");
+  const answerInput = document.getElementById("flashAnswerInput");
+  const filterSelect = document.getElementById("flashSubjectFilter");
+  const shuffleBtn = document.getElementById("flashShuffleBtn");
+  const prevBtn = document.getElementById("flashPrevBtn");
+  const nextBtn = document.getElementById("flashNextBtn");
+  const flipBtn = document.getElementById("flashFlipBtn");
+  const learnedBtn = document.getElementById("flashLearnedBtn");
+  const reviewBtn = document.getElementById("flashReviewBtn");
+  const cardEl = document.getElementById("flashcardCard");
+
+  if (addBtn && subjectInput && questionInput && answerInput) {
+    addBtn.addEventListener("click", () => {
+      const subject = subjectInput.value.trim();
+      const question = questionInput.value.trim();
+      const answer = answerInput.value.trim();
+      if (!subject || !question || !answer) {
+        if (window.showToast) window.showToast("Please fill subject, question, and answer.", "warning");
+        return;
+      }
+      const card = {
+        id: `fc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        subject,
+        question,
+        answer,
+        status: "new",
+        createdAt: new Date().toISOString()
+      };
+      flashcards.push(card);
+      saveFlashcards();
+      subjectInput.value = "";
+      questionInput.value = "";
+      answerInput.value = "";
+      flashSubjectFilter = "All";
+      renderFlashcardView();
+      if (window.showToast) window.showToast("Flashcard added.", "success");
+    });
+  }
+
+  if (filterSelect) {
+    filterSelect.addEventListener("change", () => {
+      flashSubjectFilter = filterSelect.value || "All";
+      renderFlashcardView();
+    });
+  }
+
+  if (shuffleBtn) {
+    shuffleBtn.addEventListener("click", () => {
+      flashShuffleEnabled = !flashShuffleEnabled;
+      shuffleBtn.setAttribute("aria-pressed", flashShuffleEnabled ? "true" : "false");
+      shuffleBtn.classList.toggle("active", flashShuffleEnabled);
+      rebuildFlashcardOrder();
+      updateFlashcardDisplay();
+    });
+  }
+
+  prevBtn?.addEventListener("click", () => goToFlashcard(-1));
+  nextBtn?.addEventListener("click", () => goToFlashcard(1));
+  flipBtn?.addEventListener("click", toggleFlashcardFlip);
+  learnedBtn?.addEventListener("click", () => updateFlashcardStatus("learned"));
+  reviewBtn?.addEventListener("click", () => updateFlashcardStatus("review"));
+  cardEl?.addEventListener("click", toggleFlashcardFlip);
+
+  document.addEventListener("keydown", (e) => {
+    const activeTab = document.querySelector(".tab-content.active");
+    if (!activeTab || activeTab.id !== "flashcards-tab") return;
+    const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName || "");
+    if (isTyping) return;
+
+    if (e.key === " " || e.key === "Spacebar") {
+      e.preventDefault();
+      toggleFlashcardFlip();
+    } else if (e.key === "ArrowRight") {
+      goToFlashcard(1);
+    } else if (e.key === "ArrowLeft") {
+      goToFlashcard(-1);
+    } else if (e.key.toLowerCase() === "l") {
+      updateFlashcardStatus("learned");
+    } else if (e.key.toLowerCase() === "r") {
+      updateFlashcardStatus("review");
+    } else if (e.key.toLowerCase() === "s") {
+      flashShuffleEnabled = !flashShuffleEnabled;
+      if (shuffleBtn) {
+        shuffleBtn.setAttribute("aria-pressed", flashShuffleEnabled ? "true" : "false");
+        shuffleBtn.classList.toggle("active", flashShuffleEnabled);
+      }
+      rebuildFlashcardOrder();
+      updateFlashcardDisplay();
+    }
+  });
+}
+
+function updateStats() {
+  const completedCount = tasks.filter(t => t.completed).length;
+  const totalCount = tasks.length;
+  const overdueCount = tasks.filter(t => t.overdue).length;
+
+  if (taskStats) {
+    taskStats.innerText = `✅ ${completedCount} / ${totalCount} completed`;
+  }
+
+  const overdueEl = document.getElementById('overdueCount');
+  if (overdueEl) {
+    overdueEl.innerText = overdueCount;
+    const sc = overdueEl.closest('.stat-card');
+    if (sc) sc.classList.toggle('overdue', overdueCount>0);
+  }
+
+  if (celebration) {
+    if (totalCount > 0 && completedCount === totalCount) {
+      celebration.classList.remove("hidden");
+      setTimeout(() => celebration.classList.add("show"), 10);
+    } else {
+      celebration.classList.remove("show");
+      celebration.classList.add("hidden");
+    }
+  }
+}
+
+// --- Theme Management ---
+
+function initTheme() {
+  let savedTheme = "cosmic";
+  try {
+    savedTheme = (window.TaskQuestStorage
+      ? window.TaskQuestStorage.getTheme()
+      : localStorage.getItem("taskquest_v1.theme") || localStorage.getItem("quests_theme")) || "cosmic";
+  } catch (e) {
+    console.warn("[TaskQuest] Could not read theme from storage.", e);
+  }
+  document.documentElement.setAttribute("data-theme", savedTheme);
+
+  if (themeSwitcher) {
+    themeSwitcher.value = savedTheme;
+    themeSwitcher.addEventListener("change", (e) => {
+      const selectedTheme = e.target.value;
+      document.documentElement.setAttribute("data-theme", selectedTheme);
+      try {
+        if (window.TaskQuestStorage) {
+          window.TaskQuestStorage.setTheme(selectedTheme);
+        } else {
+          localStorage.setItem("taskquest_v1.theme", selectedTheme);
+        }
+      } catch (err) {
+        console.warn("[TaskQuest] Failed to persist theme.", err);
+      }
+    });
+  }
+}
+
+function populateDependsSelect(){
+  const sel = document.getElementById('dependsSelect');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">No prerequisite</option>';
+  tasks.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.text = `${t.text}${t.completed? ' ✓':''}`;
+    sel.appendChild(opt);
+  });
+  if (prev) sel.value = prev;
+}
+
+function escapeHtml(str){
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* Export JSON Logic */
+document.getElementById('exportJsonBtn')?.addEventListener('click', () => { const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tasks, null, 2)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute('href', dataStr); dlAnchorElem.setAttribute('download', 'taskquest_backup.json'); dlAnchorElem.click(); });
+
+window.addEventListener('error', (e) => console.error('Global Error:', e.message));
+
+window.addEventListener('error', (e) => console.error('Global Error:', e.message));
 

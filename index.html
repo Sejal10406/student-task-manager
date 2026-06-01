@@ -23,10 +23,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="collaborative-styles.css">
+  <link rel="stylesheet" href="collaborative.css">
 </head>
 
-<body>
+<body class="dashboard-page">
   <a href="#quests-tab" class="skip-to-content" style="position: absolute; top: -100px; left: 10px; background: var(--primary); color: #fff; padding: 8px 16px; border-radius: 4px; z-index: 10000; transition: top 0.2s;" onfocus="this.style.top='10px'" onblur="this.style.top='-100px'">Skip to content</a>
 
   <!-- GLOBAL HEADER -->
@@ -90,6 +90,42 @@
           </button>
         </div>
       </div>
+
+      <!-- SIDEBAR MENU -->
+      <nav class="sidebar-nav">
+        <a href="index.html" class="sidebar-nav-item active">
+          <i class="ri-dashboard-line"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="notes.html" class="sidebar-nav-item">
+          <i class="ri-sticky-note-line"></i>
+          <span>Revision Notes</span>
+        </a>
+        <a href="Challenge.html" class="sidebar-nav-item">
+          <i class="ri-trophy-line"></i>
+          <span>Challenges</span>
+        </a>
+        <a href="leaderboard.html" class="sidebar-nav-item">
+          <i class="ri-medal-line"></i>
+          <span>Leaderboard</span>
+        </a>
+        <a href="reflection.html" class="sidebar-nav-item">
+          <i class="ri-focus-3-line"></i>
+          <span>Reflection</span>
+        </a>
+        <a href="docs.html" class="sidebar-nav-item">
+          <i class="ri-book-read-line"></i>
+          <span>Docs</span>
+        </a>
+        <a href="faq.html" class="sidebar-nav-item">
+          <i class="ri-question-line"></i>
+          <span>FAQ</span>
+        </a>
+        <a href="Privacy.html" class="sidebar-nav-item">
+          <i class="ri-lock-line"></i>
+          <span>Privacy</span>
+        </a>
+      </nav>
 
       <!-- PROFILE CARD -->
       <div class="profile-card" id="profileCard" style="cursor: pointer;" title="Edit Profile">
@@ -252,6 +288,7 @@
           <button class="tab-btn" id="tabBtnAssignments" data-tab="assignments" role="tab" aria-selected="false" aria-controls="assignments-tab"><i class="ri-calendar-check-line"></i> Assignments</button>
           <button class="tab-btn" id="tabBtnVault" data-tab="vault" role="tab" aria-selected="false" aria-controls="vault-tab"><i class="ri-folder-open-line"></i> Files Vault</button>
           <button class="tab-btn" id="tabBtnBookmarks" data-tab="bookmarks" role="tab" aria-selected="false" aria-controls="bookmarks-tab"><i class="ri-bookmark-3-line"></i> Bookmarks</button>
+          <button class="tab-btn" id="tabBtnFlashcards" data-tab="flashcards" role="tab" aria-selected="false" aria-controls="flashcards-tab"><i class="ri-stack-line"></i> Flashcards</button>
           <button class="tab-btn" id="tabBtnPerformance" data-tab="performance" role="tab" aria-selected="false" aria-controls="performance-tab"><i class="ri-medal-line"></i> Performance</button>
           <button class="tab-btn" id="tabBtnTimetable" data-tab="timetable" role="tab" aria-selected="false" aria-controls="timetable-tab"><i class="ri-calendar-todo-line"></i> Timetable</button>
           <button class="tab-btn" id="tabBtnCalendar" data-tab="calendar" role="tab" aria-selected="false" aria-controls="calendar-tab"><i class="ri-calendar-event-line"></i> Calendar</button>
@@ -1552,6 +1589,73 @@
         </div>
       </div>
 
+      <!-- TAB: FLASHCARDS STUDY MODE -->
+      <div id="flashcards-tab" class="tab-content" role="tabpanel" aria-labelledby="tabBtnFlashcards">
+        <div class="vault-header">
+          <div class="vault-title-area">
+            <h2><i class="ri-stack-line"></i> Flashcard Study Mode</h2>
+            <p>Create interactive Q&A cards and revise subject-wise sets with smart progress tracking.</p>
+          </div>
+          <div class="flashcard-progress" id="flashcardProgressText">0 / 0 learned</div>
+        </div>
+
+        <div class="flashcard-layout">
+          <div class="flashcard-panel glass">
+            <div class="flashcard-panel-header">
+              <h3><i class="ri-add-line"></i> Create Flashcard</h3>
+              <span class="flashcard-hint">Tip: Use short questions for faster recall.</span>
+            </div>
+            <div class="flashcard-form">
+              <input type="text" id="flashSubjectInput" placeholder="Subject (e.g., Physics)" aria-label="Flashcard subject" />
+              <textarea id="flashQuestionInput" rows="3" placeholder="Question" aria-label="Flashcard question"></textarea>
+              <textarea id="flashAnswerInput" rows="4" placeholder="Answer" aria-label="Flashcard answer"></textarea>
+              <button class="view-btn primary" id="addFlashcardBtn"><i class="ri-add-line"></i> Add Flashcard</button>
+            </div>
+          </div>
+
+          <div class="flashcard-panel glass">
+            <div class="flashcard-controls">
+              <div class="flashcard-filter">
+                <label for="flashSubjectFilter">Subject set</label>
+                <select id="flashSubjectFilter" aria-label="Filter flashcards by subject">
+                  <option value="All">All Subjects</option>
+                </select>
+              </div>
+              <button class="view-btn" id="flashShuffleBtn" aria-pressed="false"><i class="ri-shuffle-line"></i> Shuffle</button>
+              <div class="flashcard-progress" id="flashcardCounter">Card 0 / 0</div>
+            </div>
+
+            <div class="flashcard-stage">
+              <div class="flashcard-card" id="flashcardCard" tabindex="0" aria-label="Flashcard (press space to flip)">
+                <div class="flashcard-face flashcard-front">
+                  <span class="flashcard-label">Question</span>
+                  <div class="flashcard-text" id="flashQuestionText">Add a flashcard to begin.</div>
+                </div>
+                <div class="flashcard-face flashcard-back">
+                  <span class="flashcard-label">Answer</span>
+                  <div class="flashcard-text" id="flashAnswerText">Your answer will appear here.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flashcard-actions">
+              <button class="view-btn" id="flashPrevBtn"><i class="ri-arrow-left-line"></i> Prev</button>
+              <button class="view-btn" id="flashFlipBtn"><i class="ri-refresh-line"></i> Flip</button>
+              <button class="view-btn" id="flashNextBtn">Next <i class="ri-arrow-right-line"></i></button>
+            </div>
+
+            <div class="flashcard-status-actions">
+              <button class="view-btn success" id="flashLearnedBtn"><i class="ri-checkbox-circle-line"></i> Learned</button>
+              <button class="view-btn warning" id="flashReviewBtn"><i class="ri-time-line"></i> Review Later</button>
+            </div>
+
+            <div class="flashcard-footer">
+              <span class="flashcard-shortcuts">Shortcuts: Space = Flip • ←/→ = Prev/Next • L = Learned • R = Review • S = Shuffle</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- TAB 6: ACADEMIC PERFORMANCE -->
       <div id="performance-tab" class="tab-content" role="tabpanel" aria-labelledby="tabBtnPerformance">
         <div class="vault-header">
@@ -2153,12 +2257,14 @@
     });
   })();
   </script>
-
   <button class="back-to-top-btn" id="backToTopBtn" aria-label="Back to top">
     <i class="ri-arrow-up-line"></i>
   </button>
+  <style> html { scroll-behavior: smooth; } </style>
 </body>
 </html>
+
  
 <style> html { scroll-behavior: smooth; } </style>
  main
+
