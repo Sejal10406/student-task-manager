@@ -21,6 +21,7 @@
  * taskquest_v1.reflection_vault – reflection vault   (was "tq_reflection_vault")
  * taskquest_v1.challenge      – challenge state      (was in-memory only)
  * taskquest_v1.timetable      – timetable entries    (was split / missing)
+ * taskquest_v1.flashcards     – flashcard study set
  * ─────────────────────────────────────────────────────────────────
  */
 
@@ -44,6 +45,7 @@
     REFLECTION_VAULT:  NS + "reflection_vault",
     CHALLENGE:         NS + "challenge",
     TIMETABLE:         NS + "timetable",
+    FLASHCARDS:        NS + "flashcards",
   };
 
   // ── Legacy key → canonical key migration map ──────────────────────────────
@@ -188,6 +190,10 @@
     // Timetable
     getTimetable: function () { return get(KEYS.TIMETABLE, []); },
     setTimetable: function (v) { return set(KEYS.TIMETABLE, v); },
+
+    // Flashcards
+    getFlashcards: function () { return get(KEYS.FLASHCARDS, []); },
+    setFlashcards: function (v) { return set(KEYS.FLASHCARDS, v); },
 
     // Run migration (call once at app boot)
     migrate: migrate,

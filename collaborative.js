@@ -94,24 +94,43 @@ channel.onmessage = ({ data }) => {
   }
 };
 
-function broadcast(payload) {
-  try { channel.postMessage({ tabId: TAB_ID, ...payload }); } catch(e) {}
-}
+// Load collaborative data on init
+function loadCollaborativeData() {
+  try {
+    const raw = window.TaskQuestStorage
+      ? window.TaskQuestStorage.getCollab()
+      : JSON.parse(localStorage.getItem('taskquest_v1.collab'));
+    if (raw && typeof raw === 'object') {
+      // Merge into the default state so any keys added in future schema
+      // versions are always present, preventing TypeError on missing keys.
+      collaborativeState = Object.assign({}, collaborativeState, raw);
 
-/* ═══════════════════════ PRESENCE ═══════════════════════ */
-function announcePresence(action = 'pulse') {
-  const stats = getMyStats();
-  const sel   = q('statusSelect');
-  broadcast({
-    type:   'presence',
-    user:   myProfile.name,
-    status: sel ? sel.value : 'Studying',
-    xp:     stats.xp,
-    level:  stats.level,
-    streak: stats.streak,
-    action,
-    ts:     Date.now()
-  });
+      // Guarantee every array field is actually an array even if the stored
+      // value was written before that field existed or was corrupted.
+      if (!Array.isArray(collaborativeState.friends))        collaborativeState.friends = [];
+      if (!Array.isArray(collaborativeState.challenges))     collaborativeState.challenges = [];
+      if (!Array.isArray(collaborativeState.sessionHistory)) collaborativeState.sessionHistory = [];
+      if (!Array.isArray(collaborativeState.joinedChallenges)) collaborativeState.joinedChallenges = [];
+    }
+    const saved = window.TaskQuestStorage
+      ? window.TaskQuestStorage.getCollab()
+      : JSON.parse(localStorage.getItem('taskquest_v1.collab'));
+    if (saved) {
+      collaborativeState = { ...collaborativeState, ...saved };
+      // Auto-expire any stale session that exceeded max duration on page load
+      if (collaborativeState.currentSession) {
+        const elapsed = Date.now() - collaborativeState.currentSession.startTime;
+        if (elapsed > MAX_SESSION_DURATION_MS) {
+          console.warn('Stale session detected on load — auto-expiring.');
+          collaborativeState.currentSession = null;
+          saveCollaborativeData();
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load collaborative data:', e);
+    // Leave collaborativeState as the safe default defined above.
+  }
 }
 
 function handlePresence(data) {

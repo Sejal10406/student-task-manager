@@ -372,6 +372,13 @@ let currentView = "list";
 let smartSortEnabled = false; 
 let performanceData = [];
 let timetable = [];
+
+// Flashcards state
+let flashcards = [];
+let flashcardOrder = [];
+let currentFlashIndex = 0;
+let flashShuffleEnabled = false;
+let flashSubjectFilter = "All";
 let calendarEvents = [];
 let subjects = [];
 let currentCalendarDate = new Date();
@@ -2949,6 +2956,9 @@ tabBtns.forEach(btn => {
     if (btn.dataset.tab === "subject-tracker") {
       renderSubjectTracker();
     }
+    if (btn.dataset.tab === "flashcards") {
+      renderFlashcardView();
+    }
 
     // Re-render assignments on tab activation
     if (btn.dataset.tab === "assignments") {
@@ -3419,6 +3429,7 @@ function updateAnalyticsDashboard() {
   initTimetableNotifier();
   initCalendarNotifier();
   initDeadlineUpdater();
+  initFlashcards();
 
   const addTaskBtnEl = document.getElementById("addTaskBtn");
   if (addTaskBtnEl) {
@@ -3990,7 +4001,6 @@ if (addExamBtn) {
 // `tasks` undefined and making the entire app non-functional until the user
 // manually clears localStorage. The try/catch recovers silently with an
 // empty array so the app always boots into a usable state.
-let tasks = [];
 try {
   const _raw = window.TaskQuestStorage
     ? window.TaskQuestStorage.getTasks()
@@ -4065,7 +4075,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function addTask() {
   const text = taskInput.value.trim();
-  
+  const category = categorySelect ? categorySelect.value : "Theory";
+  const prioritySelect = document.getElementById("prioritySelect");
+  const priority = prioritySelect ? prioritySelect.value : "Medium";
+  const tags = typeof parseTags === "function" && taskTagsInput ? parseTags(taskTagsInput.value) : [];
+
+  const deadlineInput = document.getElementById("deadlineInput");
+  const deadline = deadlineInput ? deadlineInput.value : "";
+  const recurrenceSelect = document.getElementById("recurrenceSelect");
+  const recurrence = recurrenceSelect ? (recurrenceSelect.value || "none") : "none";
+
   if (text === "") {
     errorMsg.textContent = "Please enter a task.";
     return;
@@ -4078,28 +4097,77 @@ function addTask() {
 
   errorMsg.textContent = "";
 
-  const now = new Date();
-  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const day = dayNames[now.getDay()];
-  const date = `${now.getDate()} ${now.toLocaleString("default", { month: "long" })} ${now.getFullYear()}`;
-  const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-  const deadlineVal = document.getElementById('deadlineInput')?.value || null;
-  const deadlineIso = deadlineVal ? new Date(deadlineVal).toISOString() : null;
-  const dependsSel = document.getElementById('dependsSelect');
-  const dependsVals = dependsSel ? Array.from(dependsSel.selectedOptions).map(o => o.value).filter(v => v !== '') : [];
   const newTask = {
     id: generateTaskId(),
     text: text,
+    category,
+    priority,
     completed: false,
-    timestamp: `(${day}, ${date} at ${time})`,
-    deadline: deadlineIso
-    , depends: dependsVals.map(v => parseInt(v)).filter(Boolean)
+    createdAt: typeof getFormattedDateTime === "function" ? getFormattedDateTime(new Date()) : new Date().toLocaleString(),
+    deadline: deadline || null,
+    penaltyApplied: false,
+    tags
   };
 
+  if (recurrence && recurrence !== "none") {
+    newTask.recurrence = recurrence;
+    const template = {
+      id: `rt-${Date.now()}`,
+      text,
+      category,
+      priority,
+      recurrence,
+      active: true,
+      startDate: deadline || new Date().toISOString()
+    };
+    recurringTemplates.push(template);
+    newTask.masterId = template.id;
+  }
+
+  try {
+    const dependsSel = document.getElementById("dependsSelect");
+    if (dependsSel) {
+      const selected = Array.from(dependsSel.selectedOptions).map(o => o.value).filter(v => v !== "");
+      newTask.depends = selected.map(v => parseInt(v)).filter(Boolean);
+      const safeDeps = [];
+      newTask.depends.forEach(did => {
+        if (typeof hasCircularDependency === "function" && hasCircularDependency(newTask.id, did)) {
+          if (window && window.showToast) window.showToast("Dependency removed to avoid circular reference", "warning");
+        } else {
+          safeDeps.push(did);
+        }
+      });
+      newTask.depends = safeDeps;
+    } else {
+      newTask.depends = [];
+    }
+  } catch (e) {
+    newTask.depends = [];
+  }
+
   tasks.push(newTask);
-  saveAndRender();
   taskInput.value = "";
+  if (taskTagsInput) taskTagsInput.value = "";
+  if (deadlineInput) deadlineInput.value = "";
+
+  if (typeof storeRecentTags === "function") storeRecentTags(tags);
+
+  if (analyticsData && analyticsData.categoryStats) {
+    if (!analyticsData.categoryStats[category]) {
+      analyticsData.categoryStats[category] = { created: 0, completed: 0 };
+    }
+    analyticsData.categoryStats[category].created += 1;
+  }
+
+  if (typeof saveData === "function") saveData();
+  renderTasks();
+
+  if (typeof renderCalendar === "function") renderCalendar();
+  if (typeof updateDeadlineAlerts === "function") updateDeadlineAlerts();
+
+  if (typeof sendNotification === "function") sendNotification("Quest Assigned", `COMPLETE ${text} TASK ASAP`);
+  if (typeof showTaskPopup === "function") showTaskPopup(`COMPLETE ${text.toUpperCase()} TASK ASAP`);
+  if (typeof announce === "function") announce(`Task added: "${text}". Category: ${category}, Priority: ${priority}.`);
 }
 
 function removeTask(id) {
@@ -4194,64 +4262,334 @@ function updateOverdueFlags(){
 }
 
 function renderTasks() {
-  taskList.innerHTML = "";
+  const taskListEl = document.getElementById("taskList");
+  const boardColumns = document.getElementById("boardColumns");
+  const filtersDiv = document.querySelector(".filters");
 
-  // refresh depends select for creation
-  populateDependsSelect();
+  if (!taskListEl) return;
 
-  tasks.forEach(task => {
-    // apply filter
-    if (activeFilter === 'Overdue' && !task.overdue) return;
-
-    const li = document.createElement("li");
-    if (task.completed) li.classList.add("completed");
-    if (task.overdue) li.classList.add('overdue');
-
-    const deadlineLabel = task.deadline ? new Date(task.deadline).toLocaleString() : '';
-    const prereq = task.dependsOn ? tasks.find(t=>t.id===task.dependsOn) : null;
-    const depBadge = prereq ? (prereq.completed ? `<span class="dep-badge ready">Ready</span>` : `<span class="dep-badge blocked">Blocked</span>`) : '';
-    const depInfo = prereq ? `<div class="dep-info">Depends on: ${escapeHtml(prereq.text)}</div>` : '';
-    const allTasks = tasks; // Using the global tasks array
-    const relatedCount = CorrelationEngine.getCorrelationCount(task, allTasks);
-    let correlationBadge = '';
-    if (relatedCount > 0) {
-        correlationBadge = `
-            <span class="correlation-badge" 
-                  style="font-size: 0.7rem; background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px; margin-left: 8px; vertical-align: middle;" 
-                  title="${relatedCount} related task(s) in this subject">
-                  🔗 ${relatedCount}
-            </span>`;
-    }
-    li.innerHTML = `
-      <input type="checkbox" ${task.completed ? "checked" : ""} onchange="toggleTask('${task.id}')">
-      <span>
-        ${task.text}
-        ${depBadge}
-        ${correlationBadge}
-        <small style="display: block; font-size: 0.75rem; opacity: 0.7;">${task.timestamp}</small>
-        ${deadlineLabel ? `<div class="task-deadline ${task.overdue ? 'overdue' : ''}">Due: ${deadlineLabel}</div>` : ''}
-        ${depInfo}
-    const deps = Array.isArray(task.depends) ? task.depends : (task.dependsOn ? [task.dependsOn] : []);
-    const depTasks = deps.map(did => tasks.find(t => t.id === did)).filter(Boolean);
-    const blocked = depTasks.some(d => !d.completed);
-    const depBadge = deps.length ? (blocked ? `<span class="dep-badge blocked">Blocked</span>` : `<span class="dep-badge ready">Ready</span>`) : '';
-    const depInfo = deps.length ? `<div class="dep-info">Depends on: ${depTasks.map(d => escapeHtml(d.text) + (d.completed ? ' ✓' : '')).join(', ')}</div>` : '';
-    li.innerHTML = `
-      <input type="checkbox" ${task.completed ? "checked" : ""} onchange="toggleTask(${task.id})">
-      <span>
-        ${escapeHtml(task.text)}
-        <small style="display: block; font-size: 0.75rem; opacity: 0.7;">${escapeHtml(task.timestamp)}</small>
-      </span>
-      <div style="display: flex; gap: 5px;">
-        <button onclick="editTask('${task.id}')" style="padding: 0.5rem; font-size: 0.8rem;">Edit</button>
-        <button onclick="removeTask('${task.id}')" style="padding: 0.5rem; font-size: 0.8rem; background: var(--error-color, #ef4444);">Remove</button>
-      </div>
-    `;
-
-    taskList.appendChild(li);
+  // Ensure new tasks always have a category for Kanban grouping
+  tasks = tasks.map(task => {
+    if (!task.category) task.category = "Theory";
+    if (!task.priority) task.priority = "Medium";
+    if (!task.tags) task.tags = [];
+    return task;
   });
 
-  updateStats();
+  if (currentView === "list" || !boardColumns) {
+    taskListEl.style.display = "flex";
+    if (boardColumns) boardColumns.style.display = "none";
+    if (filtersDiv) filtersDiv.style.display = "flex";
+
+    taskListEl.innerHTML = "";
+
+    let filteredTasks = tasks;
+    if (typeof taskMatchesFilters === "function") {
+      filteredTasks = filteredTasks.filter(task => taskMatchesFilters(task));
+    } else if (typeof activeFilter !== "undefined" && activeFilter === "Overdue") {
+      filteredTasks = filteredTasks.filter(task => task.overdue);
+    }
+
+    if (smartSortEnabled && window.Prioritization) {
+      filteredTasks = window.Prioritization.getSortedTasksByPriority(filteredTasks);
+    }
+
+    if (currentSort === "priority") {
+      const priorityOrder = { High: 1, Medium: 2, Low: 3 };
+      filteredTasks.sort((a, b) => (priorityOrder[a.priority] || 99) - (priorityOrder[b.priority] || 99));
+    } else if (currentSort === "alphabetical") {
+      filteredTasks.sort((a, b) => a.text.localeCompare(b.text));
+    } else if (currentSort === "deadline") {
+      filteredTasks.sort((a, b) => {
+        const aD = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+        const bD = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+        return aD - bD;
+      });
+    }
+
+    if (filteredTasks.length === 0) {
+      taskListEl.innerHTML = `
+        <div class="empty-state">
+          <i class="ri-ghost-2-line"></i>
+          <h3>No Quests Yet</h3>
+          <p>Add tasks and begin your productivity journey ✨</p>
+        </div>
+      `;
+    } else {
+      filteredTasks.forEach(task => {
+        if (typeof createTaskEl === "function") {
+          taskListEl.appendChild(createTaskEl(task));
+        } else {
+          const li = document.createElement("li");
+          li.textContent = task.text;
+          taskListEl.appendChild(li);
+        }
+      });
+    }
+  } else {
+    taskListEl.style.display = "none";
+    boardColumns.style.display = "grid";
+    if (filtersDiv) filtersDiv.style.display = "none";
+
+    boardColumns.innerHTML = "";
+    const categories = ["Theory", "Practical", "Assignment", "Revision"];
+
+    categories.forEach(cat => {
+      const colDiv = document.createElement("div");
+      colDiv.className = "board-column";
+      colDiv.setAttribute("data-category", cat);
+
+      const colTasks = tasks.filter(t => (t.category || "Theory") === cat);
+      const catEmoji = typeof getCategoryEmoji === "function" ? getCategoryEmoji(cat) : "📌";
+
+      colDiv.innerHTML = `
+        <div class="board-column-header">
+          <div class="column-title">${catEmoji} ${cat}</div>
+          <div class="column-count">${colTasks.length}</div>
+        </div>
+        <div class="board-column-body" data-category="${cat}"></div>
+      `;
+
+      const bodyDiv = colDiv.querySelector(".board-column-body");
+      colTasks.forEach(task => {
+        if (typeof createTaskEl === "function") {
+          bodyDiv.appendChild(createTaskEl(task));
+        }
+      });
+
+      if (typeof setupColumnDragOver === "function") {
+        setupColumnDragOver(bodyDiv);
+      }
+      boardColumns.appendChild(colDiv);
+    });
+  }
+
+  if (typeof renderTagSuggestions === "function") renderTagSuggestions();
+  if (typeof renderTagFilters === "function") renderTagFilters();
+  if (typeof updateStats === "function") updateStats();
+  try { if (typeof renderDependsSelect === "function") renderDependsSelect(); } catch (e) {}
+}
+
+// ==========================
+// Flashcards Study Mode
+// ==========================
+function loadFlashcards() {
+  try {
+    if (window.TaskQuestStorage && window.TaskQuestStorage.getFlashcards) {
+      flashcards = window.TaskQuestStorage.getFlashcards();
+    } else {
+      flashcards = JSON.parse(localStorage.getItem("taskquest_v1.flashcards") || "[]");
+    }
+  } catch (e) {
+    flashcards = [];
+  }
+  if (!Array.isArray(flashcards)) flashcards = [];
+}
+
+function saveFlashcards() {
+  try {
+    if (window.TaskQuestStorage && window.TaskQuestStorage.setFlashcards) {
+      window.TaskQuestStorage.setFlashcards(flashcards);
+    } else {
+      localStorage.setItem("taskquest_v1.flashcards", JSON.stringify(flashcards));
+    }
+  } catch (e) {
+    console.warn("[TaskQuest] Failed to persist flashcards.", e);
+  }
+}
+
+function getActiveFlashcards() {
+  if (flashSubjectFilter === "All") return flashcards;
+  return flashcards.filter(card => card.subject === flashSubjectFilter);
+}
+
+function rebuildFlashcardOrder() {
+  const active = getActiveFlashcards();
+  flashcardOrder = active.map(card => card.id);
+  if (flashShuffleEnabled) {
+    for (let i = flashcardOrder.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [flashcardOrder[i], flashcardOrder[j]] = [flashcardOrder[j], flashcardOrder[i]];
+    }
+  }
+  currentFlashIndex = 0;
+}
+
+function getCurrentFlashcard() {
+  const active = getActiveFlashcards();
+  if (active.length === 0) return null;
+  const id = flashcardOrder[currentFlashIndex] || active[0].id;
+  return active.find(card => card.id === id) || active[0];
+}
+
+function renderFlashcardSubjects() {
+  const select = document.getElementById("flashSubjectFilter");
+  if (!select) return;
+  const subjects = Array.from(new Set(flashcards.map(card => card.subject))).sort();
+  const options = ['All', ...subjects];
+  select.innerHTML = options.map(sub => `<option value="${escapeHtml(sub)}">${escapeHtml(sub)}</option>`).join("");
+  select.value = flashSubjectFilter;
+}
+
+function updateFlashcardCounters() {
+  const active = getActiveFlashcards();
+  const learnedCount = active.filter(card => card.status === "learned").length;
+  const counterEl = document.getElementById("flashcardCounter");
+  const progressEl = document.getElementById("flashcardProgressText");
+  if (counterEl) {
+    const displayIndex = active.length ? currentFlashIndex + 1 : 0;
+    counterEl.textContent = `Card ${displayIndex} / ${active.length}`;
+  }
+  if (progressEl) {
+    progressEl.textContent = `${learnedCount} / ${active.length} learned`;
+  }
+}
+
+function renderFlashcardView() {
+  renderFlashcardSubjects();
+  rebuildFlashcardOrder();
+  updateFlashcardDisplay();
+}
+
+function updateFlashcardDisplay() {
+  const cardEl = document.getElementById("flashcardCard");
+  const qEl = document.getElementById("flashQuestionText");
+  const aEl = document.getElementById("flashAnswerText");
+  if (!cardEl || !qEl || !aEl) return;
+
+  cardEl.classList.remove("is-flipped");
+  const card = getCurrentFlashcard();
+  if (!card) {
+    qEl.textContent = "Add a flashcard to begin.";
+    aEl.textContent = "Your answer will appear here.";
+    updateFlashcardCounters();
+    return;
+  }
+
+  qEl.textContent = card.question;
+  aEl.textContent = card.answer;
+  updateFlashcardCounters();
+}
+
+function goToFlashcard(delta) {
+  const active = getActiveFlashcards();
+  if (active.length === 0) return;
+  currentFlashIndex = (currentFlashIndex + delta + active.length) % active.length;
+  updateFlashcardDisplay();
+}
+
+function toggleFlashcardFlip() {
+  const cardEl = document.getElementById("flashcardCard");
+  if (cardEl) cardEl.classList.toggle("is-flipped");
+}
+
+function updateFlashcardStatus(status) {
+  const card = getCurrentFlashcard();
+  if (!card) return;
+  card.status = status;
+  saveFlashcards();
+  updateFlashcardCounters();
+  goToFlashcard(1);
+}
+
+function initFlashcards() {
+  loadFlashcards();
+  renderFlashcardSubjects();
+  rebuildFlashcardOrder();
+  updateFlashcardDisplay();
+
+  const addBtn = document.getElementById("addFlashcardBtn");
+  const subjectInput = document.getElementById("flashSubjectInput");
+  const questionInput = document.getElementById("flashQuestionInput");
+  const answerInput = document.getElementById("flashAnswerInput");
+  const filterSelect = document.getElementById("flashSubjectFilter");
+  const shuffleBtn = document.getElementById("flashShuffleBtn");
+  const prevBtn = document.getElementById("flashPrevBtn");
+  const nextBtn = document.getElementById("flashNextBtn");
+  const flipBtn = document.getElementById("flashFlipBtn");
+  const learnedBtn = document.getElementById("flashLearnedBtn");
+  const reviewBtn = document.getElementById("flashReviewBtn");
+  const cardEl = document.getElementById("flashcardCard");
+
+  if (addBtn && subjectInput && questionInput && answerInput) {
+    addBtn.addEventListener("click", () => {
+      const subject = subjectInput.value.trim();
+      const question = questionInput.value.trim();
+      const answer = answerInput.value.trim();
+      if (!subject || !question || !answer) {
+        if (window.showToast) window.showToast("Please fill subject, question, and answer.", "warning");
+        return;
+      }
+      const card = {
+        id: `fc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        subject,
+        question,
+        answer,
+        status: "new",
+        createdAt: new Date().toISOString()
+      };
+      flashcards.push(card);
+      saveFlashcards();
+      subjectInput.value = "";
+      questionInput.value = "";
+      answerInput.value = "";
+      flashSubjectFilter = "All";
+      renderFlashcardView();
+      if (window.showToast) window.showToast("Flashcard added.", "success");
+    });
+  }
+
+  if (filterSelect) {
+    filterSelect.addEventListener("change", () => {
+      flashSubjectFilter = filterSelect.value || "All";
+      renderFlashcardView();
+    });
+  }
+
+  if (shuffleBtn) {
+    shuffleBtn.addEventListener("click", () => {
+      flashShuffleEnabled = !flashShuffleEnabled;
+      shuffleBtn.setAttribute("aria-pressed", flashShuffleEnabled ? "true" : "false");
+      shuffleBtn.classList.toggle("active", flashShuffleEnabled);
+      rebuildFlashcardOrder();
+      updateFlashcardDisplay();
+    });
+  }
+
+  prevBtn?.addEventListener("click", () => goToFlashcard(-1));
+  nextBtn?.addEventListener("click", () => goToFlashcard(1));
+  flipBtn?.addEventListener("click", toggleFlashcardFlip);
+  learnedBtn?.addEventListener("click", () => updateFlashcardStatus("learned"));
+  reviewBtn?.addEventListener("click", () => updateFlashcardStatus("review"));
+  cardEl?.addEventListener("click", toggleFlashcardFlip);
+
+  document.addEventListener("keydown", (e) => {
+    const activeTab = document.querySelector(".tab-content.active");
+    if (!activeTab || activeTab.id !== "flashcards-tab") return;
+    const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName || "");
+    if (isTyping) return;
+
+    if (e.key === " " || e.key === "Spacebar") {
+      e.preventDefault();
+      toggleFlashcardFlip();
+    } else if (e.key === "ArrowRight") {
+      goToFlashcard(1);
+    } else if (e.key === "ArrowLeft") {
+      goToFlashcard(-1);
+    } else if (e.key.toLowerCase() === "l") {
+      updateFlashcardStatus("learned");
+    } else if (e.key.toLowerCase() === "r") {
+      updateFlashcardStatus("review");
+    } else if (e.key.toLowerCase() === "s") {
+      flashShuffleEnabled = !flashShuffleEnabled;
+      if (shuffleBtn) {
+        shuffleBtn.setAttribute("aria-pressed", flashShuffleEnabled ? "true" : "false");
+        shuffleBtn.classList.toggle("active", flashShuffleEnabled);
+      }
+      rebuildFlashcardOrder();
+      updateFlashcardDisplay();
+    }
+  });
 }
 
 function updateStats() {

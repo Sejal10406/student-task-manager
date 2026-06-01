@@ -1446,10 +1446,31 @@ function restoreEntry(id) {
 ══════════════════════════════════════════════════════════ */
 function calcStreak() {
   if (!vault.length) return 0;
-  const days = new Set(vault.map(e => new Date(e.date).toDateString()));
+
+  // Entries are stored as UTC ISO strings (new Date().toISOString()).
+  // toDateString() converts to local timezone, so a session saved at
+  // 23:00 UTC by a UTC+5:30 user is attributed to the *next* local day,
+  // inflating the streak. Conversely, a session saved just before local
+  // midnight may be attributed to the previous UTC day, breaking a
+  // genuine streak.
+  //
+  // Fix: normalise every date to a local YYYY-MM-DD string so both the
+  // vault set and the walk-back cursor use the same local calendar day.
+  function toLocalDateKey(dateStr) {
+    const d = new Date(dateStr);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  const days = new Set(vault.map(e => toLocalDateKey(e.date)));
   let streak = 0;
-  const d = new Date();
-  while (days.has(d.toDateString())) { streak++; d.setDate(d.getDate() - 1); }
+  const cursor = new Date();
+  while (days.has(toLocalDateKey(cursor.toISOString()))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
   return streak;
 }
 
