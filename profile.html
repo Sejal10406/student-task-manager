@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Dashboard • TaskQuest</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Poppins:wght@600;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .profile-dashboard { display: flex; flex-direction: column; gap: 30px; }
+        .profile-hero { display: flex; align-items: center; gap: 30px; padding: 40px; flex-wrap: wrap; }
+        .profile-photo-container {
+            width: 150px; height: 150px; border-radius: 50%; overflow: hidden;
+            border: 4px solid var(--primary); background: var(--card);
+            display: flex; align-items: center; justify-content: center; position: relative;
+        }
+        .profile-photo-container img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-photo-container i { font-size: 80px; color: var(--text-muted); }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .info-section { padding: 24px; }
+        .info-section h3 { margin-bottom: 15px; color: var(--secondary); display: flex; align-items: center; gap: 10px; }
+        .detail-item { margin-bottom: 10px; display: flex; flex-direction: column; }
+        .detail-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+        .detail-value { font-size: 16px; font-weight: 600; color: var(--text); }
+        .edit-form { display: none; padding: 30px; }
+        .edit-form.active { display: grid; gap: 25px; }
+        .view-mode.hidden { display: none; }
+        .tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .tag { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); padding: 5px 14px; border-radius: 20px; font-size: 13px; color: var(--text); }
+        .input-group label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    </style>
+</head>
+<body data-theme="cosmic">
+    <div class="bg blur1"></div>
+    <div class="bg blur2"></div>
+    <div class="grid-overlay"></div>
+
+    <header class="site-header">
+        <div class="header-inner">
+            <a href="index.html" class="view-btn"><i class="ri-arrow-left-line"></i> Dashboard</a>
+            <div class="header-brand">
+                <h1>👤 Profile Dashboard</h1>
+            </div>
+            <div class="header-controls">
+                <button id="editProfileBtn" class="view-btn primary"><i class="ri-edit-line"></i> Edit Profile</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="profile-dashboard">
+            <!-- VIEW MODE -->
+            <div id="viewMode" class="view-mode">
+                <div class="glass profile-hero">
+                    <div class="profile-photo-container">
+                        <img id="viewPhoto" src="" alt="Profile Photo" style="display:none;">
+                        <i id="viewPhotoPlaceholder" class="ri-user-3-fill"></i>
+                    </div>
+                    <div>
+                        <h2 id="viewFullName" style="font-size: 2.5rem; margin: 0; font-family: 'Poppins', sans-serif;">Student Hero</h2>
+                        <p id="viewInstitution" style="color: var(--text-muted); font-size: 1.1rem; margin-top: 5px;">Your School/College Name</p>
+                        <span id="viewStandard" class="view-btn small active" style="margin-top: 15px; display: inline-block;">Class 10</span>
+                    </div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="glass info-section">
+                        <h3><i class="ri-medal-line"></i> Academic Progress</h3>
+                        <div class="detail-item">
+                            <span class="detail-label">Current Marks / GPA</span>
+                            <span class="detail-value" id="viewMarks">Not set</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Strong Subject</span>
+                            <span class="detail-value" id="viewStrongSubject">Not set</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Weak Subject</span>
+                            <span class="detail-value" id="viewWeakSubject">Not set</span>
+                        </div>
+                    </div>
+
+                    <div class="glass info-section">
+                        <h3><i class="ri-flashlight-line"></i> Goals & Aspirations</h3>
+                        <div class="detail-item">
+                            <span class="detail-label">Your Primary Goal</span>
+                            <span class="detail-value" id="viewGoal">Not set</span>
+                        </div>
+                    </div>
+
+                    <div class="glass info-section">
+                        <h3><i class="ri-tools-line"></i> Skills</h3>
+                        <div id="viewSkills" class="tag-list"></div>
+                    </div>
+
+                    <div class="glass info-section">
+                        <h3><i class="ri-heart-line"></i> Hobbies</h3>
+                        <div id="viewHobbies" class="tag-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EDIT MODE -->
+            <div id="editMode" class="glass edit-form">
+                <h2 style="margin-bottom: 25px; font-family: 'Poppins', sans-serif;"><i class="ri-edit-box-line"></i> Update Information</h2>
+                
+                <div class="task-box" style="grid-template-columns: 1fr; gap: 20px;">
+                    <div class="input-group">
+                        <label>Profile Photo</label>
+                        <input type="file" id="inputPhoto" accept="image/*" style="padding: 10px;">
+                    </div>
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" id="inputFullName" placeholder="e.g. John Doe">
+                    </div>
+                    <div class="input-group">
+                        <label>Standard / Class</label>
+                        <input type="text" id="inputStandard" placeholder="e.g. Class 10">
+                    </div>
+                    <div class="input-group">
+                        <label>School / College Name</label>
+                        <input type="text" id="inputInstitution" placeholder="e.g. Harvard University">
+                    </div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="task-box" style="grid-template-columns: 1fr; gap: 20px;">
+                        <div class="input-group">
+                            <label>Academic Marks / GPA</label>
+                            <input type="text" id="inputMarks" placeholder="e.g. 85% or 3.8 GPA">
+                        </div>
+                        <div class="input-group">
+                            <label>Strong Subject</label>
+                            <input type="text" id="inputStrongSubject" placeholder="e.g. Mathematics">
+                        </div>
+                        <div class="input-group">
+                            <label>Weak Subject</label>
+                            <input type="text" id="inputWeakSubject" placeholder="e.g. History">
+                        </div>
+                    </div>
+                    <div class="task-box" style="grid-template-columns: 1fr; gap: 20px;">
+                        <div class="input-group">
+                            <label>Your Goal</label>
+                            <textarea id="inputGoal" placeholder="What are you working towards?" style="min-height: 140px; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); border-radius: 18px; color: var(--text); padding: 15px;"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="task-box" style="grid-template-columns: 1fr; gap: 20px;">
+                        <div class="input-group">
+                            <label>Skills (comma separated)</label>
+                            <input type="text" id="inputSkills" placeholder="e.g. Python, Public Speaking, Design">
+                        </div>
+                    </div>
+                    <div class="task-box" style="grid-template-columns: 1fr; gap: 20px;">
+                        <div class="input-group">
+                            <label>Hobbies (comma separated)</label>
+                            <input type="text" id="inputHobbies" placeholder="e.g. Reading, Hiking, Gaming">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px; margin-top: 10px;">
+                    <button id="saveProfileBtn" class="btn btn-primary" style="flex: 2;"><i class="ri-save-line"></i> Save Information</button>
+                    <button id="cancelEditBtn" class="btn btn-ghost" style="flex: 1;"><i class="ri-close-line"></i> Cancel</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="storage.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const viewMode = document.getElementById('viewMode');
+            const editMode = document.getElementById('editMode');
+            const editProfileBtn = document.getElementById('editProfileBtn');
+            const saveProfileBtn = document.getElementById('saveProfileBtn');
+            const cancelEditBtn = document.getElementById('cancelEditBtn');
+
+            const savedTheme = (window.TaskQuestStorage && TaskQuestStorage.getTheme()) || localStorage.getItem('quests_theme') || 'cosmic';
+            document.body.setAttribute('data-theme', savedTheme);
+
+            function loadProfile() {
+                const profile = (window.TaskQuestStorage && TaskQuestStorage.getProfile()) || JSON.parse(localStorage.getItem('quests_profile')) || {};
+                
+                document.getElementById('viewFullName').textContent = profile.fullName || profile.name || "Student Hero";
+                document.getElementById('viewStandard').textContent = profile.standard || profile.class || "Class 10";
+                document.getElementById('viewInstitution').textContent = profile.institution || "Your School/College Name";
+                document.getElementById('viewMarks').textContent = profile.marks || "Not set";
+                document.getElementById('viewStrongSubject').textContent = profile.strongSubject || "Not set";
+                document.getElementById('viewWeakSubject').textContent = profile.weakSubject || "Not set";
+                document.getElementById('viewGoal').textContent = profile.goal || "Not set";
+
+                const photoImg = document.getElementById('viewPhoto');
+                const photoPlaceholder = document.getElementById('viewPhotoPlaceholder');
+                if (profile.photo) {
+                    photoImg.src = profile.photo; photoImg.style.display = 'block'; photoPlaceholder.style.display = 'none';
+                } else {
+                    photoImg.style.display = 'none'; photoPlaceholder.style.display = 'block';
+                }
+
+                const renderTags = (id, str) => {
+                    const el = document.getElementById(id); el.innerHTML = '';
+                    (str || "").split(',').forEach(tag => {
+                        if (tag.trim()) {
+                            const span = document.createElement('span'); span.className = 'tag';
+                            span.textContent = tag.trim(); el.appendChild(span);
+                        }
+                    });
+                };
+                renderTags('viewSkills', profile.skills);
+                renderTags('viewHobbies', profile.hobbies);
+
+                document.getElementById('inputFullName').value = profile.fullName || profile.name || "";
+                document.getElementById('inputStandard').value = profile.standard || profile.class || "";
+                document.getElementById('inputInstitution').value = profile.institution || "";
+                document.getElementById('inputMarks').value = profile.marks || "";
+                document.getElementById('inputStrongSubject').value = profile.strongSubject || "";
+                document.getElementById('inputWeakSubject').value = profile.weakSubject || "";
+                document.getElementById('inputGoal').value = profile.goal || "";
+                document.getElementById('inputSkills').value = profile.skills || "";
+                document.getElementById('inputHobbies').value = profile.hobbies || "";
+            }
+
+            editProfileBtn.onclick = () => { viewMode.classList.add('hidden'); editMode.classList.add('active'); editProfileBtn.style.display = 'none'; };
+            cancelEditBtn.onclick = () => { viewMode.classList.remove('hidden'); editMode.classList.remove('active'); editProfileBtn.style.display = 'flex'; };
+
+            saveProfileBtn.onclick = async () => {
+                const current = (window.TaskQuestStorage && TaskQuestStorage.getProfile()) || {};
+                const updated = {
+                    fullName: document.getElementById('inputFullName').value.trim(),
+                    name: document.getElementById('inputFullName').value.trim(), // Sync for compatibility
+                    standard: document.getElementById('inputStandard').value.trim(),
+                    class: document.getElementById('inputStandard').value.trim(), // Sync for compatibility
+                    institution: document.getElementById('inputInstitution').value.trim(),
+                    marks: document.getElementById('inputMarks').value.trim(),
+                    strongSubject: document.getElementById('inputStrongSubject').value.trim(),
+                    weakSubject: document.getElementById('inputWeakSubject').value.trim(),
+                    goal: document.getElementById('inputGoal').value.trim(),
+                    skills: document.getElementById('inputSkills').value.trim(),
+                    hobbies: document.getElementById('inputHobbies').value.trim(),
+                    photo: current.photo, gender: current.gender, title: current.title
+                };
+
+                const photoInput = document.getElementById('inputPhoto');
+                if (photoInput.files[0]) {
+                    updated.photo = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(photoInput.files[0]); });
+                }
+
+                if (window.TaskQuestStorage) TaskQuestStorage.setProfile(updated);
+                else localStorage.setItem('quests_profile', JSON.stringify(updated));
+
+                loadProfile();
+                viewMode.classList.remove('hidden'); editMode.classList.remove('active'); editProfileBtn.style.display = 'flex';
+                if (window.showToast) window.showToast("Profile dashboard saved!", "success");
+            };
+            loadProfile();
+        });
+    </script>
+</body>
+</html>
