@@ -15,6 +15,9 @@
  *   ✅ Stackable — multiple toasts queue vertically
  *   ✅ Theme-aware — respects CSS custom properties
  *   ✅ No dependencies — plain JS
+ *   ✅ Auto-pauses countdown on hover
+ *   ✅ Visual countdown progress bar
+ *   ✅ Queue management (limits active toasts to max 4)
  *
  * Usage:
  *   Include AFTER style.css (uses CSS variables).
@@ -30,6 +33,7 @@
 
   const TOAST_DURATION_MS = 3000;
   const TOAST_ANIMATION_MS = 300;
+  const MAX_TOASTS = 4;
 
   const TOAST_TYPES = {
     success: { icon: '<i class="ri-checkbox-circle-fill"></i>', role: "status",  color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.2)" },
@@ -54,10 +58,13 @@
     }
 
     .toast {
+      position: relative;
+      overflow: hidden;
       display: flex;
       align-items: flex-start;
       gap: 0.6rem;
       padding: 0.75rem 1rem;
+      padding-bottom: 0.95rem;
       border-radius: 10px;
       border: 1px solid;
       font-size: 0.875rem;
@@ -102,6 +109,27 @@
 
     .toast-close:hover { opacity: 1; }
 
+    .toast-progress {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      width: 100%;
+      background-color: currentColor;
+      opacity: 0.35;
+      transform-origin: left;
+      animation: toastProgress linear forwards;
+    }
+
+    .toast.paused .toast-progress {
+      animation-play-state: paused;
+    }
+
+    @keyframes toastProgress {
+      from { transform: scaleX(1); }
+      to   { transform: scaleX(0); }
+    }
+
     @keyframes toastSlideIn {
       from { transform: translateX(110%); opacity: 0; }
       to   { transform: translateX(0);   opacity: 1; }
@@ -123,6 +151,7 @@
 
     @media (prefers-reduced-motion: reduce) {
       .toast, .toast.dismissing { animation: none; }
+      .toast-progress { display: none; }
     }
   `;
   document.head.appendChild(styleEl);
@@ -153,6 +182,12 @@
     const config = TOAST_TYPES[type] || TOAST_TYPES.info;
     const container = getContainer();
 
+    // Limit active toasts
+    const activeToasts = container.querySelectorAll(".toast:not(.dismissing)");
+    if (activeToasts.length >= MAX_TOASTS) {
+      dismiss(activeToasts[0]); // Dismiss the oldest toast
+    }
+
     const toast = document.createElement("div");
     toast.className = "toast";
     toast.setAttribute("role", config.role);
@@ -167,17 +202,50 @@
       <span class="toast-icon" aria-hidden="true" style="display: flex; align-items: center; font-size: 1.2rem;">${config.icon}</span>
       <span class="toast-body">${escapeHTML(message)}</span>
       <button class="toast-close" aria-label="Dismiss notification" title="Dismiss">✕</button>
+      ${duration > 0 ? `<div class="toast-progress" style="animation-duration: ${duration}ms"></div>` : ''}
     `;
 
     const closeBtn = toast.querySelector(".toast-close");
     closeBtn.addEventListener("click", () => dismiss(toast));
 
-    container.appendChild(toast);
+    // Pause on Hover Logic
+    let dismissTimeout;
+    let startTime = Date.now();
+    let remainingTime = duration;
 
-    if (duration > 0) {
-      setTimeout(() => dismiss(toast), duration);
+    function startTimer() {
+      if (duration > 0) {
+        startTime = Date.now();
+        dismissTimeout = setTimeout(() => dismiss(toast), remainingTime);
+      }
     }
 
+    function pauseTimer() {
+      if (duration > 0) {
+        clearTimeout(dismissTimeout);
+        remainingTime -= Date.now() - startTime;
+        toast.classList.add("paused");
+      }
+    }
+
+    function resumeTimer() {
+      if (duration > 0) {
+        if (remainingTime <= 0) {
+          dismiss(toast);
+        } else {
+          toast.classList.remove("paused");
+          startTimer();
+        }
+      }
+    }
+
+    if (duration > 0) {
+      toast.addEventListener("mouseenter", pauseTimer);
+      toast.addEventListener("mouseleave", resumeTimer);
+      startTimer();
+    }
+
+    container.appendChild(toast);
     return toast;
   }
 
