@@ -2261,5 +2261,16 @@
     <i class="ri-arrow-up-line"></i>
   </button>
   <style> html { scroll-behavior: smooth; } </style>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("sw.js").then(function (reg) {
+          console.log("[TaskQuest SW] Registered successfully with scope:", reg.scope);
+        }).catch(function (err) {
+          console.warn("[TaskQuest SW] Registration failed:", err);
+        });
+      });
+    }
+  </script>
 </body>
 </html>
