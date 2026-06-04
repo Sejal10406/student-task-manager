@@ -566,3 +566,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* Announce departure */
 window.addEventListener('beforeunload', () => announcePresence('left'));
+
+const syncStatus = {
+  isConnected: false,
+  lastSyncTimestamp: Date.now(),
+  updateStatus(status) {
+    this.isConnected = status;
+    this.lastSyncTimestamp = Date.now();
+  }
+};
