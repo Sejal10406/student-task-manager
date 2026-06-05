@@ -106,8 +106,19 @@
         .map((q) => dateKey(parseQuestDate(q, "completedAt") || new Date(q.createdAt)))
     );
     let streak = 0;
-    const d = new Date();
+    let d = new Date();
     d.setHours(0, 0, 0, 0);
+    
+    // If today is not in the completed days set, check if yesterday was.
+    // This prevents the streak from resetting to 0 if the student hasn't completed a task yet today.
+    if (!days.has(dateKey(d))) {
+      const yesterday = new Date(d);
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (days.has(dateKey(yesterday))) {
+        d = yesterday;
+      }
+    }
+
     while (days.has(dateKey(d))) {
       streak++;
       d.setDate(d.getDate() - 1);
