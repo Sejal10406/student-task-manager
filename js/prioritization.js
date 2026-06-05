@@ -1,3 +1,9 @@
+/**
+ * @fileoverview TaskQuest Client Library and utilities.
+ * @author Senior Open-Source Contributor
+ * @version 2.0.0
+ */
+
 // prioritization.js — Adaptive Task Prioritization Engine
 // Loaded BEFORE script.js via <script> tag in index.html
 
