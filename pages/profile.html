@@ -356,7 +356,7 @@ header{
           <span id="viewInitials">?</span>
         </div>
         <div class="avatar-edit-hint" onclick="document.getElementById('photoInput').click()">✎</div>
-        <input type="file" id="photoInput" accept="image/*" onchange="handlePhoto(this)">
+        <input aria-label="Interactive Form Field" type="file" id="photoInput" accept="image/*" onchange="handlePhoto(this)">
       </div>
       <div class="hero-info">
         <div class="hero-name" id="viewName">Student Hero</div>
@@ -392,15 +392,15 @@ header{
       <div class="form-grid">
         <div class="form-group">
           <label>Full Name</label>
-          <input type="text" id="iName" placeholder="e.g. John Doe" oninput="previewInitials()">
+          <input aria-label="Interactive Form Field" type="text" id="iName" placeholder="e.g. John Doe" oninput="previewInitials()">
         </div>
         <div class="form-group">
           <label>Class / Standard</label>
-          <input type="text" id="iClass" placeholder="e.g. Class 10">
+          <input aria-label="Interactive Form Field" type="text" id="iClass" placeholder="e.g. Class 10">
         </div>
         <div class="form-group full">
           <label>School / College</label>
-          <input type="text" id="iInstitution" placeholder="e.g. Harvard University">
+          <input aria-label="Interactive Form Field" type="text" id="iInstitution" placeholder="e.g. Harvard University">
         </div>
       </div>
 
@@ -408,15 +408,15 @@ header{
       <div class="form-grid">
         <div class="form-group">
           <label>Marks / GPA</label>
-          <input type="text" id="iMarks" placeholder="e.g. 85% or 3.8 GPA">
+          <input aria-label="Interactive Form Field" type="text" id="iMarks" placeholder="e.g. 85% or 3.8 GPA">
         </div>
         <div class="form-group">
           <label>Strong Subject</label>
-          <input type="text" id="iStrong" placeholder="e.g. Mathematics">
+          <input aria-label="Interactive Form Field" type="text" id="iStrong" placeholder="e.g. Mathematics">
         </div>
         <div class="form-group">
           <label>Weak Subject</label>
-          <input type="text" id="iWeak" placeholder="e.g. History">
+          <input aria-label="Interactive Form Field" type="text" id="iWeak" placeholder="e.g. History">
         </div>
       </div>
 
@@ -428,11 +428,11 @@ header{
         </div>
         <div class="form-group">
           <label>Skills <span style="font-weight:400;opacity:0.6;text-transform:none;letter-spacing:0">(comma separated)</span></label>
-          <input type="text" id="iSkills" placeholder="Python, Design, Speaking">
+          <input aria-label="Interactive Form Field" type="text" id="iSkills" placeholder="Python, Design, Speaking">
         </div>
         <div class="form-group">
           <label>Hobbies <span style="font-weight:400;opacity:0.6;text-transform:none;letter-spacing:0">(comma separated)</span></label>
-          <input type="text" id="iHobbies" placeholder="Reading, Gaming, Hiking">
+          <input aria-label="Interactive Form Field" type="text" id="iHobbies" placeholder="Reading, Gaming, Hiking">
         </div>
       </div>
 
