@@ -574,4 +574,4 @@ const syncStatus = {
     this.isConnected = status;
     this.lastSyncTimestamp = Date.now();
   }
-};
+};
