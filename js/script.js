@@ -4674,3 +4674,16 @@ document.getElementById('exportJsonBtn')?.addEventListener('click', () => { cons
 window.addEventListener('error', (e) => console.error('Global Error:', e.message));
 
 window.addEventListener('error', (e) => console.error('Global Error:', e.message));
+
+// ── Keyboard Shortcuts Listener ──
+document.addEventListener("keydown", (e) => {
+  if (e.key === "?") {
+    const m = document.getElementById("shortcutsModal");
+    if (m) {
+      m.style.display = m.style.display === "none" ? "flex" : "none";
+    }
+  } else if (e.key === "Escape") {
+    const m = document.getElementById("shortcutsModal");
+    if (m) m.style.display = "none";
+  }
+});
