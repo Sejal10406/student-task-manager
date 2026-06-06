@@ -1,0 +1,16 @@
+name: PR Size Labeler
+
+on:
+  pull_request:
+
+permissions:
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: pascalgn/size-label-action@v0.5.5
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          IGNORED_FILES: "package-lock.json"
