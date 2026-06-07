@@ -201,6 +201,30 @@
     getFlashcards: function () { return get(KEYS.FLASHCARDS, []); },
     setFlashcards: function (v) { return set(KEYS.FLASHCARDS, v); },
 
+    // Storage Quota Visualizer Report Helper
+    getStorageUsageReport: function () {
+      let totalBytes = 0;
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(NS)) {
+            const val = localStorage.getItem(key);
+            totalBytes += (key.length + (val ? val.length : 0)) * 2; // UTF-16 characters use 2 bytes
+          }
+        }
+      } catch (e) {
+        console.warn("Could not read localStorage size", e);
+      }
+      const quotaLimitBytes = 5 * 1024 * 1024; // 5MB standard limit
+      const percentage = parseFloat(((totalBytes / quotaLimitBytes) * 100).toFixed(2));
+      return {
+        usedBytes: totalBytes,
+        limitBytes: quotaLimitBytes,
+        percentage: percentage,
+        status: percentage > 85 ? "warning" : "ok"
+      };
+    },
+
     // Run migration (call once at app boot)
     migrate: migrate,
 
