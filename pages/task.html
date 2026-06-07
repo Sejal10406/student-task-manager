@@ -457,8 +457,8 @@
 
     <div class="color-row" id="color-row"></div>
 
-    <input type="text" id="subject-name-input" placeholder="Subject name (e.g. Mathematics)" maxlength="40">
-    <input type="text" id="subject-emoji-input" placeholder="Icon emoji 📚" maxlength="4" style="max-width:100px">
+    <input aria-label="Interactive Form Field" type="text" id="subject-name-input" placeholder="Subject name (e.g. Mathematics)" maxlength="40">
+    <input aria-label="Interactive Form Field" type="text" id="subject-emoji-input" placeholder="Icon emoji 📚" maxlength="4" style="max-width:100px">
     <button class="btn btn-primary" onclick="addSubject()">Add Subject</button>
   </div>
 
@@ -679,7 +679,7 @@ function renderCard(subjectId) {
 
     <!-- Add Topic -->
     <div class="add-topic-row">
-      <input type="text" id="topic-input-${subjectId}" placeholder="Add a topic…" maxlength="80"
+      <input aria-label="Interactive Form Field" type="text" id="topic-input-${subjectId}" placeholder="Add a topic…" maxlength="80"
         onkeydown="if(event.key==='Enter')addTopic(${subjectId})">
       <button class="btn-add-topic" onclick="addTopic(${subjectId})" title="Add topic">+</button>
     </div>
