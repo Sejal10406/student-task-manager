@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Challenges • TaskQuest</title>
+<meta name="description" content="Take random challenges and earn badges to level up your study efficiency." />
+<link rel="stylesheet" href="../css/Challenge.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+</head>
+<body>
+<main>
+
+<div class="page-wrapper">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <button class="back-btn" onclick="history.back()"><i class="ti ti-arrow-left"></i></button>
+      <div>
+        <h1 class="page-title">Challenges</h1>
+        <p class="page-sub">Complete tasks. Earn rewards.</p>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-pill"><i class="ti ti-coin"></i> <span id="total-pts">0</span> pts</div>
+      <div class="stat-pill badge-pill"><i class="ti ti-medal"></i> <span id="badge-count">0</span></div>
+    </div>
+  </header>
+
+  <!-- Achievements bar -->
+  <div class="achievements-bar" id="achievements-bar">
+    <div class="ach-label"><i class="ti ti-trophy"></i> Achievements</div>
+    <div class="ach-badges" id="ach-badges">
+      <span class="ach-empty">No badges yet — complete challenges to earn!</span>
+    </div>
+  </div>
+
+  <!-- Random Challenge Generator -->
+  <section class="challenge-section">
+    <div class="section-header">
+      <h2 class="section-title"><i class="ti ti-sparkles"></i> Random Challenge</h2>
+      <p class="section-desc">Hit the button and get a surprise productivity challenge assigned to you.</p>
+    </div>
+
+    <button class="btn-random" id="randomBtn" onclick="generateChallenge()">
+      <i class="ti ti-refresh"></i> Get Random Challenge
+    </button>
+
+    <!-- Challenge Card -->
+    <div class="challenge-card hidden" id="challenge-card">
+      <div class="challenge-header">
+        <span class="challenge-tag" id="challenge-tag">📚 Reading</span>
+        <span class="pts-badge" id="challenge-pts">+10 pts</span>
+      </div>
+      <p class="challenge-text" id="challenge-text">Your challenge will appear here.</p>
+
+      <div class="response-area">
+        <p class="response-label">Type <strong>Yes, Done</strong> to claim your points or <strong>No</strong> to get a reminder.</p>
+        <div class="input-row">
+          <input type="text" id="user-input" class="response-input" placeholder="Type Yes, Done or No…" autocomplete="off"/>
+          <button class="btn-submit" onclick="handleResponse()"><i class="ti ti-send"></i></button>
+        </div>
+      </div>
+
+      <div class="feedback-msg hidden" id="feedback-msg"></div>
+    </div>
+  </section>
+
+  <!-- Active Challenges -->
+  <section class="challenge-section">
+    <div class="section-header">
+      <h2 class="section-title"><i class="ti ti-list-check"></i> Active Challenges</h2>
+    </div>
+    <div class="challenge-list" id="active-list">
+      <div class="empty-state">
+        <i class="ti ti-player-play"></i>
+        <p>No active challenges yet.<br>Generate one above to get started!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Completed Challenges -->
+  <section class="challenge-section">
+    <div class="section-header">
+      <h2 class="section-title"><i class="ti ti-circle-check"></i> Completed</h2>
+    </div>
+    <div class="challenge-list" id="completed-list">
+      <div class="empty-state">
+        <i class="ti ti-trophy"></i>
+        <p>No completed challenges yet.<br>You've got this, champ!</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script src="../js/storage.js"></script>
+<script src="../js/Challenge.js"></script>
+</body>
+</html>
+<script>console.log("Challenge page loaded and ready.");</script>
+
+<script>console.log("Challenge page loaded and ready.");</script>

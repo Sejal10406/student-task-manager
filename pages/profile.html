@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="description" content="TaskQuest is a gamified student task manager featuring study quests, collaborative lounge, and performance tracking.">
+  <meta name="keywords" content="task manager, study lounge, gamified learning, student productivity">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile — TaskQuest</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --surface2: #18181f;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --accent: #7c6dfa;
+  --accent2: #fa6d9b;
+  --text: #f0eeff;
+  --muted: #6b6880;
+  --muted2: #9b98aa;
+  --success: #4ade80;
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* BG FX */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 600px 400px at 20% 0%, rgba(124,109,250,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 300px at 80% 80%, rgba(250,109,155,0.08) 0%, transparent 70%);
+  pointer-events:none;z-index:0;
+}
+.grain{
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:0.4;
+}
+
+/* HEADER */
+header{
+  position:sticky;top:0;z-index:100;
+  padding:16px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(24px);
+  background:rgba(10,10,15,0.7);
+}
+.logo{
+  font-family:'Syne',sans-serif;
+  font-weight:800;font-size:18px;
+  letter-spacing:-0.02em;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.header-actions{display:flex;gap:10px;align-items:center}
+
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 18px;border-radius:var(--radius-sm);
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;
+  cursor:pointer;transition:all 0.2s;border:none;
+  text-decoration:none;
+}
+.btn-ghost{
+  background:transparent;
+  border:1px solid var(--border2);
+  color:var(--muted2);
+}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);background:rgba(124,109,250,0.06)}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent),#6255d6);
+  color:#fff;box-shadow:0 4px 20px rgba(124,109,250,0.3);
+}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(124,109,250,0.4)}
+.btn-primary:active{transform:translateY(0)}
+.btn-danger-ghost{background:transparent;border:1px solid rgba(250,109,155,0.3);color:var(--accent2)}
+.btn-danger-ghost:hover{background:rgba(250,109,155,0.08);border-color:var(--accent2)}
+
+/* LAYOUT */
+.container{
+  max-width:940px;margin:0 auto;
+  padding:40px 24px 80px;
+  position:relative;z-index:1;
+}
+
+/* HERO CARD */
+.hero-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:24px;
+  padding:36px;
+  display:flex;align-items:center;gap:28px;
+  flex-wrap:wrap;
+  margin-bottom:20px;
+  position:relative;overflow:hidden;
+  animation:fadeUp 0.4s ease both;
+}
+.hero-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent);
+}
+
+/* AVATAR */
+.avatar-wrap{position:relative;flex-shrink:0}
+.avatar{
+  width:100px;height:100px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(124,109,250,0.2),rgba(250,109,155,0.2));
+  border:2px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:36px;font-weight:700;
+  color:var(--accent);overflow:hidden;cursor:pointer;
+  transition:border-color 0.2s;
+}
+.avatar:hover{border-color:var(--accent)}
+.avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.avatar-edit-hint{
+  position:absolute;bottom:2px;right:2px;
+  width:26px;height:26px;border-radius:50%;
+  background:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,0.4);
+  transition:transform 0.2s;
+}
+.avatar-edit-hint:hover{transform:scale(1.1)}
+#photoInput{display:none}
+
+.hero-info{flex:1;min-width:200px}
+.hero-name{
+  font-family:'Syne',sans-serif;
+  font-size:2rem;font-weight:800;
+  letter-spacing:-0.03em;
+  line-height:1.1;margin-bottom:6px;
+}
+.hero-institution{
+  font-size:14px;color:var(--muted2);margin-bottom:14px;
+  display:flex;align-items:center;gap:6px;
+}
+.hero-institution svg{opacity:0.5}
+.pill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;
+  border:1px solid var(--border2);background:rgba(255,255,255,0.03);
+  color:var(--muted2);
+}
+.pill-accent{border-color:rgba(124,109,250,0.3);background:rgba(124,109,250,0.08);color:var(--accent)}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:20px}
+
+/* INFO CARD */
+.info-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:22px;
+  animation:fadeUp 0.4s ease both;
+}
+.info-card:nth-child(1){animation-delay:0.05s}
+.info-card:nth-child(2){animation-delay:0.1s}
+.info-card:nth-child(3){animation-delay:0.15s}
+.info-card:nth-child(4){animation-delay:0.2s}
+.card-title{
+  font-family:'Syne',sans-serif;
+  font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.1em;
+  color:var(--muted);margin-bottom:16px;
+  display:flex;align-items:center;gap:7px;
+}
+.card-title-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+}
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field-label{
+  font-size:10px;font-weight:500;
+  text-transform:uppercase;letter-spacing:0.08em;
+  color:var(--muted);margin-bottom:4px;
+}
+.field-value{
+  font-size:15px;font-weight:400;color:var(--text);
+  line-height:1.5;
+}
+.field-value.empty{color:var(--muted);font-style:italic;font-size:14px}
+.divider{border:none;border-top:1px solid var(--border);margin:12px 0}
+
+/* TAGS */
+.tags{display:flex;flex-wrap:wrap;gap:7px}
+.tag{
+  padding:4px 12px;border-radius:20px;
+  font-size:12px;font-weight:400;
+  background:var(--surface2);
+  border:1px solid var(--border2);
+  color:var(--muted2);
+  transition:all 0.15s;
+}
+.tag:hover{border-color:var(--accent);color:var(--accent)}
+
+/* GOAL CARD (full width) */
+.goal-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:22px;
+  animation:fadeUp 0.4s 0.25s ease both;
+  margin-bottom:20px;
+}
+.goal-text{
+  font-size:15px;line-height:1.7;
+  color:var(--text);
+  border-left:2px solid var(--accent);
+  padding-left:16px;margin-top:4px;
+}
+.goal-text.empty{color:var(--muted);font-style:italic;border-color:var(--border2)}
+
+/* ===================== EDIT PANEL ===================== */
+#editPanel{
+  display:none;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:24px;
+  padding:32px;
+  margin-bottom:20px;
+  animation:fadeUp 0.3s ease both;
+}
+#editPanel.open{display:block}
+.edit-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:28px;
+  padding-bottom:20px;
+  border-bottom:1px solid var(--border);
+}
+.edit-header h2{
+  font-family:'Syne',sans-serif;
+  font-size:18px;font-weight:700;
+  letter-spacing:-0.02em;
+}
+.edit-section-title{
+  font-size:11px;font-weight:600;
+  text-transform:uppercase;letter-spacing:0.1em;
+  color:var(--muted);margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;
+}
+.edit-section-title::after{
+  content:'';flex:1;height:1px;background:var(--border);
+}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:24px}
+.form-group{display:flex;flex-direction:column;gap:7px}
+.form-group.full{grid-column:1/-1}
+.form-group label{
+  font-size:11px;font-weight:600;
+  text-transform:uppercase;letter-spacing:0.07em;
+  color:var(--muted2);
+}
+.form-group input,
+.form-group textarea{
+  background:var(--surface2);
+  border:1px solid var(--border2);
+  border-radius:var(--radius-sm);
+  padding:10px 14px;
+  font-family:'DM Sans',sans-serif;
+  font-size:14px;color:var(--text);
+  transition:border-color 0.2s,box-shadow 0.2s;
+  outline:none;resize:vertical;
+}
+.form-group input:focus,
+.form-group textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(124,109,250,0.15);
+}
+.form-group input::placeholder,
+.form-group textarea::placeholder{color:var(--muted)}
+.form-group textarea{min-height:100px}
+
+.edit-footer{
+  display:flex;gap:10px;justify-content:flex-end;
+  padding-top:20px;border-top:1px solid var(--border);
+}
+
+/* AVATAR EDIT ROW */
+.avatar-edit-row{
+  display:flex;align-items:center;gap:20px;
+  margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--border);
+}
+.avatar-edit-row .avatar{width:72px;height:72px;font-size:26px}
+.avatar-edit-info{font-size:13px;color:var(--muted2);line-height:1.6}
+.avatar-edit-info strong{color:var(--text);font-weight:500}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(12px);
+  background:var(--surface);
+  border:1px solid rgba(74,222,128,0.3);
+  border-radius:var(--radius-sm);
+  padding:12px 22px;
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:500;color:var(--success);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  opacity:0;transition:all 0.3s ease;
+  z-index:999;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast-dot{width:6px;height:6px;border-radius:50%;background:var(--success)}
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+@media(max-width:600px){
+  header{padding:14px 18px}
+  .container{padding:24px 16px 60px}
+  .hero-card{padding:24px;gap:20px}
+  .hero-name{font-size:1.5rem}
+  #editPanel{padding:22px 18px}
+}
+</style>
+</head>
+<body>
+<div class="grain"></div>
+
+<header>
+  <span class="logo">TaskQuest</span>
+  <div class="header-actions">
+    <a href="index.html" class="btn btn-ghost">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Dashboard
+    </a>
+    <button class="btn btn-primary" id="editBtn" onclick="openEdit()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Edit Profile
+    </button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- VIEW MODE -->
+  <div id="viewMode">
+
+    <div class="hero-card">
+      <div class="avatar-wrap">
+        <div class="avatar" id="viewAvatar" onclick="document.getElementById('photoInput').click()">
+          <span id="viewInitials">?</span>
+        </div>
+        <div class="avatar-edit-hint" onclick="document.getElementById('photoInput').click()">✎</div>
+        <input aria-label="Interactive Form Field" type="file" id="photoInput" accept="image/*" onchange="handlePhoto(this)">
+      </div>
+      <div class="hero-info">
+        <div class="hero-name" id="viewName">Student Hero</div>
+        <div class="hero-institution">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+          <span id="viewInstitution">Your School / College</span>
+        </div>
+        <span class="pill pill-accent" id="viewClass">Class 10</span>
+      </div>
+    </div>
+
+    <div id="editPanel">
+      <div class="edit-header">
+        <h2>Update Information</h2>
+        <button class="btn btn-ghost" onclick="closeEdit()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Cancel
+        </button>
+      </div>
+
+      <div class="avatar-edit-row">
+        <div class="avatar" id="editAvatarPreview">
+          <span id="editInitialsPreview">?</span>
+        </div>
+        <div class="avatar-edit-info">
+          <strong>Profile Photo</strong><br>
+          Click the avatar above or the ✎ button to upload a photo.<br>
+          JPG, PNG, GIF — up to any size.
+        </div>
+      </div>
+
+      <div class="edit-section-title">Personal Info</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input aria-label="Interactive Form Field" type="text" id="iName" placeholder="e.g. John Doe" oninput="previewInitials()">
+        </div>
+        <div class="form-group">
+          <label>Class / Standard</label>
+          <input aria-label="Interactive Form Field" type="text" id="iClass" placeholder="e.g. Class 10">
+        </div>
+        <div class="form-group full">
+          <label>School / College</label>
+          <input aria-label="Interactive Form Field" type="text" id="iInstitution" placeholder="e.g. Harvard University">
+        </div>
+      </div>
+
+      <div class="edit-section-title">Academic Progress</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Marks / GPA</label>
+          <input aria-label="Interactive Form Field" type="text" id="iMarks" placeholder="e.g. 85% or 3.8 GPA">
+        </div>
+        <div class="form-group">
+          <label>Strong Subject</label>
+          <input aria-label="Interactive Form Field" type="text" id="iStrong" placeholder="e.g. Mathematics">
+        </div>
+        <div class="form-group">
+          <label>Weak Subject</label>
+          <input aria-label="Interactive Form Field" type="text" id="iWeak" placeholder="e.g. History">
+        </div>
+      </div>
+
+      <div class="edit-section-title">Goals & Interests</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Primary Goal</label>
+          <textarea id="iGoal" placeholder="What are you working towards?"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Skills <span style="font-weight:400;opacity:0.6;text-transform:none;letter-spacing:0">(comma separated)</span></label>
+          <input aria-label="Interactive Form Field" type="text" id="iSkills" placeholder="Python, Design, Speaking">
+        </div>
+        <div class="form-group">
+          <label>Hobbies <span style="font-weight:400;opacity:0.6;text-transform:none;letter-spacing:0">(comma separated)</span></label>
+          <input aria-label="Interactive Form Field" type="text" id="iHobbies" placeholder="Reading, Gaming, Hiking">
+        </div>
+      </div>
+
+      <div class="edit-footer">
+        <button class="btn btn-ghost" onclick="closeEdit()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveProfile()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+          Save Profile
+        </button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="info-card">
+        <div class="card-title"><div class="card-title-dot"></div> Academic Progress</div>
+        <div class="field">
+          <div class="field-label">Marks / GPA</div>
+          <div class="field-value" id="viewMarks"><em class="empty">Not set</em></div>
+        </div>
+        <div class="divider"></div>
+        <div class="field">
+          <div class="field-label">Strong Subject</div>
+          <div class="field-value" id="viewStrong"><em class="empty">Not set</em></div>
+        </div>
+        <div class="divider"></div>
+        <div class="field">
+          <div class="field-label">Weak Subject</div>
+          <div class="field-value" id="viewWeak"><em class="empty">Not set</em></div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="card-title"><div class="card-title-dot"></div> Skills</div>
+        <div id="viewSkills" class="tags"><span class="tag" style="color:var(--muted);border-style:dashed">None added yet</span></div>
+      </div>
+
+      <div class="info-card" style="grid-column:1/-1">
+        <div class="card-title"><div class="card-title-dot"></div> Hobbies & Interests</div>
+        <div id="viewHobbies" class="tags"><span class="tag" style="color:var(--muted);border-style:dashed">None added yet</span></div>
+      </div>
+    </div>
+
+    <div class="goal-card">
+      <div class="card-title"><div class="card-title-dot"></div> Primary Goal</div>
+      <div class="goal-text empty" id="viewGoal">No goal set yet — tap Edit Profile to add one.</div>
+    </div>
+
+  </div><!-- /viewMode -->
+</div>
+
+<div class="toast" id="toast">
+  <div class="toast-dot"></div>
+  Profile saved successfully
+</div>
+
+<script>
+const SK = 'tq_profile_v3';
+let profile = {};
+
+function load(){
+  try{ profile = JSON.parse(localStorage.getItem(SK)) || {}; }catch(e){ profile={}; }
+  render();
+}
+
+function initials(name){
+  if(!name) return '?';
+  return name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+}
+
+function setAvatar(el, photo, name){
+  if(photo){
+    el.innerHTML = `<img src="${photo}" alt="Profile photo">`;
+  } else {
+    el.innerHTML = `<span>${initials(name)}</span>`;
+  }
+}
+
+function renderTags(id, str){
+  const el = document.getElementById(id);
+  const tags = (str||'').split(',').map(t=>t.trim()).filter(Boolean);
+  if(!tags.length){
+    el.innerHTML = '<span class="tag" style="color:var(--muted);border-style:dashed">None added yet</span>';
+    return;
+  }
+  el.innerHTML = tags.map(t=>`<span class="tag">${t}</span>`).join('');
+}
+
+function render(){
+  const p = profile;
+  document.getElementById('viewName').textContent = p.name || 'Student Hero';
+  document.getElementById('viewInstitution').textContent = p.institution || 'Your School / College';
+  document.getElementById('viewClass').textContent = p.cls || 'Class 10';
+
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if(val){ el.textContent = val; el.className='field-value'; }
+    else { el.innerHTML='<em class="empty">Not set</em>'; }
+  };
+  setVal('viewMarks', p.marks);
+  setVal('viewStrong', p.strong);
+  setVal('viewWeak', p.weak);
+
+  const goalEl = document.getElementById('viewGoal');
+  if(p.goal){ goalEl.textContent = p.goal; goalEl.className='goal-text'; }
+  else { goalEl.textContent='No goal set yet — tap Edit Profile to add one.'; goalEl.className='goal-text empty'; }
+
+  renderTags('viewSkills', p.skills);
+  renderTags('viewHobbies', p.hobbies);
+  setAvatar(document.getElementById('viewAvatar'), p.photo, p.name);
+}
+
+function openEdit(){
+  const p = profile;
+  document.getElementById('iName').value = p.name||'';
+  document.getElementById('iClass').value = p.cls||'';
+  document.getElementById('iInstitution').value = p.institution||'';
+  document.getElementById('iMarks').value = p.marks||'';
+  document.getElementById('iStrong').value = p.strong||'';
+  document.getElementById('iWeak').value = p.weak||'';
+  document.getElementById('iGoal').value = p.goal||'';
+  document.getElementById('iSkills').value = p.skills||'';
+  document.getElementById('iHobbies').value = p.hobbies||'';
+  setAvatar(document.getElementById('editAvatarPreview'), p.photo, p.name);
+  const panel = document.getElementById('editPanel');
+  panel.classList.add('open');
+  panel.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function closeEdit(){
+  document.getElementById('editPanel').classList.remove('open');
+}
+
+function previewInitials(){
+  const name = document.getElementById('iName').value;
+  if(!profile.photo){
+    document.getElementById('editAvatarPreview').innerHTML = `<span>${initials(name)}</span>`;
+  }
+}
+
+function handlePhoto(input){
+  if(!input.files[0]) return;
+  const r = new FileReader();
+  r.onload = e => {
+    profile.photo = e.target.result;
+    setAvatar(document.getElementById('editAvatarPreview'), profile.photo, '');
+    setAvatar(document.getElementById('viewAvatar'), profile.photo, '');
+  };
+  r.readAsDataURL(input.files[0]);
+}
+
+function saveProfile(){
+  profile.name        = document.getElementById('iName').value.trim();
+  profile.cls         = document.getElementById('iClass').value.trim();
+  profile.institution = document.getElementById('iInstitution').value.trim();
+  profile.marks       = document.getElementById('iMarks').value.trim();
+  profile.strong      = document.getElementById('iStrong').value.trim();
+  profile.weak        = document.getElementById('iWeak').value.trim();
+  profile.goal        = document.getElementById('iGoal').value.trim();
+  profile.skills      = document.getElementById('iSkills').value.trim();
+  profile.hobbies     = document.getElementById('iHobbies').value.trim();
+  try{ localStorage.setItem(SK, JSON.stringify(profile)); }catch(e){}
+  render();
+  closeEdit();
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+load();
+</script>
+</body>
+</html>

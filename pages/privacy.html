@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy • TaskQuest</title>
+  <meta name="description" content="Read about how we respect your privacy, secure local data, and manage local storage." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .legal-content {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-top: 2rem;
+      box-shadow: var(--shadow);
+    }
+    .legal-content h2 {
+      color: var(--accent);
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .data-manager-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    #clearDataBtn {
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      align-self: flex-start;
+      transition: background 0.2s;
+    }
+    #clearDataBtn:hover {
+      background: #dc2626;
+    }
+  </style>
+</head>
+<body class="legal-page">
+<main>
+
+  <!-- BACKGROUND -->
+  <div class="bg blur1"></div>
+  <div class="bg blur2"></div>
+  <div class="grid-overlay"></div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="view-btn" style="text-decoration: none;"><i class="ri-home-4-line"></i> Dashboard</a>
+      <div class="header-brand">
+        <h1>🔒 Privacy Policy</h1>
+        <p class="header-subtitle">
+          <span>👋 Your Data, Your Control</span>
+        </p>
+      </div>
+      <div class="header-controls">
+        <div class="stats-pill">
+          <span class="stats-pill-label">Status</span>
+          <span class="stats-pill-value">🔒 Secure</span>
+        </div>
+        <div class="theme-pill">
+          <span class="theme-pill-label">Theme</span>
+          <select id="themeSwitcher" class="theme-dropdown" aria-label="Switch Theme">
+            <option value="cosmic">🌌 Cosmic</option>
+            <option value="aurora">🍃 Aurora</option>
+            <option value="cyberpunk">🌸 Cyberpunk</option>
+            <option value="sunset">🌅 Sunset</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="legal-content">
+      <section>
+        <h2><i class="ri-database-2-line"></i> 1. Information We Collect</h2>
+        <p><strong>TaskQuest</strong> is a local-first application. We do not collect or store any of your personal data on external servers. All task data, XP, coins, and settings are stored locally in your browser's <strong>localStorage</strong>.</p>
+      </section>
+
+      <section style="margin-top: 2rem;">
+        <h2><i class="ri-shield-check-line"></i> 2. How We Use Data</h2>
+        <p>Your gamification data is used solely to provide the productivity features of this application. Since the data remains on your device, we have no access to your study schedules or completion status.</p>
+      </section>
+
+      <section style="margin-top: 2rem;">
+        <h2><i class="ri-pie-chart-2-line"></i> 3. Third-Party Services</h2>
+        <p>We use <strong>Chart.js</strong> for analytics visualizations and <strong>jsPDF</strong> for exporting your data locally. These libraries operate entirely on the client-side. No tracking scripts or cookies are used.</p>
+      </section>
+
+      <section style="margin-top: 2rem;">
+        <h2><i class="ri-lock-2-line"></i> 4. Data Security</h2>
+        <p>Your data is as secure as your browser and device. Clearing your browser cache or site data will remove your progress permanently unless you use the Export feature.</p>
+      </section>
+
+      <section style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 2rem;">
+        <h2><i class="ri-delete-bin-line"></i> 5. Manage Your Data</h2>
+        <p>TaskQuest data resides strictly on your browser. You can inspect the storage size or reset the application data below.</p>
+        <div class="data-manager-card">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Estimated storage usage:</span>
+            <strong id="storageSize">Calculating...</strong>
+          </div>
+          <button id="clearDataBtn">
+            <i class="ri-alert-line"></i> Reset All Application Data
+          </button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer" style="text-align: center; margin-top: 3rem; opacity: 0.7;">
+    <p>&copy; 2026 TaskQuest. Level Up Productivity.</p>
+  </footer>
+
+  <script>
+    function applyTheme(theme) {
+      document.body.setAttribute("data-theme", theme);
+      if (theme === "sunset") {
+        document.body.classList.add("light");
+      } else {
+        document.body.classList.remove("light");
+      }
+    }
+
+    function getStoredTheme() {
+      if (window.TaskQuestStorage && typeof window.TaskQuestStorage.getTheme === 'function') {
+        return window.TaskQuestStorage.getTheme();
+      }
+      return localStorage.getItem("taskquest_v1.theme") || "cosmic";
+    }
+
+    function setStoredTheme(theme) {
+      if (window.TaskQuestStorage && typeof window.TaskQuestStorage.setTheme === 'function') {
+        window.TaskQuestStorage.setTheme(theme);
+      } else {
+        localStorage.setItem("taskquest_v1.theme", theme);
+      }
+    }
+
+    const themeSwitcher = document.getElementById("themeSwitcher");
+    const savedTheme = getStoredTheme();
+    applyTheme(savedTheme);
+    if (themeSwitcher) themeSwitcher.value = savedTheme;
+
+    if (themeSwitcher) {
+      themeSwitcher.addEventListener("change", (e) => {
+        const theme = e.target.value;
+        applyTheme(theme);
+        setStoredTheme(theme);
+      });
+    }
+
+    function updateStorageSize() {
+      let total = 0;
+      for (let x in localStorage) {
+        if (localStorage.hasOwnProperty(x)) {
+          total += (localStorage[x].length + x.length) * 2;
+        }
+      }
+      const kb = (total / 1024).toFixed(2);
+      const storageSizeEl = document.getElementById("storageSize");
+      if (storageSizeEl) storageSizeEl.textContent = kb + " KB";
+    }
+    updateStorageSize();
+
+    const clearDataBtn = document.getElementById("clearDataBtn");
+    if (clearDataBtn) {
+      clearDataBtn.addEventListener("click", () => {
+        if (confirm("Are you absolutely sure you want to delete all your tasks, coins, XP, and stats? This cannot be undone.")) {
+          localStorage.clear();
+          alert("All application data has been successfully reset.");
+          window.location.href = "../index.html";
+        }
+      });
+    }
+  </script>
+</body>
+</html>
+<div style="text-align: center; padding: 2rem; font-size: 0.9em; color: #777; border-top: 1px solid #eee; margin-top: 2rem;">
+  Last updated: <script>document.write(new Date().toISOString().split('T')[0]);</script>
+</div>
+
+<div style="text-align: center; padding: 2rem; font-size: 0.9em; color: #777; border-top: 1px solid #eee; margin-top: 2rem;">
+  Last updated: <script>document.write(new Date().toISOString().split('T')[0]);</script>
+</div>

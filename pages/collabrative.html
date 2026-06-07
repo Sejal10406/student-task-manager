@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Lounge • TaskQuest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/collaborative.css" />
+</head>
+<body>
+
+  <!-- Ambient background -->
+  <div class="ambient">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="orb orb-c"></div>
+    <div class="grid-lines"></div>
+  </div>
+
+  <!-- ══ HEADER ══ -->
+  <header class="topbar">
+    <a href="../index.html" class="brand">
+      <div class="brand-icon"><i class="ri-gamepad-fill"></i></div>
+      <span class="brand-name">TaskQuest</span>
+    </a>
+    <div class="topbar-center">
+      <div class="room-badge">
+        <span class="live-dot"></span>
+        <span>Global Study Lounge</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="my-status-chip" id="myStatusChip">
+        <span class="status-emoji">📖</span>
+        <select id="statusSelect" aria-label="Set your status">
+          <option value="Studying">Studying</option>
+          <option value="Break">On Break</option>
+          <option value="Deep Focus">Deep Focus</option>
+          <option value="Away">Away</option>
+        </select>
+      </div>
+      <a href="../index.html" class="btn-ghost-sm"><i class="ri-home-4-line"></i> Dashboard</a>
+    </div>
+  </header>
+
+  <!-- ══ MAIN LAYOUT ══ -->
+  <main class="workspace">
+
+    <!-- ── LEFT SIDEBAR ── -->
+    <aside class="sidebar-left panel">
+
+      <!-- Team Members -->
+      <section class="sidebar-block">
+        <div class="block-header">
+          <h3><i class="ri-team-line"></i> Team</h3>
+          <button class="icon-btn-sm" id="addMemberToggle" title="Add member"><i class="ri-user-add-line"></i></button>
+        </div>
+        <div class="add-member-form" id="addMemberForm" hidden>
+          <div class="input-row">
+            <input type="text" id="memberInput" placeholder="Member name…" />
+            <button class="btn-accent-sm" id="addMemberBtn"><i class="ri-check-line"></i></button>
+          </div>
+        </div>
+        <div class="member-list" id="teamMemberList">
+          <p class="empty-hint">No members yet</p>
+        </div>
+      </section>
+
+      <!-- Active Scholars -->
+      <section class="sidebar-block">
+        <div class="block-header">
+          <h3><i class="ri-pulse-line"></i> Live Scholars</h3>
+          <span class="count-badge" id="onlineCount">0</span>
+        </div>
+        <div class="online-list" id="onlineList">
+          <p class="empty-hint">No other sessions</p>
+        </div>
+      </section>
+
+      <!-- Team Energy -->
+      <section class="sidebar-block energy-block">
+        <div class="block-header">
+          <h3><i class="ri-flashlight-line"></i> Team Energy</h3>
+          <span class="pct-label" id="energyPct">0%</span>
+        </div>
+        <div class="energy-track">
+          <div class="energy-fill" id="energyFill"></div>
+        </div>
+        <p class="energy-hint" id="energyHint">Start studying to build momentum!</p>
+      </section>
+
+    </aside>
+
+    <!-- ── CHAT CENTER ── -->
+    <section class="chat-panel panel">
+
+      <div class="chat-header">
+        <div>
+          <h2 class="chat-title">Study Lounge</h2>
+          <p class="chat-sub" id="roomStatus">Connecting…</p>
+        </div>
+        <button class="btn-ghost-sm danger-btn" id="clearChat" title="Clear chat">
+          <i class="ri-delete-bin-line"></i> Clear
+        </button>
+      </div>
+
+      <div class="messages-wrap" id="messagesContainer">
+        <!-- messages injected by JS -->
+      </div>
+
+      <div class="chat-footer">
+        <div class="quick-pills">
+          <button class="pill" data-msg="You've got this! 🚀">🚀 Hype</button>
+          <button class="pill" data-msg="Time for a break? ☕">☕ Break</button>
+          <button class="pill" data-msg="Pure focus mode 🧠">🧠 Focus</button>
+          <button class="pill" data-msg="Task done! ✅">✅ Done</button>
+        </div>
+        <div class="typing-bar" id="typingBar"></div>
+        <form class="compose-form" id="chatForm">
+          <input type="text" id="chatInput" placeholder="Send motivation…" autocomplete="off" />
+          <button type="submit" class="send-btn" aria-label="Send">
+            <i class="ri-send-plane-fill"></i>
+          </button>
+        </form>
+      </div>
+
+    </section>
+
+    <!-- ── RIGHT SIDEBAR ── -->
+    <aside class="sidebar-right panel">
+
+      <!-- My Focus -->
+      <section class="sidebar-block focus-block">
+        <div class="block-header">
+          <h3><i class="ri-focus-3-line"></i> My Focus</h3>
+        </div>
+        <div class="focus-display">
+          <p id="myActiveTask">No active quest</p>
+        </div>
+      </section>
+
+      <!-- Add Friend -->
+      <section class="sidebar-block">
+        <div class="block-header">
+          <h3><i class="ri-user-heart-line"></i> Friends</h3>
+          <button class="icon-btn-sm" id="addFriendToggle"><i class="ri-add-line"></i></button>
+        </div>
+        <div class="add-member-form" id="addFriendForm" hidden>
+          <div class="input-row">
+            <input type="text" id="friendNameInput" placeholder="Friend's name…" />
+            <button class="btn-accent-sm" id="confirmAddFriendBtn"><i class="ri-check-line"></i></button>
+          </div>
+        </div>
+        <div id="friendsListGrid" class="friends-list">
+          <p class="empty-hint">Add friends to compete!</p>
+        </div>
+      </section>
+
+      <!-- Collab Session -->
+      <section class="sidebar-block session-block">
+        <div class="block-header">
+          <h3><i class="ri-vidicon-line"></i> Session</h3>
+        </div>
+        <div class="session-info">
+          <div class="session-row">
+            <span class="session-label">Partner</span>
+            <span class="session-val" id="collabSessionPartner">—</span>
+          </div>
+          <div class="session-row">
+            <span class="session-label">Duration</span>
+            <span class="session-val" id="collabSessionDuration">0 min</span>
+          </div>
+        </div>
+        <div class="session-actions">
+          <button class="btn-start" id="startCollabSessionBtn"><i class="ri-play-fill"></i> Start Session</button>
+          <button class="btn-stop" id="stopCollabSessionBtn" style="display:none"><i class="ri-stop-fill"></i> End Session</button>
+        </div>
+      </section>
+
+      <!-- Leaderboard -->
+      <section class="sidebar-block">
+        <div class="block-header">
+          <h3><i class="ri-medal-line"></i> Leaderboard</h3>
+        </div>
+        <div id="collabLeaderboard">
+          <p class="empty-hint">No data yet</p>
+        </div>
+      </section>
+
+    </aside>
+
+  </main>
+
+  <!-- Challenge Modal (hidden by default) -->
+  <div class="modal-overlay" id="sessionModal" hidden>
+    <div class="modal-box">
+      <h3>Pick a Study Partner</h3>
+      <div class="modal-list" id="sessionPartnerList"></div>
+      <button class="btn-ghost-sm" id="cancelSessionModal">Cancel</button>
+    </div>
+  </div>
+
+  <script src="../js/collaborative.js" defer></script>
+</body>
+</html>

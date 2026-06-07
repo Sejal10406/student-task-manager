@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TaskQuest • Gamified Productivity</title>
+  <title>TaskQuest • Gamified Productivity | Student Task Manager</title>
+  <meta name="description" content="A gamified task manager app to boost study productivity, track assignments, subjects, exams and streaks." />
   <!-- Security Headers -->
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: https:;">
@@ -22,8 +23,8 @@
   <!-- jsPDF for PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="collaborative.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/collaborative.css">
 </head>
 
 <body class="dashboard-page">
@@ -37,13 +38,13 @@
         <h1 style="font-size: 18px; margin: 0; font-family: 'Poppins', sans-serif;">TaskQuest</h1>
       </a>
       <nav class="header-nav" style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <a href="notes.html" class="view-btn small" style="text-decoration: none;"><i class="ri-sticky-note-line"></i> Revision Notes</a>
-        <a href="Challenge.html" class="view-btn small" style="text-decoration: none;"><i class="ri-trophy-line"></i> Challenges</a>
-        <a href="leaderboard.html" class="view-btn small" style="text-decoration: none;"><i class="ri-medal-line"></i> Leaderboard</a>
-        <a href="reflection.html" class="view-btn small" style="text-decoration: none;"><i class="ri-focus-3-line"></i> Reflection</a>
-        <a href="docs.html" class="view-btn small" style="text-decoration: none;"><i class="ri-book-read-line"></i> Docs</a>
-        <a href="faq.html" class="view-btn small" style="text-decoration: none;"><i class="ri-question-line"></i> FAQ</a>
-        <a href="Privacy.html" class="view-btn small" style="text-decoration: none;"><i class="ri-lock-line"></i> Privacy</a>
+        <a href="pages/notes.html" class="view-btn small" style="text-decoration: none;"><i class="ri-sticky-note-line"></i> Revision Notes</a>
+        <a href="pages/Challenge.html" class="view-btn small" style="text-decoration: none;"><i class="ri-trophy-line"></i> Challenges</a>
+        <a href="pages/leaderboard.html" class="view-btn small" style="text-decoration: none;"><i class="ri-medal-line"></i> Leaderboard</a>
+        <a href="pages/Reflection.html" class="view-btn small" style="text-decoration: none;"><i class="ri-focus-3-line"></i> Reflection</a>
+        <a href="pages/docs.html" class="view-btn small" style="text-decoration: none;"><i class="ri-book-read-line"></i> Docs</a>
+        <a href="pages/faq.html" class="view-btn small" style="text-decoration: none;"><i class="ri-question-line"></i> FAQ</a>
+        <a href="pages/privacy.html" class="view-btn small" style="text-decoration: none;"><i class="ri-lock-line"></i> Privacy</a>
       </nav>
     </div>
   </header>
@@ -97,31 +98,31 @@
           <i class="ri-dashboard-line"></i>
           <span>Dashboard</span>
         </a>
-        <a href="notes.html" class="sidebar-nav-item">
+        <a href="pages/notes.html" class="sidebar-nav-item">
           <i class="ri-sticky-note-line"></i>
           <span>Revision Notes</span>
         </a>
-        <a href="Challenge.html" class="sidebar-nav-item">
+        <a href="pages/Challenge.html" class="sidebar-nav-item">
           <i class="ri-trophy-line"></i>
           <span>Challenges</span>
         </a>
-        <a href="leaderboard.html" class="sidebar-nav-item">
+        <a href="pages/leaderboard.html" class="sidebar-nav-item">
           <i class="ri-medal-line"></i>
           <span>Leaderboard</span>
         </a>
-        <a href="reflection.html" class="sidebar-nav-item">
+        <a href="pages/Reflection.html" class="sidebar-nav-item">
           <i class="ri-focus-3-line"></i>
           <span>Reflection</span>
         </a>
-        <a href="docs.html" class="sidebar-nav-item">
+        <a href="pages/docs.html" class="sidebar-nav-item">
           <i class="ri-book-read-line"></i>
           <span>Docs</span>
         </a>
-        <a href="faq.html" class="sidebar-nav-item">
+        <a href="pages/faq.html" class="sidebar-nav-item">
           <i class="ri-question-line"></i>
           <span>FAQ</span>
         </a>
-        <a href="Privacy.html" class="sidebar-nav-item">
+        <a href="pages/privacy.html" class="sidebar-nav-item">
           <i class="ri-lock-line"></i>
           <span>Privacy</span>
         </a>
@@ -130,7 +131,7 @@
       <!-- PROFILE CARD -->
       <div class="profile-card" id="profileCard" style="cursor: pointer;" title="Edit Profile">
         <div class="avatar" id="profileAvatar">
-          <img id="profileAvatarImg" src="male_avatar.svg" alt="Profile Photo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: none;">
+          <img id="profileAvatarImg" src="assets/male_avatar.svg" alt="Profile Photo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: none;">
           <i id="profileIconPlaceholder" class="ri-user-3-fill"></i>
           <div class="avatar-edit-overlay">
             <i class="ri-pencil-fill"></i>
@@ -331,7 +332,7 @@
                 <option value="Assignment">📝 Assignment</option>
                 <option value="Revision">📖 Revision</option>
               </select>
-            <select id="mobilePrioritySelect" aria-label="Task priority">
+            <select id="prioritySelect" aria-label="Task priority">
   <option value="High">🔴 High Priority</option>
   <option value="Medium" selected>🟡 Medium Priority</option>
   <option value="Low">🟢 Low Priority</option>
@@ -1981,7 +1982,7 @@
         <option value="Revision">📖 Revision</option>
       </select>
 
-      <select id="prioritySelect" aria-label="Task priority">
+      <select id="mobilePrioritySelect" aria-label="Task priority">
 
         <option value="High">🚩 High Priority</option>
         <option value="Medium" selected>🔸 Medium Priority</option>
@@ -2103,12 +2104,12 @@
       <div class="form-group">
         <label>Choose an avatar</label>
         <div class="avatar-options" id="avatarOptions">
-          <img src="male_avatar.svg" alt="Male avatar" class="avatar-option" data-src="male_avatar.svg" />
-          <img src="female_avatar.svg" alt="Female avatar" class="avatar-option" data-src="female_avatar.svg" />
-          <img src="avatar_blue.svg" alt="Blue avatar" class="avatar-option" data-src="avatar_blue.svg" />
-          <img src="avatar_green.svg" alt="Green avatar" class="avatar-option" data-src="avatar_green.svg" />
-          <img src="avatar_orange.svg" alt="Orange avatar" class="avatar-option" data-src="avatar_orange.svg" />
-          <img src="avatar_purple.svg" alt="Purple avatar" class="avatar-option" data-src="avatar_purple.svg" />
+          <img src="assets/male_avatar.svg" alt="Male avatar" class="avatar-option" data-src="assets/male_avatar.svg" />
+          <img src="assets/female_avatar.svg" alt="Female avatar" class="avatar-option" data-src="assets/female_avatar.svg" />
+          <img src="assets/avatar_blue.svg" alt="Blue avatar" class="avatar-option" data-src="assets/avatar_blue.svg" />
+          <img src="assets/avatar_green.svg" alt="Green avatar" class="avatar-option" data-src="assets/avatar_green.svg" />
+          <img src="assets/avatar_orange.svg" alt="Orange avatar" class="avatar-option" data-src="assets/avatar_orange.svg" />
+          <img src="assets/avatar_purple.svg" alt="Purple avatar" class="avatar-option" data-src="assets/avatar_purple.svg" />
         </div>
       </div>
 
@@ -2183,13 +2184,13 @@
   </button>
   <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
-  <script src="storage.js"></script>
-  <script src="analytics.js"></script>
-  <script src="prioritization.js"></script>
-  <script src="script.js"></script>
-  <script src="toast.js"></script>
-  <script src="collaborative.js"></script>
-  <script src="correlationEngine.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/prioritization.js"></script>
+  <script src="js/script.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/collaborative.js"></script>
+  <script src="js/correlationEngine.js"></script>
   <script>
   /* ── Timetable Manager (single implementation, persisted) ── */
   (function () {
@@ -2261,5 +2262,16 @@
     <i class="ri-arrow-up-line"></i>
   </button>
   <style> html { scroll-behavior: smooth; } </style>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("sw.js").then(function (reg) {
+          console.log("[TaskQuest SW] Registered successfully with scope:", reg.scope);
+        }).catch(function (err) {
+          console.warn("[TaskQuest SW] Registration failed:", err);
+        });
+      });
+    }
+  </script>
 </body>
 </html>

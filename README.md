@@ -112,6 +112,14 @@ start index.html       # Windows
 xdg-open index.html    # Linux
 ```
 
+### 4️⃣ Verify Environment Setup
+
+We provide a built-in diagnostic checker to verify file integrity, schema versions, and JavaScript syntax:
+
+```bash
+node verify-env.js
+```
+
 ---
 
 ## 🤝 How to Contribute
@@ -137,8 +145,23 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full contribution guide includi
 
 This project is open-source and available under the [MIT License](./License.md).
 
-## Community
+## 💬 Community
 Join our community and help us build a better task manager for students.
 
-## Community
-Join our community and help us build a better task manager for students.
+---
+
+## 🛠️ Troubleshooting & Setup Guide
+
+If you encounter issues during setup or use, please refer to the cases below:
+
+### 1. LocalStorage Quota Exceeded
+* **Symptom:** Saving tasks or sessions fails with warnings or errors.
+* **Resolution:** Clear older tasks or clear your browser cache for the site. Alternatively, you can use the **Files Vault** to export your reflections/tasks as `.txt` files to preserve data, and then use the **Clear All** button in the dashboard to free up space.
+
+### 2. Multi-Tab Collaboration (BroadcastChannel) in Incognito Mode
+* **Symptom:** Tabs do not sync task updates or chat messages.
+* **Explanation:** Most modern browsers restrict the `BroadcastChannel` API inside Private/Incognito browsing sessions for security reasons. To use multi-tab features, run the app in a normal browser window.
+
+### 3. PDF/PNG Export Failures
+* **Symptom:** Clicking "Export PDF" or "Export Charts" fails silently or prints warning messages to the console.
+* **Resolution:** Ensure all resources (e.g. avatar images, Chart.js libraries) are fully loaded before exporting. If hosting locally, run a lightweight local server (e.g., `npx http-server` or `python -m http.server`) rather than double-clicking the HTML file directly, as browsers restrict some canvas functions for local `file://` protocols.

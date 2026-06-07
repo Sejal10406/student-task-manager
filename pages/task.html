@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="description" content="TaskQuest is a gamified student task manager featuring study quests, collaborative lounge, and performance tracking.">
+  <meta name="keywords" content="task manager, study lounge, gamified learning, student productivity">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyTrack — Subject Progress</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a26;
+    --border: #2a2a3d;
+    --accent: #7c5cfc;
+    --accent2: #fc5c7d;
+    --accent3: #5cfcb8;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --gold: #ffd166;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,92,252,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,92,252,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glowing blobs */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+    animation: blobFloat 8s ease-in-out infinite alternate;
+  }
+  .blob1 { width: 400px; height: 400px; background: rgba(124,92,252,0.12); top: -100px; left: -100px; }
+  .blob2 { width: 300px; height: 300px; background: rgba(252,92,125,0.08); bottom: -80px; right: -80px; animation-delay: 3s; }
+  .blob3 { width: 200px; height: 200px; background: rgba(92,252,184,0.07); top: 40%; left: 50%; animation-delay: 5s; }
+
+  @keyframes blobFloat {
+    from { transform: translateY(0) scale(1); }
+    to   { transform: translateY(-30px) scale(1.05); }
+  }
+
+  /* ── Header ── */
+  header {
+    position: relative; z-index: 10;
+    padding: 40px 48px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 16px;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px; font-weight: 800;
+    letter-spacing: -1px;
+  }
+  .logo span { color: var(--accent); }
+  .header-stats {
+    display: flex; gap: 24px;
+  }
+  .stat-pill {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 8px 20px;
+    font-size: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .stat-pill b { font-family: 'Syne', sans-serif; font-size: 18px; color: var(--accent); }
+
+  /* ── Main layout ── */
+  main {
+    position: relative; z-index: 10;
+    max-width: 1200px; margin: 0 auto;
+    padding: 40px 48px 80px;
+  }
+
+  /* ── Add Subject Panel ── */
+  .add-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 32px;
+    margin-bottom: 40px;
+    display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+  }
+  .add-panel-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 3px;
+    color: var(--muted);
+    flex: 0 0 100%;
+    margin-bottom: -4px;
+  }
+
+  input[type="text"] {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    padding: 12px 18px;
+    outline: none;
+    flex: 1; min-width: 160px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,92,252,0.15);
+  }
+  input[type="text"]::placeholder { color: var(--muted); }
+
+  .btn {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    border: none; border-radius: 12px;
+    cursor: pointer; padding: 12px 24px;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn:active { transform: translateY(0); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(124,92,252,0.35);
+  }
+  .btn-primary:hover { box-shadow: 0 6px 28px rgba(124,92,252,0.5); }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-danger {
+    background: transparent;
+    border: 1px solid rgba(252,92,125,0.3);
+    color: var(--accent2);
+    font-size: 11px; padding: 6px 14px;
+  }
+  .btn-danger:hover { background: rgba(252,92,125,0.1); transform: none; }
+
+  /* ── Color picker for subjects ── */
+  .color-row {
+    display: flex; gap: 8px; align-items: center;
+    flex: 0 0 100%;
+  }
+  .color-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    cursor: pointer; border: 2px solid transparent;
+    transition: transform 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+  .color-dot:hover { transform: scale(1.15); }
+  .color-dot.selected { border-color: #fff; transform: scale(1.2); }
+
+  /* ── Subjects grid ── */
+  .subjects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 24px;
+  }
+
+  /* ── Subject card ── */
+  .subject-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    animation: cardIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+    position: relative;
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .card-header {
+    padding: 20px 24px 16px;
+    display: flex; align-items: flex-start; gap: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .subject-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .card-title-group { flex: 1; }
+  .subject-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px; font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+  }
+  .topic-count {
+    font-size: 11px; color: var(--muted);
+    margin-top: 3px;
+  }
+
+  /* ── Progress bar ── */
+  .progress-wrap {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .progress-meta {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .progress-pct {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px; font-weight: 700;
+    color: var(--text);
+  }
+  .progress-bar-bg {
+    height: 6px; background: var(--surface);
+    border-radius: 100px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; border-radius: 100px;
+    transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    min-width: 0;
+  }
+
+  /* ── Topics list ── */
+  .topics-list {
+    padding: 12px 24px 8px;
+    flex: 1;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+
+  .topic-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    animation: topicIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+    user-select: none;
+  }
+  @keyframes topicIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .topic-item:hover { background: var(--surface); }
+  .topic-item.done .topic-label {
+    text-decoration: line-through;
+    color: var(--muted);
+  }
+
+  /* Custom checkbox */
+  .check-box {
+    width: 20px; height: 20px; border-radius: 6px;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    position: relative;
+  }
+  .topic-item:hover .check-box { border-color: var(--muted); }
+  .check-box.checked {
+    border-color: transparent;
+    transform: scale(1.08);
+  }
+  .check-box.checked::after {
+    content: '';
+    width: 10px; height: 7px;
+    border-left: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    transform: rotate(-45deg) translateY(-1px);
+  }
+  .check-bounce {
+    animation: checkBounce 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  }
+  @keyframes checkBounce {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(1.3); }
+    60%  { transform: scale(0.95); }
+    100% { transform: scale(1.08); }
+  }
+
+  .topic-label {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.4;
+    transition: color 0.2s;
+  }
+  .topic-remove {
+    opacity: 0;
+    background: none; border: none;
+    color: var(--accent2); cursor: pointer;
+    font-size: 16px; line-height: 1;
+    padding: 2px 4px; border-radius: 4px;
+    transition: opacity 0.15s, background 0.15s;
+  }
+  .topic-item:hover .topic-remove { opacity: 0.6; }
+  .topic-remove:hover { opacity: 1 !important; background: rgba(252,92,125,0.12); }
+
+  /* ── Add topic row ── */
+  .add-topic-row {
+    padding: 12px 24px 20px;
+    display: flex; gap: 10px;
+  }
+  .add-topic-row input {
+    flex: 1; font-size: 13px; padding: 9px 14px;
+  }
+  .btn-add-topic {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--accent);
+    font-size: 20px; line-height: 1;
+    width: 36px; height: 36px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .btn-add-topic:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .card-footer {
+    padding: 12px 24px 16px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: flex-end;
+  }
+
+  /* ── Completion badge ── */
+  .complete-badge {
+    display: none;
+    align-items: center; gap: 6px;
+    font-family: 'Syne', sans-serif;
+    font-size: 12px; font-weight: 700;
+    color: var(--accent3);
+    letter-spacing: 1px;
+  }
+  .complete-badge.show { display: flex; }
+  .badge-star { animation: starSpin 1s ease both; font-size: 16px; }
+  @keyframes starSpin {
+    from { transform: rotate(-180deg) scale(0); opacity: 0; }
+    to   { transform: rotate(0) scale(1); opacity: 1; }
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 80px 40px;
+    color: var(--muted);
+  }
+  .empty-icon {
+    font-size: 56px; margin-bottom: 20px;
+    animation: float 3s ease-in-out infinite alternate;
+  }
+  @keyframes float {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-10px); }
+  }
+  .empty-state h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 700;
+    margin-bottom: 8px; color: var(--text);
+  }
+  .empty-state p { font-size: 13px; line-height: 1.6; }
+
+  /* ── Global achievement toast ── */
+  .toast {
+    position: fixed; bottom: 32px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: linear-gradient(135deg, #1a1a26, #24243a);
+    border: 1px solid var(--accent);
+    box-shadow: 0 8px 40px rgba(124,92,252,0.35);
+    border-radius: 100px;
+    padding: 16px 32px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 700;
+    color: var(--text);
+    z-index: 9999;
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+  .toast.hide {
+    transform: translateX(-50%) translateY(100px);
+    opacity: 0;
+  }
+
+  /* ── Confetti canvas ── */
+  #confetti-canvas {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    header { padding: 24px 20px; }
+    main   { padding: 24px 16px 60px; }
+    .add-panel { padding: 20px; }
+    .subjects-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="blob blob3"></div>
+<canvas id="confetti-canvas"></canvas>
+
+<!-- ── Header ── -->
+<header>
+  <div class="logo">Study<span>Track</span></div>
+  <div class="header-stats">
+    <div class="stat-pill"><b id="stat-subjects">0</b> subjects</div>
+    <div class="stat-pill"><b id="stat-done">0</b> / <b id="stat-total">0</b> topics</div>
+    <div class="stat-pill"><b id="stat-pct">0%</b> overall</div>
+  </div>
+</header>
+
+<!-- ── Main ── -->
+<main>
+
+  <!-- Add Subject Panel -->
+  <div class="add-panel">
+    <span class="add-panel-label">+ New Subject</span>
+
+    <div class="color-row" id="color-row"></div>
+
+    <input aria-label="Interactive Form Field" type="text" id="subject-name-input" placeholder="Subject name (e.g. Mathematics)" maxlength="40">
+    <input aria-label="Interactive Form Field" type="text" id="subject-emoji-input" placeholder="Icon emoji 📚" maxlength="4" style="max-width:100px">
+    <button class="btn btn-primary" onclick="addSubject()">Add Subject</button>
+  </div>
+
+  <!-- Subjects Grid -->
+  <div class="subjects-grid" id="subjects-grid">
+    <!-- empty state injected by JS -->
+  </div>
+
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════════════ */
+const COLORS = [
+  { bg:'rgba(124,92,252,0.18)', fill:'#7c5cfc', name:'violet' },
+  { bg:'rgba(252,92,125,0.18)', fill:'#fc5c7d', name:'rose' },
+  { bg:'rgba(92,252,184,0.18)', fill:'#5cfcb8', name:'mint' },
+  { bg:'rgba(255,209,102,0.18)', fill:'#ffd166', name:'gold' },
+  { bg:'rgba(92,178,252,0.18)', fill:'#5cb2fc', name:'sky' },
+  { bg:'rgba(252,174,92,0.18)', fill:'#fcae5c', name:'orange' },
+];
+const EMOJIS = ['📚','🔢','🧪','🌍','🎨','💻','📐','🏛️','🎵','📖'];
+
+let subjects = JSON.parse(localStorage.getItem('studytrack_subjects') || '[]');
+let selectedColor = 0;
+
+/* ═══════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════ */
+function init() {
+  buildColorPicker();
+  renderAll();
+  // enter key
+  ['subject-name-input','subject-emoji-input'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => { if(e.key==='Enter') addSubject(); });
+  });
+}
+
+function save() {
+  localStorage.setItem('studytrack_subjects', JSON.stringify(subjects));
+}
+
+/* ═══════════════════════════════════════════════════
+   COLOR PICKER
+═══════════════════════════════════════════════════ */
+function buildColorPicker() {
+  const row = document.getElementById('color-row');
+  row.innerHTML = '<span style="font-size:11px;color:var(--muted);margin-right:4px;">Color:</span>';
+  COLORS.forEach((c, i) => {
+    const d = document.createElement('div');
+    d.className = 'color-dot' + (i===selectedColor?' selected':'');
+    d.style.background = c.fill;
+    d.onclick = () => { selectedColor = i; buildColorPicker(); };
+    row.appendChild(d);
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   ADD SUBJECT
+═══════════════════════════════════════════════════ */
+function addSubject() {
+  const nameEl = document.getElementById('subject-name-input');
+  const emojiEl = document.getElementById('subject-emoji-input');
+  const name = nameEl.value.trim();
+  if (!name) { nameEl.focus(); shake(nameEl); return; }
+  const emoji = emojiEl.value.trim() || EMOJIS[subjects.length % EMOJIS.length];
+  subjects.push({ id: Date.now(), name, emoji, colorIdx: selectedColor, topics: [] });
+  save(); renderAll();
+  nameEl.value = ''; emojiEl.value = '';
+  nameEl.focus();
+}
+
+/* ═══════════════════════════════════════════════════
+   ADD TOPIC
+═══════════════════════════════════════════════════ */
+function addTopic(subjectId) {
+  const inp = document.getElementById('topic-input-' + subjectId);
+  const text = inp.value.trim();
+  if (!text) { inp.focus(); shake(inp); return; }
+  const subj = subjects.find(s => s.id === subjectId);
+  if (!subj) return;
+  subj.topics.push({ id: Date.now(), text, done: false });
+  save(); renderCard(subjectId);
+  inp.value = ''; inp.focus();
+  updateStats();
+}
+
+/* ═══════════════════════════════════════════════════
+   TOGGLE TOPIC
+═══════════════════════════════════════════════════ */
+function toggleTopic(subjectId, topicId) {
+  const subj = subjects.find(s => s.id === subjectId);
+  if (!subj) return;
+  const topic = subj.topics.find(t => t.id === topicId);
+  if (!topic) return;
+  topic.done = !topic.done;
+  save();
+
+  // update just this topic item
+  const item = document.getElementById('topic-' + topicId);
+  if (item) {
+    const cb = item.querySelector('.check-box');
+    const lbl = item.querySelector('.topic-label');
+    if (topic.done) {
+      item.classList.add('done');
+      cb.classList.add('checked','check-bounce');
+      cb.style.background = COLORS[subj.colorIdx].fill;
+      setTimeout(()=>cb.classList.remove('check-bounce'),400);
+    } else {
+      item.classList.remove('done');
+      cb.classList.remove('checked');
+      cb.style.background = '';
+    }
+  }
+  updateProgress(subjectId);
+  updateStats();
+
+  // check full completion
+  const allDone = subj.topics.length > 0 && subj.topics.every(t=>t.done);
+  if (allDone) {
+    triggerCompletion(subj);
+  } else {
+    const badge = document.getElementById('badge-' + subjectId);
+    if (badge) badge.classList.remove('show');
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   REMOVE TOPIC
+═══════════════════════════════════════════════════ */
+function removeTopic(subjectId, topicId, e) {
+  e.stopPropagation();
+  const subj = subjects.find(s=>s.id===subjectId);
+  if (!subj) return;
+  subj.topics = subj.topics.filter(t=>t.id!==topicId);
+  save(); renderCard(subjectId); updateStats();
+}
+
+/* ═══════════════════════════════════════════════════
+   REMOVE SUBJECT
+═══════════════════════════════════════════════════ */
+function removeSubject(subjectId) {
+  subjects = subjects.filter(s=>s.id!==subjectId);
+  save(); renderAll();
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDER ALL
+═══════════════════════════════════════════════════ */
+function renderAll() {
+  const grid = document.getElementById('subjects-grid');
+  if (subjects.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon">🎯</div>
+      <h2>No subjects yet</h2>
+      <p>Add your first subject above to start tracking<br>your study progress.</p>
+    </div>`;
+    updateStats(); return;
+  }
+  grid.innerHTML = '';
+  subjects.forEach(s => {
+    const div = document.createElement('div');
+    div.id = 'card-' + s.id;
+    div.className = 'subject-card';
+    grid.appendChild(div);
+    renderCard(s.id);
+  });
+  updateStats();
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDER SINGLE CARD
+═══════════════════════════════════════════════════ */
+function renderCard(subjectId) {
+  const subj = subjects.find(s=>s.id===subjectId);
+  const card = document.getElementById('card-'+subjectId);
+  if (!subj || !card) return;
+  const c = COLORS[subj.colorIdx];
+  const done = subj.topics.filter(t=>t.done).length;
+  const total = subj.topics.length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  const allDone = total > 0 && done === total;
+
+  card.innerHTML = `
+    <!-- Header -->
+    <div class="card-header">
+      <div class="subject-icon" style="background:${c.bg}">${subj.emoji}</div>
+      <div class="card-title-group">
+        <div class="subject-name">${escHtml(subj.name)}</div>
+        <div class="topic-count">${total} topic${total!==1?'s':''} &nbsp;·&nbsp; ${done} completed</div>
+      </div>
+      <div id="badge-${subjectId}" class="complete-badge${allDone?' show':''}">
+        <span class="badge-star">⭐</span> DONE
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span>PROGRESS</span>
+        <span class="progress-pct" id="pct-${subjectId}">${pct}%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="bar-${subjectId}"
+          style="width:${pct}%;background:${c.fill};box-shadow:0 0 12px ${c.fill}55"></div>
+      </div>
+    </div>
+
+    <!-- Topics -->
+    <div class="topics-list" id="topics-${subjectId}">
+      ${subj.topics.map(t => topicHTML(t, subjectId, c)).join('')}
+      ${subj.topics.length===0 ? `<div style="font-size:12px;color:var(--muted);padding:8px 4px">No topics yet — add one below.</div>` : ''}
+    </div>
+
+    <!-- Add Topic -->
+    <div class="add-topic-row">
+      <input aria-label="Interactive Form Field" type="text" id="topic-input-${subjectId}" placeholder="Add a topic…" maxlength="80"
+        onkeydown="if(event.key==='Enter')addTopic(${subjectId})">
+      <button class="btn-add-topic" onclick="addTopic(${subjectId})" title="Add topic">+</button>
+    </div>
+
+    <!-- Footer -->
+    <div class="card-footer">
+      <button class="btn btn-danger" onclick="removeSubject(${subjectId})">Remove Subject</button>
+    </div>
+  `;
+}
+
+function topicHTML(t, subjectId, c) {
+  const doneClass = t.done ? ' done' : '';
+  const cbClass   = t.done ? ' checked' : '';
+  const cbBg      = t.done ? `background:${c.fill}` : '';
+  return `<div class="topic-item${doneClass}" id="topic-${t.id}" onclick="toggleTopic(${subjectId},${t.id})">
+    <div class="check-box${cbClass}" style="${cbBg}"></div>
+    <span class="topic-label">${escHtml(t.text)}</span>
+    <button class="topic-remove" onclick="removeTopic(${subjectId},${t.id},event)" title="Remove">×</button>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════════════
+   UPDATE PROGRESS BAR (without full re-render)
+═══════════════════════════════════════════════════ */
+function updateProgress(subjectId) {
+  const subj = subjects.find(s=>s.id===subjectId);
+  if (!subj) return;
+  const done = subj.topics.filter(t=>t.done).length;
+  const total = subj.topics.length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  const bar = document.getElementById('bar-'+subjectId);
+  const pctEl = document.getElementById('pct-'+subjectId);
+  const cntEl = document.querySelector('#card-'+subjectId+' .topic-count');
+  if (bar)   bar.style.width = pct+'%';
+  if (pctEl) pctEl.textContent = pct+'%';
+  if (cntEl) cntEl.textContent = `${total} topic${total!==1?'s':''} · ${done} completed`;
+}
+
+/* ═══════════════════════════════════════════════════
+   UPDATE GLOBAL STATS
+═══════════════════════════════════════════════════ */
+function updateStats() {
+  const totalTopics = subjects.reduce((a,s)=>a+s.topics.length, 0);
+  const doneTopics  = subjects.reduce((a,s)=>a+s.topics.filter(t=>t.done).length, 0);
+  const pct = totalTopics ? Math.round(doneTopics/totalTopics*100) : 0;
+  document.getElementById('stat-subjects').textContent = subjects.length;
+  document.getElementById('stat-total').textContent   = totalTopics;
+  document.getElementById('stat-done').textContent    = doneTopics;
+  document.getElementById('stat-pct').textContent     = pct+'%';
+}
+
+/* ═══════════════════════════════════════════════════
+   COMPLETION
+═══════════════════════════════════════════════════ */
+function triggerCompletion(subj) {
+  const badge = document.getElementById('badge-' + subj.id);
+  if (badge) badge.classList.add('show');
+  showToast(`🎉 "${subj.name}" — All topics complete!`);
+  launchConfetti(COLORS[subj.colorIdx].fill);
+}
+
+/* ═══════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════ */
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('hide'); t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.classList.add('hide'); setTimeout(()=>t.classList.remove('show','hide'),500); }, 3500);
+}
+
+/* ═══════════════════════════════════════════════════
+   CONFETTI
+═══════════════════════════════════════════════════ */
+function launchConfetti(primaryColor) {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const colors = [primaryColor, '#fc5c7d','#ffd166','#5cfcb8','#5cb2fc','#ffffff'];
+  const particles = Array.from({length:140}, () => ({
+    x: Math.random() * canvas.width,
+    y: -10 - Math.random() * 200,
+    w: 6 + Math.random()*8, h: 4 + Math.random()*6,
+    color: colors[Math.floor(Math.random()*colors.length)],
+    angle: Math.random()*360,
+    spin: (Math.random()-0.5)*6,
+    vx: (Math.random()-0.5)*3,
+    vy: 2 + Math.random()*4,
+    alpha: 1,
+    shape: Math.random()>0.5?'rect':'circle'
+  }));
+
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    let alive = false;
+    particles.forEach(p => {
+      if (p.y > canvas.height + 20) return;
+      alive = true;
+      p.x += p.vx; p.y += p.vy; p.angle += p.spin;
+      if (p.y > canvas.height*0.7) p.alpha -= 0.015;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.alpha);
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle * Math.PI/180);
+      ctx.fillStyle = p.color;
+      if (p.shape==='circle') {
+        ctx.beginPath(); ctx.arc(0,0,p.w/2,0,Math.PI*2); ctx.fill();
+      } else {
+        ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      }
+      ctx.restore();
+    });
+    if (alive && frame < 300) { frame++; requestAnimationFrame(draw); }
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  draw();
+}
+
+/* ═══════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════ */
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function shake(el) {
+  el.style.animation = 'none';
+  el.style.transition = 'border-color 0.2s';
+  el.style.borderColor = 'var(--accent2)';
+  el.offsetHeight; // reflow
+  el.style.animation = 'shakeInput 0.35s ease';
+  setTimeout(()=>{ el.style.borderColor=''; el.style.animation=''; }, 400);
+}
+
+// inject shake keyframes
+const ks = document.createElement('style');
+ks.textContent = `@keyframes shakeInput {
+  0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 60%{transform:translateX(6px)} 80%{transform:translateX(-3px)}
+}`;
+document.head.appendChild(ks);
+
+/* ── Bootstrap ── */
+init();
+</script>
+</body>
+</html>

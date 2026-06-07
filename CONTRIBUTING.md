@@ -63,13 +63,24 @@ By participating in this project, you agree to maintain a respectful and inclusi
    git push origin main
    ```
 
-2. **Create a dedicated branch** for your contribution:
+2. **Create a dedicated branch** for your contribution following these conventions:
+   * **Rule 1:** Use lowercase letters only.
+   * **Rule 2:** Use hyphen-separated words (e.g., `improve-spacing` instead of `improve_spacing` or `improveSpacing`).
+   * **Rule 3:** Prefix the branch name based on the contribution type:
+     * `feat/` for new features
+     * `fix/` for bug fixes
+     * `docs/` for documentation
+     * `style/` for code styling/formatting
+     * `refactor/` for structural refactorings
+     * `accessibility/` for accessibility improvements
+     * `enhancement/` for general UI/UX polish
+   
    ```bash
-   git checkout -b feature/your-feature-name
+   git checkout -b feat/add-task-due-date
    # or
-   git checkout -b fix/your-bug-fix
+   git checkout -b fix/toast-animation-overlap
    # or
-   git checkout -b docs/your-doc-update
+   git checkout -b accessibility/improve-button-contrast
    ```
 
 3. **Make your changes** — keep them focused on a single concern.

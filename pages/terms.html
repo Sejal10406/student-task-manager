@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service • TaskQuest</title>
+  <meta name="description" content="Review the usage guidelines, local licensing, and terms of service for TaskQuest." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .legal-content {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-top: 2rem;
+      box-shadow: var(--shadow);
+    }
+    .legal-content h2 {
+      color: var(--accent);
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .legal-content p {
+      margin-bottom: 1.5rem;
+      color: var(--text-muted, #94a3b8);
+      line-height: 1.6;
+    }
+    #scrollProgress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      width: 0%;
+      z-index: 10000;
+      transition: width 0.1s ease-out;
+    }
+  </style>
+</head>
+<body class="legal-page">
+  <div id="scrollProgress"></div>
+<main>
+
+  <!-- BACKGROUND -->
+  <div class="bg blur1"></div>
+  <div class="bg blur2"></div>
+  <div class="grid-overlay"></div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="view-btn" style="text-decoration: none;"><i class="ri-home-4-line"></i> Dashboard</a>
+      <div class="header-brand">
+        <h1>📄 Terms of Service</h1>
+        <p class="header-subtitle">
+          <span>⚖️ TaskQuest Rules</span>
+        </p>
+      </div>
+      <div class="header-controls">
+        <div class="stats-pill">
+          <span class="stats-pill-label">Version</span>
+          <span class="stats-pill-value">v2.0</span>
+        </div>
+        <div class="theme-pill">
+          <span class="theme-pill-label">Theme</span>
+          <select id="themeSwitcher" class="theme-dropdown" aria-label="Switch Theme">
+            <option value="cosmic">🌌 Cosmic</option>
+            <option value="aurora">🍃 Aurora</option>
+            <option value="cyberpunk">🌸 Cyberpunk</option>
+            <option value="sunset">🌅 Sunset</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="legal-content">
+      <section>
+        <h2><i class="ri-checkbox-circle-line"></i> 1. Acceptance of Terms</h2>
+        <p>By accessing or using <strong>TaskQuest</strong>, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, please discontinue use of the application.</p>
+      </section>
+
+      <section>
+        <h2><i class="ri-sword-line"></i> 2. Use of the Gamified Platform</h2>
+        <p>This application is provided for personal productivity and educational use. You may use it to create tasks, earn XP, and unlock badges. You agree not to exploit bugs or manipulate local storage to artificially inflate your TaskQuest scores or coins.</p>
+      </section>
+
+      <section>
+        <h2><i class="ri-hard-drive-2-line"></i> 3. Local Data Storage & Loss</h2>
+        <p>All TaskQuest progress (XP, streaks, coins) is stored locally in your browser. You are fully responsible for backing up your own data using the Export functionality. We do not maintain backups, and we are not responsible for any lost progress due to cleared cache.</p>
+      </section>
+
+      <section>
+        <h2><i class="ri-open-source-line"></i> 4. Open Source License</h2>
+        <p>The source code, design, and assets of TaskQuest are open-source. Contributions are welcome and governed by our <strong>Contributing Guide</strong> and <strong>Code of Conduct</strong>.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer" style="text-align: center; margin-top: 3rem; opacity: 0.7;">
+    <p>&copy; 2026 TaskQuest. Level Up Productivity.</p>
+  </footer>
+
+  <script>
+    function applyTheme(theme) {
+      document.body.setAttribute("data-theme", theme);
+      if (theme === "sunset") {
+        document.body.classList.add("light");
+      } else {
+        document.body.classList.remove("light");
+      }
+    }
+
+    function getStoredTheme() {
+      if (window.TaskQuestStorage && typeof window.TaskQuestStorage.getTheme === 'function') {
+        return window.TaskQuestStorage.getTheme();
+      }
+      return localStorage.getItem("taskquest_v1.theme") || "cosmic";
+    }
+
+    function setStoredTheme(theme) {
+      if (window.TaskQuestStorage && typeof window.TaskQuestStorage.setTheme === 'function') {
+        window.TaskQuestStorage.setTheme(theme);
+      } else {
+        localStorage.setItem("taskquest_v1.theme", theme);
+      }
+    }
+
+    const themeSwitcher = document.getElementById("themeSwitcher");
+    const savedTheme = getStoredTheme();
+    applyTheme(savedTheme);
+    if (themeSwitcher) themeSwitcher.value = savedTheme;
+
+    if (themeSwitcher) {
+      themeSwitcher.addEventListener("change", (e) => {
+        const theme = e.target.value;
+        applyTheme(theme);
+        setStoredTheme(theme);
+      });
+    }
+
+    window.addEventListener("scroll", () => {
+      const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
+      const progressBar = document.getElementById("scrollProgress");
+      if (progressBar) progressBar.style.width = scrolled + "%";
+    });
+  </script>
+</body>
+</html>
+<footer><p><strong>Limitation of Liability:</strong> We shall not be held liable for any indirect damages.</p></footer>

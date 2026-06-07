@@ -73,3 +73,7 @@ We appreciate contributions from the community to improve this project.
 
 ## Responsible Disclosure
 If you find a security issue, please report it privately. We aim to respond within 48 hours.
+
+
+## Contact
+For security reports, please use the contact details provided in the repository guidelines.

@@ -29,8 +29,9 @@ jobs:
           echo "## Project Files Size Report 📊" >> $GITHUB_STEP_SUMMARY
           echo "| File | Size |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          find . -name "*.html" -o -name "*.css" -o -name "*.js" | not -path "./node_modules/*" | while read file; do
+          find . -type f \( -name "*.html" -o -name "*.css" -o -name "*.js" \) -not -path "*/node_modules/*" -not -path "*/.git/*" | while read file; do
             size=$(ls -lh "$file" | awk '{print $5}')
             echo "| \`$file\` | $size |" >> $GITHUB_STEP_SUMMARY
           done
         continue-on-error: true
+

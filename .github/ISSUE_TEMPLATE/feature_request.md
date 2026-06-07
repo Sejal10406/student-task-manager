@@ -1,20 +1,25 @@
 ---
 name: Feature Request
-about: Suggest an idea for this project.
-title: "[FEATURE] "
+about: Propose a new capability or UI enhancement for TaskQuest.
+title: "[FEATURE]: "
 labels: enhancement
 assignees: ''
 
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+# Feature Request
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+## Core Problem
+Describe the problem or limitation this feature request addresses. Why is this capability needed?
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+## Proposed Feature / Solution
+A clear and concise description of what you want to happen. Explain how the proposed feature improves user experience.
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+## Alternatives Considered
+A description of any alternative solutions or workarounds you've considered.
+
+## UI / Interaction Design Idea
+If applicable, describe how the interface should look and behave (layout, styling, animations).
+
+## Additional Context
+Add any other context, screenshots, or mockup diagrams about the feature request here.

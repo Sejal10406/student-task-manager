@@ -1,28 +1,35 @@
 ---
 name: Bug Report
-about: Create a report to help us improve.
-title: "[BUG] "
+about: Create a report to help us improve TaskQuest.
+title: "[BUG]: "
 labels: bug
 assignees: ''
 
 ---
 
-**Describe the bug**
+# Bug Report
+
+## Describe the Bug
 A clear and concise description of what the bug is.
 
-**To Reproduce**
+## Current Behavior
+What actually happens instead of the expected behavior.
+
+## Expected Behavior
+A clear and concise description of what you expected to happen.
+
+## Steps to Reproduce
 Steps to reproduce the behavior:
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
 4. See error
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+## Screenshots / Video Logs
+If applicable, add screenshots or console output/logs to help explain your problem.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
-
-**Environment info:**
-- OS: [e.g. Windows, macOS]
-- Browser [e.g. chrome, safari]
+## Environment Details
+- OS: [e.g. Windows, macOS, Linux]
+- Browser: [e.g. Chrome, Safari, Firefox, Edge]
+- Screen Resolution: [e.g. 1920x1080, Mobile viewport]
+- LocalStorage state (if relevant): [e.g. profile, tasks]

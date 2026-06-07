@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation & Setup • TaskQuest</title>
+  <meta name="description" content="Step-by-step setup guides, features list, and API documentation for TaskQuest." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="legal-page">
+<main>
+  <!-- BACKGROUND -->
+  <div class="bg blur1"></div>
+  <div class="bg blur2"></div>
+  <div class="grid-overlay"></div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="view-btn" style="text-decoration: none;"><i class="ri-home-4-line"></i> Home</a>
+      <div class="header-brand">
+        <h1>📖 Docs</h1>
+        <p class="header-subtitle">
+          <span>🚀 Get Started</span>
+          <span class="subtitle-divider">•</span>
+          <span>Study Smarter</span>
+        </p>
+      </div>
+      <div class="header-controls">
+        <div class="stats-pill">
+          <span class="stats-pill-label">Status</span>
+          <span class="stats-pill-value">📖 Ready</span>
+        </div>
+        <div class="theme-pill">
+          <span class="theme-pill-label">Theme</span>
+          <select id="themeSwitcher" class="theme-dropdown" aria-label="Switch Theme">
+            <option value="cosmic">🌌 Cosmic</option>
+            <option value="aurora">🍃 Aurora</option>
+            <option value="cyberpunk">🌸 Cyberpunk</option>
+            <option value="sunset">🌅 Sunset</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="search-box glass" style="margin-bottom: 2rem; display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 8px 16px;">
+      <i class="ri-search-line" style="color: var(--text-light); font-size: 1.2rem;"></i>
+      <input type="text" id="docSearch" placeholder="Search documentation..." style="width: 100%; border: none; background: transparent; color: var(--text); outline: none; font-size: 1rem;">
+    </div>
+    <section class="doc-section">
+      <h2>🚀 Getting Started</h2>
+      <p>Simply enter your task in the input box, select a priority, choose a due date, and click <strong>Add</strong>.</p>
+    </section>
+
+    <section class="doc-section" style="margin-top: 2rem;">
+      <h2>🔍 Search & Filtering</h2>
+      <p>Use the search bar to quickly find tasks. The list filters in real-time as you type.</p>
+    </section>
+
+    <section class="doc-section" style="margin-top: 2rem;">
+      <h2>✏️ Editing Tasks</h2>
+      <p>Click the <strong>Edit</strong> button on any task to change its text inline. Click <strong>Save</strong> to commit your changes.</p>
+    </section>
+
+    <section class="doc-section" style="margin-top: 2rem;">
+      <h2>📊 Progress Tracking</h2>
+      <p>The progress bar at the bottom updates automatically as you complete tasks. Finish all tasks to trigger a celebration!</p>
+    </section>
+
+    <section class="doc-section" style="margin-top: 2rem;">
+      <h2>🎨 Themes</h2>
+      <p>Switch between Light, Dark, Blue, and Pastel themes using the dropdown in the header. Your preference is saved automatically.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 2026 Study Task Tracker. Empowering students.</p>
+  </footer>
+
+  <script src="../js/storage.js"></script>
+  <script>
+    function applyTheme(theme) {
+      document.body.setAttribute("data-theme", theme);
+      if (theme === "sunset") {
+        document.body.classList.add("light");
+      } else {
+        document.body.classList.remove("light");
+      }
+    }
+
+    function getStoredTheme() {
+      if (window.TaskQuestStorage && typeof window.TaskQuestStorage.getTheme === 'function') {
+        return window.TaskQuestStorage.getTheme();
+      }
+      return localStorage.getItem("taskquest_v1.theme") || "cosmic";
+    }
+
+    function setStoredTheme(theme) {
+      if (window.TaskQuestStorage && typeof window.TaskQuestStorage.setTheme === 'function') {
+        window.TaskQuestStorage.setTheme(theme);
+      } else {
+        localStorage.setItem("taskquest_v1.theme", theme);
+      }
+    }
+
+    const themeSwitcher = document.getElementById("themeSwitcher");
+    const savedTheme = getStoredTheme();
+    applyTheme(savedTheme);
+    if (themeSwitcher) themeSwitcher.value = savedTheme;
+
+    if (themeSwitcher) {
+      themeSwitcher.addEventListener("change", (e) => {
+        const theme = e.target.value;
+        applyTheme(theme);
+        setStoredTheme(theme);
+      });
+    }
+
+    const docSearch = document.getElementById("docSearch");
+    if (docSearch) {
+      docSearch.addEventListener("input", (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        document.querySelectorAll(".doc-section").forEach(sec => {
+          const text = sec.textContent.toLowerCase();
+          if (text.includes(query)) {
+            sec.style.display = "block";
+          } else {
+            sec.style.display = "none";
+          }
+        });
+      });
+    }
+  </script>
+</body>
+</html>
