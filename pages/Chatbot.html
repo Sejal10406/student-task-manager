@@ -694,6 +694,11 @@ function getResponse(text) {
 const msgsEl = document.getElementById('msgs');
 const inpEl = document.getElementById('inp');
 let chatLog = [];
+try {
+  chatLog = JSON.parse(localStorage.getItem('taskquest_v1.chatbot_log')) || [];
+} catch (e) {
+  chatLog = [];
+}
 
 function nowTime() {
   const d = new Date();
@@ -712,6 +717,9 @@ function addMsg(role, content, isHTML = false) {
   wrap.appendChild(av); wrap.appendChild(inner);
   msgsEl.appendChild(wrap); msgsEl.scrollTop = msgsEl.scrollHeight;
   chatLog.push({role, content: isHTML ? bub.textContent : content, time: nowTime()});
+  try {
+    localStorage.setItem('taskquest_v1.chatbot_log', JSON.stringify(chatLog));
+  } catch (e) {}
   return bub;
 }
 
@@ -743,7 +751,12 @@ function sendMsg() {
 function qs(text) { addMsg('user', text); respond(text); }
 
 function clearChat() {
-  if (confirm('Clear chat history?')) { msgsEl.innerHTML = ''; chatLog = []; addMsg('bot', 'Chat cleared! How can I help you today?'); }
+  if (confirm('Clear chat history?')) {
+    msgsEl.innerHTML = '';
+    chatLog = [];
+    localStorage.removeItem('taskquest_v1.chatbot_log');
+    addMsg('bot', 'Chat cleared! How can I help you today?');
+  }
 }
 
 function exportChat() {
@@ -761,7 +774,23 @@ document.getElementById('new-task-inp').addEventListener('keydown', e => { if (e
 document.getElementById('rem-inp').addEventListener('keydown', e => { if (e.key === 'Enter') addReminder(); });
 
 updateRing();
-setTimeout(() => addMsg('bot', "Hey! I'm StudyBot — your personal academic assistant. I can help with tasks, study tips, Pomodoro timers, reminders, motivation, and exam prep.\n\nUse the sidebar to switch between Chat, Tasks, Timer, Reminders and Stats. What do you need today?"), 250);
+if (chatLog.length > 0) {
+  chatLog.forEach(m => {
+    const wrap = document.createElement('div'); wrap.className = 'msg ' + m.role;
+    const av = document.createElement('div'); av.className = 'm-ava';
+    av.innerHTML = m.role === 'user' ? '<i class="ti ti-user"></i>' : '<i class="ti ti-robot"></i>';
+    const bub = document.createElement('div'); bub.className = 'bubble';
+    bub.textContent = m.content;
+    const tm = document.createElement('div'); tm.className = 'time-lbl'; tm.textContent = m.time;
+    const inner = document.createElement('div'); inner.className = 'msg-inner';
+    inner.appendChild(bub); inner.appendChild(tm);
+    wrap.appendChild(av); wrap.appendChild(inner);
+    msgsEl.appendChild(wrap);
+  });
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+} else {
+  setTimeout(() => addMsg('bot', "Hey! I'm StudyBot — your personal academic assistant. I can help with tasks, study tips, Pomodoro timers, reminders, motivation, and exam prep.\n\nUse the sidebar to switch between Chat, Tasks, Timer, Reminders and Stats. What do you need today?"), 250);
+}
 </script>
 </body>
 </html>
