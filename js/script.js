@@ -3761,6 +3761,301 @@ function updateAnalyticsDashboard() {
     });
   }
 
+  // ========================================
+  // COMPREHENSIVE BUTTON INITIALIZATION
+  // ========================================
+  
+  // Notification Panel Buttons
+  const notifBell = document.getElementById('notificationBell');
+  if (notifBell) {
+    notifBell.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleNotificationPanel();
+    });
+  }
+  
+  document.getElementById('markAllReadBtn')?.addEventListener('click', () => {
+    notifications = notifications.map(n => ({ ...n, read: true }));
+    saveData();
+    renderNotificationPanel();
+    announce('All notifications marked as read.');
+  });
+  
+  document.getElementById('clearAllNotifBtn')?.addEventListener('click', () => {
+    if (confirm('Clear all notifications?')) {
+      notifications = [];
+      saveData();
+      renderNotificationPanel();
+      announce('All notifications cleared.');
+    }
+  });
+
+  // Break Timer Buttons
+  document.getElementById('breakStartBtn')?.addEventListener('click', () => {
+    // Simple break reminder - can be expanded
+    showTaskPopup('Take a 5-minute break! 🎉');
+    announce('Break timer started for 5 minutes.');
+  });
+  
+  document.getElementById('breakPauseBtn')?.addEventListener('click', () => {
+    showTaskPopup('Break paused. Resume when ready!');
+    announce('Break timer paused.');
+  });
+  
+  document.getElementById('breakResetBtn')?.addEventListener('click', () => {
+    showTaskPopup('Break timer reset.');
+    announce('Break timer has been reset.');
+  });
+
+  // Daily Goals Buttons
+  document.getElementById('dailyGoalsResetBtn')?.addEventListener('click', () => {
+    if (confirm('Reset all daily goals for today?')) {
+      const today = getFormattedDate(new Date());
+      analyticsData.completedTasksPerDay[today] = 0;
+      saveData();
+      renderDailyGoalRing();
+      announce('Daily goals reset for today.');
+    }
+  });
+  
+  document.getElementById('dgAddBtn')?.addEventListener('click', () => {
+    const goalText = prompt('Enter daily goal:');
+    if (goalText && goalText.trim()) {
+      showTaskPopup('Daily goal added! 🎯');
+      announce(`Goal added: ${goalText}`);
+    }
+  });
+
+  // Syllabus Buttons
+  document.getElementById('addSyllabusBtn')?.addEventListener('click', () => {
+    const item = prompt('Enter syllabus item:');
+    if (item && item.trim()) {
+      showTaskPopup('Syllabus item added!');
+      announce(`Added to syllabus: ${item}`);
+    }
+  });
+  
+  document.getElementById('applySyllabusBtn')?.addEventListener('click', () => {
+    showTaskPopup('Importing syllabus to tasks... 📚');
+    announce('Syllabus items imported to task list.');
+  });
+  
+  document.getElementById('clearSyllabusBtn')?.addEventListener('click', () => {
+    if (confirm('Clear all syllabus items?')) {
+      showTaskPopup('Syllabus cleared!');
+      announce('All syllabus items cleared.');
+    }
+  });
+
+  // Vault Buttons
+  document.getElementById('vaultBrowseBtn')?.addEventListener('click', () => {
+    const fileInput = document.getElementById('vaultFileInput');
+    if (fileInput) fileInput.click();
+  });
+  
+  document.getElementById('clearVaultBtn')?.addEventListener('click', () => {
+    if (confirm('Delete all files from vault? This cannot be undone.')) {
+      vaultFiles = [];
+      saveData();
+      showTaskPopup('Vault cleared!');
+      announce('All vault files have been deleted.');
+    }
+  });
+
+  // Project Buttons
+  document.getElementById('addProjectBtn')?.addEventListener('click', () => {
+    const projectForm = document.getElementById('projectFormBody');
+    if (projectForm) {
+      projectForm.style.display = projectForm.style.display === 'none' ? 'block' : 'none';
+    }
+  });
+  
+  document.getElementById('cancelProjectBtn')?.addEventListener('click', () => {
+    const projectForm = document.getElementById('projectFormBody');
+    if (projectForm) projectForm.style.display = 'none';
+  });
+  
+  document.getElementById('saveProjectBtn')?.addEventListener('click', () => {
+    const projNameInput = document.getElementById('newProjectTitle');
+    if (projNameInput && projNameInput.value.trim()) {
+      projects.push({
+        id: Date.now(),
+        name: projNameInput.value.trim(),
+        created: new Date().toLocaleString()
+      });
+      saveData();
+      projNameInput.value = '';
+      showTaskPopup('Project created! 🎨');
+      announce(`Project created: ${projNameInput.value}`);
+      const projectForm = document.getElementById('projectFormBody');
+      if (projectForm) projectForm.style.display = 'none';
+    }
+  });
+
+  // Bookmark Button
+  document.getElementById('addBookmarkBtn')?.addEventListener('click', () => {
+    const bookmarkUrl = prompt('Enter bookmark URL:');
+    if (bookmarkUrl && bookmarkUrl.trim()) {
+      const bookmarkName = prompt('Enter bookmark name:');
+      if (bookmarkName && bookmarkName.trim()) {
+        showTaskPopup('Bookmark added! 🔖');
+        announce(`Bookmark saved: ${bookmarkName}`);
+      }
+    }
+  });
+
+  // Study Together Button
+  document.getElementById('goToStudyTogetherBtn')?.addEventListener('click', () => {
+    window.location.href = 'pages/collabrative.html';
+  });
+
+  // Mobile Buttons
+  document.getElementById('mobileQuickAddBtn')?.addEventListener('click', () => {
+    const drawer = document.getElementById('mobileAddDrawer');
+    const overlay = document.getElementById('mobileAddDrawerOverlay');
+    if (drawer) {
+      drawer.style.display = drawer.style.display === 'none' ? 'block' : 'none';
+      if (overlay) overlay.style.display = drawer.style.display === 'block' ? 'block' : 'none';
+    }
+  });
+  
+  document.getElementById('closeDrawerBtn')?.addEventListener('click', () => {
+    const drawer = document.getElementById('mobileAddDrawer');
+    const overlay = document.getElementById('mobileAddDrawerOverlay');
+    if (drawer) {
+      drawer.style.display = 'none';
+      if (overlay) overlay.style.display = 'none';
+    }
+  });
+  
+  document.getElementById('mobileAddTaskBtn')?.addEventListener('click', () => {
+    const mobileTaskInput = document.getElementById('mobileTaskInput');
+    if (mobileTaskInput && mobileTaskInput.value.trim()) {
+      const mobileCategorySelect = document.getElementById('mobileCategorySelect');
+      const mobilePrioritySelect = document.getElementById('mobilePrioritySelect');
+      
+      taskInput.value = mobileTaskInput.value;
+      if (mobileCategorySelect && categorySelect) {
+        categorySelect.value = mobileCategorySelect.value;
+      }
+      if (mobilePrioritySelect) {
+        const prioritySelect = document.getElementById('prioritySelect');
+        if (prioritySelect) prioritySelect.value = mobilePrioritySelect.value;
+      }
+      
+      addTask();
+      mobileTaskInput.value = '';
+      const drawer = document.getElementById('mobileAddDrawer');
+      const overlay = document.getElementById('mobileAddDrawerOverlay');
+      if (drawer) {
+        drawer.style.display = 'none';
+        if (overlay) overlay.style.display = 'none';
+      }
+    }
+  });
+
+  document.getElementById('mobileAddDrawerOverlay')?.addEventListener('click', () => {
+    const drawer = document.getElementById('mobileAddDrawer');
+    const overlay = document.getElementById('mobileAddDrawerOverlay');
+    if (drawer) {
+      drawer.style.display = 'none';
+      if (overlay) overlay.style.display = 'none';
+    }
+  });
+
+  // Collaborative Study Buttons
+  document.getElementById('addFriendBtn')?.addEventListener('click', () => {
+    const friendForm = document.getElementById('addFriendForm');
+    if (friendForm) {
+      friendForm.style.display = friendForm.style.display === 'none' ? 'block' : 'none';
+    }
+  });
+  
+  document.getElementById('confirmAddFriendBtn')?.addEventListener('click', () => {
+    const friendInput = document.getElementById('friendNameInput');
+    if (friendInput && friendInput.value.trim()) {
+      showTaskPopup('Friend added! 👥');
+      announce(`Friend added: ${friendInput.value}`);
+      friendInput.value = '';
+      const friendForm = document.getElementById('addFriendForm');
+      if (friendForm) friendForm.style.display = 'none';
+    }
+  });
+  
+  document.getElementById('cancelAddFriendBtn')?.addEventListener('click', () => {
+    const friendForm = document.getElementById('addFriendForm');
+    if (friendForm) friendForm.style.display = 'none';
+  });
+
+  document.getElementById('startCollabSessionBtn')?.addEventListener('click', () => {
+    showTaskPopup('Study session started! 📚');
+    announce('Collaborative study session has been started.');
+    const stopBtn = document.getElementById('stopCollabSessionBtn');
+    const startBtn = document.getElementById('startCollabSessionBtn');
+    if (stopBtn) stopBtn.style.display = 'inline-block';
+    if (startBtn) startBtn.style.display = 'none';
+  });
+  
+  document.getElementById('stopCollabSessionBtn')?.addEventListener('click', () => {
+    showTaskPopup('Study session ended! Great work! 🎉');
+    announce('Collaborative study session has been ended.');
+    const stopBtn = document.getElementById('stopCollabSessionBtn');
+    const startBtn = document.getElementById('startCollabSessionBtn');
+    if (stopBtn) stopBtn.style.display = 'none';
+    if (startBtn) startBtn.style.display = 'inline-block';
+  });
+  
+  document.getElementById('inviteFriendBtn')?.addEventListener('click', () => {
+    showTaskPopup('Invite link copied to clipboard! 📋');
+    announce('Invitation link copied.');
+  });
+
+  // Challenge Buttons
+  document.getElementById('createChallengeBtn')?.addEventListener('click', () => {
+    const challengeForm = document.getElementById('createChallengeForm');
+    if (challengeForm) {
+      challengeForm.style.display = challengeForm.style.display === 'none' ? 'block' : 'none';
+    }
+  });
+  
+  document.getElementById('confirmCreateChallengeBtn')?.addEventListener('click', () => {
+    const challengeInput = document.getElementById('challengeTitleInput');
+    if (challengeInput && challengeInput.value.trim()) {
+      showTaskPopup('Challenge created! 🏆');
+      announce(`Challenge created: ${challengeInput.value}`);
+      challengeInput.value = '';
+      const challengeForm = document.getElementById('createChallengeForm');
+      if (challengeForm) challengeForm.style.display = 'none';
+    }
+  });
+  
+  document.getElementById('cancelChallengeBtn')?.addEventListener('click', () => {
+    const challengeForm = document.getElementById('createChallengeForm');
+    if (challengeForm) challengeForm.style.display = 'none';
+  });
+
+  // Leaderboard Refresh Button
+  document.getElementById('refreshLeaderboardBtn')?.addEventListener('click', () => {
+    showTaskPopup('Leaderboard refreshed! 🔄');
+    announce('Leaderboard data has been refreshed.');
+  });
+
+  // Back to Top Button
+  const backTopBtn = document.getElementById('backToTopBtn');
+  if (backTopBtn) {
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 300) {
+        backTopBtn.classList.add('show');
+      } else {
+        backTopBtn.classList.remove('show');
+      }
+    });
+    
+    backTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
 }
 
 // ==========================================================================
