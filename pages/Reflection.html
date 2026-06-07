@@ -1403,15 +1403,16 @@ function renderVault() {
   list.innerHTML = vault.map(e => {
     const dt   = new Date(e.date);
     const dStr = dt.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
-    const preview = (e.ach || e.act || e.ref || '').slice(0, 120).replace(/\n/g,' ');
+    const preview = escapeHtml((e.ach || e.act || e.ref || '').slice(0, 120).replace(/\n/g,' '));
     const tags = [e.ach && 'ach', e.act && 'act', e.ref && 'ref'].filter(Boolean);
     const tagLabels = { ach:'Achievement', act:'Activity', ref:'Reflection' };
+    const safeMood = e.mood ? escapeHtml(e.mood.split(' ')[0]) : '';
     return `
       <div class="vault-entry" onclick="restoreEntry(${e.id})">
         <div class="ve-header">
           <span class="ve-date">${dStr}</span>
           <div class="ve-meta">
-            ${e.mood ? `<span class="ve-mood">${e.mood.split(' ')[0]}</span>` : ''}
+            ${safeMood ? `<span class="ve-mood">${safeMood}</span>` : ''}
             <span class="ve-wc">${e.words} words</span>
             <button class="ve-delete" onclick="event.stopPropagation();deleteEntry(${e.id})" title="Delete"><i class="ri-delete-bin-line"></i></button>
           </div>
@@ -1439,6 +1440,16 @@ function restoreEntry(id) {
   }
   toast('Session loaded into workspace ✔', 'success');
   window.scrollTo({top: document.getElementById('reflectionCard').offsetTop - 20, behavior:'smooth'});
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 /* ══════════════════════════════════════════════════════════
