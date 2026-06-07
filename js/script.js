@@ -1420,6 +1420,15 @@ function addTask() {
   }
   taskInput.setAttribute("aria-invalid", "false");
 
+  if (deadline) {
+    const selectedDate = new Date(deadline);
+    if (selectedDate < new Date()) {
+      if (window.showToast) window.showToast("Cannot set a deadline in the past.", "error");
+      else alert("Cannot set a deadline in the past.");
+      return;
+    }
+  }
+
   const task = {
     id: Date.now(),
     text,
