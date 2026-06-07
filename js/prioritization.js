@@ -115,12 +115,42 @@
     return suggestions;
   }
 
+  /**
+   * Categorizes a task according to the Eisenhower Matrix.
+   */
+  function getEisenhowerQuadrant(task) {
+    if (task.completed) return { name: "Completed", class: "completed", code: 0 };
+    
+    var isImportant = (task.priority || "Medium").toLowerCase() === "high";
+    var isUrgent = false;
+    
+    if (task.deadline) {
+      var now = new Date();
+      var due = new Date(task.deadline);
+      var hoursLeft = (due - now) / (1000 * 60 * 60);
+      if (hoursLeft < 48) { // Urgent if due in less than 48 hours or overdue
+        isUrgent = true;
+      }
+    }
+    
+    if (isImportant && isUrgent) {
+      return { name: "Do First (Urgent & Important)", class: "do-first", code: 1 };
+    } else if (isImportant && !isUrgent) {
+      return { name: "Schedule (Important but Not Urgent)", class: "schedule", code: 2 };
+    } else if (!isImportant && isUrgent) {
+      return { name: "Delegate (Urgent but Not Important)", class: "delegate", code: 3 };
+    } else {
+      return { name: "Eliminate (Neither)", class: "eliminate", code: 4 };
+    }
+  }
+
   // Expose on window
   global.Prioritization = {
     calculatePriorityScore: calculatePriorityScore,
     getSortedTasksByPriority: getSortedTasksByPriority,
     getUrgencyInfo: getUrgencyInfo,
-    getProductivitySuggestions: getProductivitySuggestions
+    getProductivitySuggestions: getProductivitySuggestions,
+    getEisenhowerQuadrant: getEisenhowerQuadrant
   };
 
 })(window);
