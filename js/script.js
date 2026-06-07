@@ -1,3 +1,9 @@
+/**
+ * @fileoverview TaskQuest Client Library and utilities.
+ * @author Senior Open-Source Contributor
+ * @version 2.0.0
+ */
+
 
 // Core Elements
 const taskInput = document.getElementById("taskInput");
