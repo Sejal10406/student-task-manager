@@ -17,6 +17,7 @@
   let trendMode = "weekly";
 
   function parseQuestDate(quest, field) {
+    if (!quest) return null;
     const v = quest[field];
     if (!v) return null;
     const d = new Date(v);
@@ -32,6 +33,7 @@
   }
 
   function normalizeQuest(raw) {
+    if (!raw) return { text: "", title: "", category: "General", completed: false, createdAt: new Date().toISOString(), completedAt: null };
     const q = { ...raw };
     q.text = (q.text || q.title || "").trim();
     q.title = q.title || q.text;
