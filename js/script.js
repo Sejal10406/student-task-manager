@@ -4007,12 +4007,67 @@ if (addExamBtn) {
   });
 }
 
-// --- State Management ---
-// Guard against corrupt or malformed JSON in storage. A bare JSON.parse at
-// the top level throws a SyntaxError before any function is defined, leaving
-// `tasks` undefined and making the entire app non-functional until the user
-// manually clears localStorage. The try/catch recovers silently with an
-// empty array so the app always boots into a usable state.
+// ==========================================================================
+// SYLLABUS CHECKLIST - IMPORT TO TASKS WITH DUPLICATE PREVENTION
+// ==========================================================================
+
+function applySyllabusToTasks(syllabusTopics, defaultCategory = "Theory", defaultPriority = "Medium") {
+  if (!syllabusTopics || !Array.isArray(syllabusTopics) || syllabusTopics.length === 0) {
+    console.warn("No syllabus topics provided for import");
+    return { added: 0, skipped: 0 };
+  }
+  
+  let addedCount = 0;
+  let skippedCount = 0;
+  
+  const existingTaskTexts = new Set();
+  tasks.forEach(task => {
+    if (task.text) {
+      existingTaskTexts.add(task.text.toLowerCase().trim());
+    }
+  });
+  
+  for (const topic of syllabusTopics) {
+    if (!topic || typeof topic !== 'string') continue;
+    
+    const topicText = topic.trim();
+    if (topicText === "") continue;
+    
+    if (existingTaskTexts.has(topicText.toLowerCase())) {
+      skippedCount++;
+      continue;
+    }
+    
+    const newTask = {
+      id: Date.now() + Math.floor(Math.random() * 1000) + addedCount,
+      text: topicText,
+      category: defaultCategory,
+      priority: defaultPriority,
+      completed: false,
+      createdAt: getFormattedDateTime(new Date()),
+      deadline: null,
+      penaltyApplied: false,
+      tags: ["syllabus", defaultCategory.toLowerCase()]
+    };
+    
+    tasks.push(newTask);
+    existingTaskTexts.add(topicText.toLowerCase()); 
+    addedCount++;
+  }
+  
+  if (addedCount > 0) {
+    saveData();
+    renderTasks();
+    showTaskPopup(`📚 Imported ${addedCount} syllabus ${addedCount === 1 ? 'topic' : 'topics'} as tasks! ${skippedCount > 0 ? `(${skippedCount} skipped - already exist)` : ''}`);
+    announce(`Imported ${addedCount} syllabus topics as tasks.`);
+  } else if (skippedCount > 0) {
+    showTaskPopup(`📋 All ${skippedCount} syllabus topics already exist in your task list.`);
+    announce(`No new syllabus topics to import. All ${skippedCount} topics already exist.`);
+  }
+  
+  return { added: addedCount, skipped: skippedCount };
+}
+
 try {
   const _raw = window.TaskQuestStorage
     ? window.TaskQuestStorage.getTasks()
@@ -4215,45 +4270,28 @@ function toggleTask(id) {
 }
 
 function editTask(id) {
-  tasks = tasks.map(task => {
-    if (task.id === id) {
-      return { ...task, isEditing: true };
-    }
-    return task;
-  });
-  renderTasks();
-}
-
-function saveEdit(id) {
-  const input = document.querySelector(`input[data-edit-id="${id}"]`);
-  if (!input) return;
-  const newText = input.value.trim();
-
-  if (newText !== "") {
-    if (newText.length > MAX_TASK_LENGTH) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  const newText = prompt("Edit task:", task.text);
+  if (newText !== null && newText.trim() !== "") {
+    if (newText.trim().length > MAX_TASK_LENGTH) {
       alert(`Task is too long. Please keep it under ${MAX_TASK_LENGTH} characters.`);
       return;
     }
-    tasks = tasks.map(task => {
-      if (task.id === id) {
-        return { ...task, text: newText, isEditing: false };
-      }
-      return task;
-    });
-    saveAndRender();
-  } else {
-    cancelEdit(id);
+    task.text = newText.trim();
   }
-}
-
-function cancelEdit(id) {
-  tasks = tasks.map(task => {
-    if (task.id === id) {
-      return { ...task, isEditing: false };
+  const choices = tasks.filter(t => t.id !== id).map((t, i) => `${i+1}. ${t.text} (id:${t.id}${t.completed? ' ✓':''})`);
+  const sel = prompt(`Select prerequisite numbers (comma separated) or empty = none:\n${choices.join('\n')}`);
+  if (sel !== null) {
+    if (sel.trim() === '') {
+      task.depends = [];
+    } else {
+      const parts = sel.split(/[,\s]+/).map(s => Number(s)).filter(n => Number.isFinite(n) && n>=1 && n<=choices.length);
+      const chosen = parts.map(n => tasks.filter(t => t.id !== id)[n-1]).filter(Boolean).map(t => t.id);
+      task.depends = chosen.filter(did => !hasCircularDependency(task.id, did));
     }
-    return task;
-  });
-  renderTasks();
+  }
+  saveAndRender();
 }
 
 function saveAndRender() {
