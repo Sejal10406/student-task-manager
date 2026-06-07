@@ -227,6 +227,11 @@
             renderNotes();
         }
 
+        function escapeHtml(str) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return String(str).replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
         function renderNotes() {
             const grid = document.getElementById('notesGrid');
             const search = document.getElementById('noteSearch').value.toLowerCase();
@@ -249,9 +254,9 @@
 
             grid.innerHTML = filtered.map(n => `
                 <div class="note-card">
-                    <span class="note-tag tag-${n.category.toLowerCase()}">${n.category}</span>
-                    <h3 class="note-title">${n.title}</h3>
-                    <p class="note-content">${n.content}</p>
+                    <span class="note-tag tag-${n.category.toLowerCase()}">${escapeHtml(n.category)}</span>
+                    <h3 class="note-title">${escapeHtml(n.title)}</h3>
+                    <p class="note-content">${escapeHtml(n.content)}</p>
                     <div class="note-actions">
                         <button class="action-btn delete" onclick="deleteNote(${n.id})" title="Delete note"><i class="ri-delete-bin-line"></i></button>
                     </div>
