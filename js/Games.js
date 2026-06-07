@@ -1,3 +1,9 @@
+/**
+ * @fileoverview TaskQuest Client Library and utilities.
+ * @author Senior Open-Source Contributor
+ * @version 2.0.0
+ */
+
 /* ===== GLOBAL STATE ===== */
 const _S = window.TaskQuestStorage;
 let globalScore = _S ? _S.getCoins() : 0;
