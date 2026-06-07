@@ -1,6 +1,6 @@
 # Pull Request Description
 
-## Related Issue
+## 🔗 Related Issue
 Closes #
 
 ## Summary
