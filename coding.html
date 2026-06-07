@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coding Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent1: #00ff88;
+    --accent2: #ff6b35;
+    --accent3: #7c3aed;
+    --accent4: #06b6d4;
+    --accent5: #f59e0b;
+    --accent6: #ec4899;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── GRID BACKGROUND ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── PAGES ─── */
+  .page { display: none; position: relative; z-index: 1; }
+  .page.active { display: block; }
+
+  /* ═══════════════════════════════
+     HUB PAGE
+  ═══════════════════════════════ */
+  #hub-page {
+    min-height: 100vh;
+    padding: 60px 24px 80px;
+  }
+
+  .hub-header {
+    text-align: center;
+    margin-bottom: 64px;
+    animation: fadeDown .6s ease both;
+  }
+
+  .hub-header .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--accent1);
+    border: 1px solid var(--accent1);
+    padding: 4px 14px;
+    border-radius: 2px;
+    margin-bottom: 20px;
+    opacity: .8;
+  }
+
+  .hub-header h1 {
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    background: linear-gradient(135deg, #fff 40%, var(--accent1) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hub-header p {
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: 1rem;
+    font-family: var(--mono);
+    font-size: .85rem;
+  }
+
+  /* ─── CARDS GRID ─── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+
+  .game-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 28px 24px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+    animation: fadeUp .5s ease both;
+  }
+
+  .game-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity .3s;
+    border-radius: 12px;
+  }
+
+  .game-card:hover { transform: translateY(-4px); }
+  .game-card:hover::before { opacity: 1; }
+
+  .game-card[data-color="1"] { --c: var(--accent1); }
+  .game-card[data-color="2"] { --c: var(--accent2); }
+  .game-card[data-color="3"] { --c: var(--accent3); }
+  .game-card[data-color="4"] { --c: var(--accent4); }
+  .game-card[data-color="5"] { --c: var(--accent5); }
+  .game-card[data-color="6"] { --c: var(--accent6); }
+
+  .game-card:hover { border-color: var(--c); box-shadow: 0 0 30px -5px var(--c); }
+  .game-card::before { background: radial-gradient(ellipse at top left, color-mix(in srgb, var(--c) 8%, transparent), transparent 70%); }
+
+  .card-icon {
+    font-size: 2.2rem;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .card-num {
+    position: absolute;
+    top: 20px;
+    right: 22px;
+    font-family: var(--mono);
+    font-size: .7rem;
+    color: var(--muted);
+    opacity: .5;
+  }
+
+  .card-title {
+    font-size: 1.18rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+
+  .card-desc {
+    font-size: .82rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 22px;
+    font-family: var(--mono);
+  }
+
+  .card-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid var(--c);
+    color: var(--c);
+    font-family: var(--mono);
+    font-size: .75rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 8px 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+  }
+
+  .card-btn:hover { background: var(--c); color: #000; }
+  .card-btn .arrow { transition: transform .2s; }
+  .card-btn:hover .arrow { transform: translateX(4px); }
+
+  /* ═══════════════════════════════
+     GAME SHELL
+  ═══════════════════════════════ */
+  #game-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .game-topbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,.9);
+    backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .back-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: .75rem;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .back-btn:hover { border-color: var(--text); color: var(--text); }
+
+  .game-title-bar {
+    font-weight: 700;
+    font-size: .95rem;
+  }
+
+  .game-content {
+    flex: 1;
+    padding: 36px 24px 60px;
+    max-width: 860px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* ─── GAME SHARED COMPONENTS ─── */
+  .g-heading {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 6px;
+    letter-spacing: -.02em;
+  }
+
+  .g-sub {
+    font-family: var(--mono);
+    font-size: .78rem;
+    color: var(--muted);
+    margin-bottom: 30px;
+  }
+
+  .g-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 26px;
+    margin-bottom: 20px;
+  }
+
+  .g-label {
+    font-family: var(--mono);
+    font-size: .7rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  pre.code-block {
+    background: #0d0d14;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    font-family: var(--mono);
+    font-size: .82rem;
+    line-height: 1.7;
+    color: #c9d1d9;
+    overflow-x: auto;
+    white-space: pre;
+    margin: 12px 0;
+  }
+
+  pre.code-block .kw  { color: #ff7b72; }
+  pre.code-block .fn  { color: #d2a8ff; }
+  pre.code-block .str { color: #a5d6ff; }
+  pre.code-block .num { color: #f78166; }
+  pre.code-block .cm  { color: var(--muted); font-style: italic; }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .opt-btn {
+    background: #0d0d14;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: .82rem;
+    padding: 12px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    transition: all .2s;
+  }
+
+  .opt-btn:hover:not(:disabled) { border-color: var(--accent4); color: #fff; }
+  .opt-btn.correct { border-color: var(--accent1); background: rgba(0,255,136,.08); color: var(--accent1); }
+  .opt-btn.wrong   { border-color: var(--accent2); background: rgba(255,107,53,.08); color: var(--accent2); }
+  .opt-btn:disabled { cursor: default; }
+
+  .feedback {
+    margin-top: 14px;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: .82rem;
+    display: none;
+  }
+
+  .feedback.show { display: block; }
+  .feedback.ok  { background: rgba(0,255,136,.08); border: 1px solid var(--accent1); color: var(--accent1); }
+  .feedback.err { background: rgba(255,107,53,.08); border: 1px solid var(--accent2); color: var(--accent2); }
+
+  .action-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--accent1);
+    color: #000;
+    border: none;
+    font-family: var(--mono);
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    padding: 10px 22px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+
+  .btn-primary:hover { opacity: .85; }
+  .btn-primary:disabled { opacity: .4; cursor: default; }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: .8rem;
+    padding: 10px 22px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+
+  .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+
+  .score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: .78rem;
+    color: var(--accent5);
+    margin-left: auto;
+  }
+
+  .progress-bar-wrap {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 26px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--accent1);
+    border-radius: 2px;
+    transition: width .4s ease;
+  }
+
+  textarea.code-input {
+    width: 100%;
+    background: #0d0d14;
+    border: 1px solid var(--border);
+    color: #c9d1d9;
+    font-family: var(--mono);
+    font-size: .82rem;
+    padding: 16px;
+    border-radius: 8px;
+    resize: vertical;
+    min-height: 120px;
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  textarea.code-input:focus { border-color: var(--accent4); }
+
+  .drag-item {
+    background: #0d0d14;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 11px 16px;
+    font-family: var(--mono);
+    font-size: .8rem;
+    cursor: grab;
+    transition: all .2s;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .drag-item:hover { border-color: var(--accent3); }
+  .drag-item.dragging { opacity: .4; }
+  .drag-item.drag-over { border-color: var(--accent4); background: rgba(6,182,212,.08); }
+
+  .drag-handle { color: var(--muted); font-size: .9rem; }
+
+  #drag-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .result-screen {
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .result-screen .big-score {
+    font-size: 4rem;
+    font-weight: 800;
+    line-height: 1;
+    margin: 16px 0;
+    background: linear-gradient(135deg, var(--accent1), var(--accent4));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .result-screen p { color: var(--muted); font-family: var(--mono); font-size: .85rem; }
+
+  @keyframes fadeDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:none; } }
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(16px);  } to { opacity:1; transform:none; } }
+
+  .game-card:nth-child(1) { animation-delay: .05s; }
+  .game-card:nth-child(2) { animation-delay: .1s; }
+  .game-card:nth-child(3) { animation-delay: .15s; }
+  .game-card:nth-child(4) { animation-delay: .2s; }
+  .game-card:nth-child(5) { animation-delay: .25s; }
+  .game-card:nth-child(6) { animation-delay: .3s; }
+
+  @media (max-width: 600px) {
+    .options-grid { grid-template-columns: 1fr; }
+    .cards-grid { grid-template-columns: 1fr; }
+    .g-heading { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HUB PAGE ═══════════════ -->
+<div id="hub-page" class="page active">
+  <div class="hub-header">
+    <div class="badge">// coding challenges</div>
+    <h1>Coding Hub</h1>
+    <p>six games · pick your challenge · level up</p>
+  </div>
+
+  <div class="cards-grid">
+    <div class="game-card" data-color="1" onclick="openGame('debug')">
+      <span class="card-num">01</span>
+      <span class="card-icon">🐛</span>
+      <div class="card-title">Debug Game</div>
+      <div class="card-desc">Spot and fix bugs hidden inside broken code snippets. How fast can you squash them?</div>
+      <button class="card-btn">Start <span class="arrow">→</span></button>
+    </div>
+
+    <div class="game-card" data-color="2" onclick="openGame('challenge')">
+      <span class="card-num">02</span>
+      <span class="card-icon">💻</span>
+      <div class="card-title">Random Coding Challenge</div>
+      <div class="card-desc">Get a random algorithm problem. Read the task, write your logic, and submit your solution.</div>
+      <button class="card-btn">Start <span class="arrow">→</span></button>
+    </div>
+
+    <div class="game-card" data-color="3" onclick="openGame('output')">
+      <span class="card-num">03</span>
+      <span class="card-icon">🔍</span>
+      <div class="card-title">Guess the Output</div>
+      <div class="card-desc">Look at a code snippet and predict what it prints. Test your mental execution skills.</div>
+      <button class="card-btn">Start <span class="arrow">→</span></button>
+    </div>
+
+    <div class="game-card" data-color="4" onclick="openGame('quiz')">
+      <span class="card-num">04</span>
+      <span class="card-icon">❓</span>
+      <div class="card-title">Coding Quiz</div>
+      <div class="card-desc">10-question MCQ covering Python, JS, data structures, and CS fundamentals.</div>
+      <button class="card-btn">Start <span class="arrow">→</span></button>
+    </div>
+
+    <div class="game-card" data-color="5" onclick="openGame('complete')">
+      <span class="card-num">05</span>
+      <span class="card-icon">🧩</span>
+      <div class="card-title">Complete the Code</div>
+      <div class="card-desc">Fill in the blanks to complete a working function. Close the gaps with the right logic.</div>
+      <button class="card-btn">Start <span class="arrow">→</span></button>
+    </div>
+
+    <div class="game-card" data-color="6" onclick="openGame('arrange')">
+      <span class="card-num">06</span>
+      <span class="card-icon">🔀</span>
+      <div class="card-title">Arrange the Code</div>
+      <div class="card-desc">Drag and drop scrambled lines into the correct order to build a working program.</div>
+      <button class="card-btn">Start <span class="arrow">→</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ GAME SHELL ═══════════════ -->
+<div id="game-shell" class="page">
+  <div class="game-topbar">
+    <button class="back-btn" onclick="backToHub()">← Hub</button>
+    <div class="game-title-bar" id="game-title-bar"></div>
+    <div class="score-badge" id="score-badge"></div>
+  </div>
+  <div class="game-content" id="game-content"></div>
+</div>
+
+
+<script>
+/* ═══════════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════════ */
+
+const DEBUG_QUESTIONS = [
+  {
+    intro: "Find and describe the bug in this Python function:",
+    code: `def find_max(nums):\n    max_val = 0\n    for n in nums:\n        if n > max_val:\n            max_val = n\n    return max_val`,
+    bug: "Initializing max_val = 0 fails for all-negative lists.",
+    fix: "Use max_val = nums[0] or float('-inf') instead.",
+    options: [
+      "max_val should start at 0 — correct as-is",
+      "max_val = 0 fails when all numbers are negative",
+      "The loop variable n is undefined",
+      "return should be inside the loop"
+    ],
+    correct: 1
+  },
+  {
+    intro: "What is wrong with this JavaScript?",
+    code: `function greet(name) {\n  console.log("Hello, " + Name + "!");\n}`,
+    bug: "'Name' is capitalised but the parameter is 'name' (lowercase).",
+    fix: "Change 'Name' to 'name'.",
+    options: [
+      "Missing semicolon after console.log",
+      "'Name' should be 'name' — JS is case-sensitive",
+      "console.log cannot concatenate strings",
+      "function keyword is incorrect"
+    ],
+    correct: 1
+  },
+  {
+    intro: "Spot the bug in this binary search:",
+    code: `def binary_search(arr, target):\n    lo, hi = 0, len(arr)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid\n    return -1`,
+    bug: "hi should be len(arr) - 1, not len(arr).",
+    fix: "Change hi = len(arr) to hi = len(arr) - 1.",
+    options: [
+      "lo should start at 1, not 0",
+      "hi = len(arr) should be hi = len(arr) - 1",
+      "mid calculation uses integer division — wrong",
+      "The while condition should be lo <= hi"
+    ],
+    correct: 1
+  },
+  {
+    intro: "What's wrong with this Python list append?",
+    code: `result = []\nfor i in range(5):\n    result.append[i]\nprint(result)`,
+    bug: "append is a method, so it needs () not [].",
+    fix: "Change result.append[i] to result.append(i).",
+    options: [
+      "range(5) should be range(1, 5)",
+      "result.append[i] uses brackets instead of parentheses",
+      "result should be initialized as None",
+      "print needs an f-string"
+    ],
+    correct: 1
+  },
+  {
+    intro: "Find the bug in this infinite loop check:",
+    code: `i = 0\nwhile i != 10:\n    print(i)\n    i += 3`,
+    bug: "i goes 0,3,6,9,12 — it never equals 10, causing infinite loop.",
+    fix: "Use i < 10 instead of i != 10, or increment by 1.",
+    options: [
+      "print(i) should come after the increment",
+      "i += 3 skips 10 so i != 10 loops forever",
+      "while condition should use 'and' not '!='",
+      "i should start at 1"
+    ],
+    correct: 1
+  }
+];
+
+const CHALLENGES = [
+  {
+    title: "FizzBuzz",
+    desc: "Print numbers 1–20. For multiples of 3 print 'Fizz', multiples of 5 print 'Buzz', multiples of both print 'FizzBuzz'.",
+    hint: "Use the modulo operator %. Check divisibility by 15 first.",
+    starter: "for i in range(1, 21):\n    # your code here\n    pass"
+  },
+  {
+    title: "Reverse a String",
+    desc: "Write a function reverse(s) that returns the string s reversed without using built-in reverse utilities.",
+    hint: "Loop from the last index down to 0 and build a new string.",
+    starter: "def reverse(s):\n    # your code here\n    pass"
+  },
+  {
+    title: "Count Vowels",
+    desc: "Write count_vowels(s) that returns the number of vowel characters (a,e,i,o,u) in string s (case-insensitive).",
+    hint: "Iterate over each character and check if it's in a vowel set.",
+    starter: "def count_vowels(s):\n    # your code here\n    pass"
+  },
+  {
+    title: "Factorial",
+    desc: "Write factorial(n) that returns n! recursively. Handle the base case n == 0.",
+    hint: "factorial(n) = n * factorial(n-1); factorial(0) = 1.",
+    starter: "def factorial(n):\n    # your code here\n    pass"
+  },
+  {
+    title: "Palindrome Check",
+    desc: "Write is_palindrome(s) that returns True if s reads the same forwards and backwards (ignore case, letters only).",
+    hint: "Clean the string first, then compare it to its reverse.",
+    starter: "def is_palindrome(s):\n    # your code here\n    pass"
+  },
+  {
+    title: "Sum of Digits",
+    desc: "Write digit_sum(n) that returns the sum of all digits of a non-negative integer n.",
+    hint: "Convert to string to iterate, or use divmod with 10.",
+    starter: "def digit_sum(n):\n    # your code here\n    pass"
+  }
+];
+
+const OUTPUT_QUESTIONS = [
+  {
+    code: `x = [1, 2, 3]\ny = x\ny.append(4)\nprint(x)`,
+    options: ["[1, 2, 3]", "[1, 2, 3, 4]", "[4, 1, 2, 3]", "Error"],
+    correct: 1,
+    explain: "y = x makes y point to the same list. Appending to y also mutates x."
+  },
+  {
+    code: `print(0.1 + 0.2 == 0.3)`,
+    options: ["True", "False", "0.3", "Error"],
+    correct: 1,
+    explain: "Floating-point arithmetic is imprecise. 0.1+0.2 yields 0.30000000000000004."
+  },
+  {
+    code: `a = 5\nif a > 3:\n    if a > 7:\n        print("big")\n    else:\n        print("medium")\nelse:\n    print("small")`,
+    options: ["big", "medium", "small", "nothing"],
+    correct: 1,
+    explain: "5 > 3 is True, 5 > 7 is False, so the inner else runs."
+  },
+  {
+    code: `s = "hello"\nprint(s[1:3])`,
+    options: ["he", "el", "ell", "ello"],
+    correct: 1,
+    explain: "Slice [1:3] takes indices 1 and 2 (exclusive end): 'e','l' → 'el'."
+  },
+  {
+    code: `d = {'a': 1, 'b': 2}\nd['c'] = d.get('c', 0) + 5\nprint(d['c'])`,
+    options: ["0", "5", "Error", "None"],
+    correct: 1,
+    explain: "d.get('c', 0) returns 0 (key missing), then 0+5=5 is stored at 'c'."
+  },
+  {
+    code: `print(type([]) == type(()))`,
+    options: ["True", "False", "None", "Error"],
+    correct: 1,
+    explain: "[] is list, () is tuple. They are different types, so == is False."
+  },
+  {
+    code: `nums = [3, 1, 4, 1, 5]\nprint(sorted(nums)[-1])`,
+    options: ["1", "3", "5", "4"],
+    correct: 2,
+    explain: "sorted() returns [1,1,3,4,5]. [-1] is the last element: 5."
+  },
+  {
+    code: `x = 10\ndef f():\n    x = 20\nf()\nprint(x)`,
+    options: ["20", "10", "None", "Error"],
+    correct: 1,
+    explain: "x inside f() is local. The global x remains 10."
+  }
+];
+
+const QUIZ_QUESTIONS = [
+  { q: "What is the time complexity of binary search?", opts: ["O(n)", "O(log n)", "O(n²)", "O(1)"], a: 1 },
+  { q: "Which data structure uses LIFO order?", opts: ["Queue", "Stack", "Heap", "Tree"], a: 1 },
+  { q: "What does 'null' represent in JavaScript?", opts: ["Undefined variable", "Intentional absence of value", "Empty string", "Zero"], a: 1 },
+  { q: "In Python, what does list.pop() do by default?", opts: ["Removes first element", "Removes last element", "Removes random element", "Clears the list"], a: 1 },
+  { q: "Which sorting algorithm has O(n log n) average complexity?", opts: ["Bubble Sort", "Insertion Sort", "Merge Sort", "Selection Sort"], a: 2 },
+  { q: "What does CSS 'position: absolute' do?", opts: ["Stays in normal flow", "Removed from flow, relative to nearest positioned ancestor", "Fixed to viewport", "Inherits parent position"], a: 1 },
+  { q: "What is a closure in programming?", opts: ["A class with private fields", "A function that captures its enclosing scope's variables", "A sealed module", "A recursive function"], a: 1 },
+  { q: "What does HTTP status code 404 mean?", opts: ["Server Error", "Unauthorized", "Not Found", "Redirect"], a: 2 },
+  { q: "In Big-O, which is fastest for large n?", opts: ["O(n!)", "O(2ⁿ)", "O(n²)", "O(n log n)"], a: 3 },
+  { q: "What keyword prevents reassignment in JavaScript (but allows mutation)?", opts: ["var", "let", "const", "static"], a: 2 }
+];
+
+const COMPLETE_QUESTIONS = [
+  {
+    title: "Sum a List",
+    desc: "Complete the function that returns the sum of a list of numbers.",
+    before: "def list_sum(nums):\n    total = ",
+    blank: "0",
+    after: "\n    for n in nums:\n        total += n\n    return total",
+    hint: "Initialize total to the additive identity.",
+    options: ["0", "None", "nums[0]", "[]"],
+    correct: 0
+  },
+  {
+    title: "Check Even",
+    desc: "Complete the function that returns True if n is even.",
+    before: "def is_even(n):\n    return n ",
+    blank: "% 2 == 0",
+    after: "",
+    hint: "Use the modulo operator.",
+    options: ["/ 2 == 0", "% 2 == 0", "// 2 == 0", "** 2 == 0"],
+    correct: 1
+  },
+  {
+    title: "Max of Two",
+    desc: "Complete the one-liner to return the larger of a and b.",
+    before: "def max_two(a, b):\n    return a if ",
+    blank: "a > b",
+    after: " else b",
+    hint: "Use a conditional expression (ternary).",
+    options: ["a < b", "a == b", "a > b", "a >= 0"],
+    correct: 2
+  },
+  {
+    title: "String Repeat",
+    desc: "Complete the function to return s repeated n times.",
+    before: "def repeat_str(s, n):\n    return ",
+    blank: "s * n",
+    after: "",
+    hint: "Python strings support the * operator.",
+    options: ["s + n", "s * n", "s ** n", "repeat(s, n)"],
+    correct: 1
+  },
+  {
+    title: "List Length Without len()",
+    desc: "Count items in a list using a loop.",
+    before: "def my_len(lst):\n    count = 0\n    for _ in lst:\n        count ",
+    blank: "+= 1",
+    after: "\n    return count",
+    hint: "Increment counter for each element.",
+    options: ["-= 1", "= count", "+= 1", "== 1"],
+    correct: 2
+  }
+];
+
+const ARRANGE_QUESTIONS = [
+  {
+    title: "Bubble Sort",
+    desc: "Arrange these lines to implement a basic bubble sort.",
+    lines: [
+      "def bubble_sort(arr):",
+      "    for i in range(len(arr)):",
+      "        for j in range(len(arr) - i - 1):",
+      "            if arr[j] > arr[j+1]:",
+      "                arr[j], arr[j+1] = arr[j+1], arr[j]",
+      "    return arr"
+    ]
+  },
+  {
+    title: "Fibonacci Sequence",
+    desc: "Arrange these lines to print the first 8 Fibonacci numbers.",
+    lines: [
+      "a, b = 0, 1",
+      "for _ in range(8):",
+      "    print(a)",
+      "    a, b = b, a + b"
+    ]
+  },
+  {
+    title: "Count Characters",
+    desc: "Arrange to build a frequency dict of characters in a string.",
+    lines: [
+      "def char_count(s):",
+      "    freq = {}",
+      "    for c in s:",
+      "        freq[c] = freq.get(c, 0) + 1",
+      "    return freq"
+    ]
+  }
+];
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+let currentGame = null;
+
+function openGame(game) {
+  document.getElementById('hub-page').classList.remove('active');
+  document.getElementById('game-shell').classList.add('active');
+  currentGame = game;
+  const titles = {
+    debug: '🐛 Debug Game',
+    challenge: '💻 Random Challenge',
+    output: '🔍 Guess the Output',
+    quiz: '❓ Coding Quiz',
+    complete: '🧩 Complete the Code',
+    arrange: '🔀 Arrange the Code'
+  };
+  document.getElementById('game-title-bar').textContent = titles[game];
+  document.getElementById('score-badge').innerHTML = '';
+  window.scrollTo(0, 0);
+  initGame(game);
+}
+
+function backToHub() {
+  document.getElementById('game-shell').classList.remove('active');
+  document.getElementById('hub-page').classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+/* ═══════════════════════════════════════════════
+   GAME ROUTER
+═══════════════════════════════════════════════ */
+function initGame(g) {
+  if (g === 'debug')     initDebug();
+  if (g === 'challenge') initChallenge();
+  if (g === 'output')    initOutput();
+  if (g === 'quiz')      initQuiz();
+  if (g === 'complete')  initComplete();
+  if (g === 'arrange')   initArrange();
+}
+
+/* ═══════════════════════════════════════════════
+   GAME 1 – DEBUG
+═══════════════════════════════════════════════ */
+let debugIdx = 0, debugScore = 0;
+
+function initDebug() {
+  debugIdx = 0; debugScore = 0;
+  renderDebug();
+}
+
+function renderDebug() {
+  const q = DEBUG_QUESTIONS[debugIdx];
+  const pct = (debugIdx / DEBUG_QUESTIONS.length) * 100;
+  document.getElementById('game-content').innerHTML = `
+    <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+    <div class="g-heading">🐛 Debug Game</div>
+    <div class="g-sub">Question ${debugIdx+1} of ${DEBUG_QUESTIONS.length}</div>
+    <div class="g-card">
+      <div class="g-label">Buggy Code</div>
+      <pre class="code-block">${q.code}</pre>
+      <div style="margin-top:14px;font-family:var(--mono);font-size:.82rem;color:var(--muted)">${q.intro}</div>
+      <div class="options-grid" style="margin-top:16px;">
+        ${q.options.map((o,i) => `<button class="opt-btn" onclick="checkDebug(${i})">${o}</button>`).join('')}
+      </div>
+      <div class="feedback" id="debug-fb"></div>
+    </div>
+  `;
+  updateScore(debugScore, DEBUG_QUESTIONS.length);
+}
+
+function checkDebug(i) {
+  const q = DEBUG_QUESTIONS[debugIdx];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+  const fb = document.getElementById('debug-fb');
+  if (i === q.correct) {
+    btns[i].classList.add('correct');
+    fb.className = 'feedback show ok';
+    fb.innerHTML = `✓ Correct! <strong>Bug:</strong> ${q.bug} <strong>Fix:</strong> ${q.fix}`;
+    debugScore++;
+  } else {
+    btns[i].classList.add('wrong');
+    btns[q.correct].classList.add('correct');
+    fb.className = 'feedback show err';
+    fb.innerHTML = `✗ The bug is: ${q.bug}`;
+  }
+  updateScore(debugScore, DEBUG_QUESTIONS.length);
+
+  setTimeout(() => {
+    debugIdx++;
+    if (debugIdx < DEBUG_QUESTIONS.length) renderDebug();
+    else showResult(debugScore, DEBUG_QUESTIONS.length, '🐛');
+  }, 1800);
+}
+
+/* ═══════════════════════════════════════════════
+   GAME 2 – RANDOM CHALLENGE
+═══════════════════════════════════════════════ */
+let challengeQ = null, hintShown = false;
+
+function initChallenge() {
+  challengeQ = CHALLENGES[Math.floor(Math.random() * CHALLENGES.length)];
+  hintShown = false;
+  renderChallenge();
+}
+
+function renderChallenge() {
+  const c = challengeQ;
+  document.getElementById('game-content').innerHTML = `
+    <div class="g-heading">💻 ${c.title}</div>
+    <div class="g-sub">Write code that satisfies the requirements below.</div>
+    <div class="g-card">
+      <div class="g-label">Task</div>
+      <p style="font-size:.9rem;line-height:1.7;">${c.desc}</p>
+    </div>
+    <div class="g-card">
+      <div class="g-label">Starter Code</div>
+      <pre class="code-block">${c.starter}</pre>
+      <div class="g-label" style="margin-top:18px;">Your Solution</div>
+      <textarea class="code-input" id="challenge-input" placeholder="Write your solution here…" rows="7">${c.starter}</textarea>
+      <div id="challenge-fb" class="feedback"></div>
+      <div class="action-row">
+        <button class="btn-primary" onclick="submitChallenge()">Submit</button>
+        <button class="btn-ghost" id="hint-btn" onclick="showHint()">Show Hint</button>
+        <button class="btn-ghost" onclick="initChallenge()">New Challenge</button>
+      </div>
+    </div>
+    <div id="hint-box" style="display:none;" class="g-card">
+      <div class="g-label">Hint</div>
+      <p style="font-family:var(--mono);font-size:.82rem;color:var(--accent5);">${c.hint}</p>
+    </div>
+  `;
+}
+
+function showHint() {
+  document.getElementById('hint-box').style.display = 'block';
+  document.getElementById('hint-btn').disabled = true;
+}
+
+function submitChallenge() {
+  const val = document.getElementById('challenge-input').value.trim();
+  const fb = document.getElementById('challenge-fb');
+  if (!val || val === challengeQ.starter.trim()) {
+    fb.className = 'feedback show err';
+    fb.textContent = '✗ Please write your solution before submitting.';
+    return;
+  }
+  fb.className = 'feedback show ok';
+  fb.innerHTML = `✓ Solution submitted! Here's a reference hint: <em>${challengeQ.hint}</em><br><br>Try the next one!`;
+  setTimeout(() => {
+    challengeQ = CHALLENGES[Math.floor(Math.random() * CHALLENGES.length)];
+    hintShown = false;
+    renderChallenge();
+  }, 2500);
+}
+
+/* ═══════════════════════════════════════════════
+   GAME 3 – GUESS OUTPUT
+═══════════════════════════════════════════════ */
+let outputIdx = 0, outputScore = 0;
+
+function initOutput() {
+  outputIdx = 0; outputScore = 0;
+  const shuffled = [...OUTPUT_QUESTIONS].sort(() => Math.random() - .5);
+  window._outputQs = shuffled.slice(0, 6);
+  renderOutput();
+}
+
+function renderOutput() {
+  const qs = window._outputQs;
+  const q = qs[outputIdx];
+  const pct = (outputIdx / qs.length) * 100;
+  document.getElementById('game-content').innerHTML = `
+    <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+    <div class="g-heading">🔍 Guess the Output</div>
+    <div class="g-sub">Question ${outputIdx+1} of ${qs.length}</div>
+    <div class="g-card">
+      <div class="g-label">What does this print?</div>
+      <pre class="code-block">${q.code}</pre>
+      <div class="options-grid">
+        ${q.options.map((o,i) => `<button class="opt-btn" onclick="checkOutput(${i})">${o}</button>`).join('')}
+      </div>
+      <div class="feedback" id="output-fb"></div>
+    </div>
+  `;
+  updateScore(outputScore, qs.length);
+}
+
+function checkOutput(i) {
+  const q = window._outputQs[outputIdx];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+  const fb = document.getElementById('output-fb');
+  if (i === q.correct) {
+    btns[i].classList.add('correct');
+    fb.className = 'feedback show ok';
+    fb.textContent = `✓ Correct! ${q.explain}`;
+    outputScore++;
+  } else {
+    btns[i].classList.add('wrong');
+    btns[q.correct].classList.add('correct');
+    fb.className = 'feedback show err';
+    fb.textContent = `✗ ${q.explain}`;
+  }
+  updateScore(outputScore, window._outputQs.length);
+  setTimeout(() => {
+    outputIdx++;
+    if (outputIdx < window._outputQs.length) renderOutput();
+    else showResult(outputScore, window._outputQs.length, '🔍');
+  }, 1800);
+}
+
+/* ═══════════════════════════════════════════════
+   GAME 4 – QUIZ
+═══════════════════════════════════════════════ */
+let quizIdx = 0, quizScore = 0;
+
+function initQuiz() {
+  quizIdx = 0; quizScore = 0;
+  window._quizQs = [...QUIZ_QUESTIONS].sort(() => Math.random() - .5);
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const q = window._quizQs[quizIdx];
+  const total = window._quizQs.length;
+  const pct = (quizIdx / total) * 100;
+  document.getElementById('game-content').innerHTML = `
+    <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+    <div class="g-heading">❓ Coding Quiz</div>
+    <div class="g-sub">Question ${quizIdx+1} of ${total}</div>
+    <div class="g-card">
+      <p style="font-size:1rem;font-weight:600;line-height:1.5;margin-bottom:18px;">${q.q}</p>
+      <div class="options-grid">
+        ${q.opts.map((o,i) => `<button class="opt-btn" onclick="checkQuiz(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}
+      </div>
+      <div class="feedback" id="quiz-fb"></div>
+    </div>
+  `;
+  updateScore(quizScore, total);
+}
+
+function checkQuiz(i) {
+  const q = window._quizQs[quizIdx];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+  const fb = document.getElementById('quiz-fb');
+  if (i === q.a) {
+    btns[i].classList.add('correct');
+    fb.className = 'feedback show ok';
+    fb.textContent = `✓ Correct!`;
+    quizScore++;
+  } else {
+    btns[i].classList.add('wrong');
+    btns[q.a].classList.add('correct');
+    fb.className = 'feedback show err';
+    fb.textContent = `✗ The correct answer is: ${q.opts[q.a]}`;
+  }
+  updateScore(quizScore, window._quizQs.length);
+  setTimeout(() => {
+    quizIdx++;
+    if (quizIdx < window._quizQs.length) renderQuiz();
+    else showResult(quizScore, window._quizQs.length, '❓');
+  }, 1600);
+}
+
+/* ═══════════════════════════════════════════════
+   GAME 5 – COMPLETE THE CODE
+═══════════════════════════════════════════════ */
+let completeIdx = 0, completeScore = 0;
+
+function initComplete() {
+  completeIdx = 0; completeScore = 0;
+  renderComplete();
+}
+
+function renderComplete() {
+  const q = COMPLETE_QUESTIONS[completeIdx];
+  const pct = (completeIdx / COMPLETE_QUESTIONS.length) * 100;
+  document.getElementById('game-content').innerHTML = `
+    <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+    <div class="g-heading">🧩 Complete the Code</div>
+    <div class="g-sub">Question ${completeIdx+1} of ${COMPLETE_QUESTIONS.length} · ${q.title}</div>
+    <div class="g-card">
+      <div class="g-label">Task</div>
+      <p style="font-size:.88rem;color:var(--muted);font-family:var(--mono);line-height:1.6;">${q.desc}</p>
+    </div>
+    <div class="g-card">
+      <div class="g-label">Fill in the blank</div>
+      <pre class="code-block">${q.before}<span style="background:rgba(245,158,11,.15);border:1px dashed var(--accent5);padding:2px 8px;border-radius:3px;">___?___</span>${q.after}</pre>
+      <div style="margin-top:16px;"><div class="g-label">Choose the blank:</div>
+      <div class="options-grid" style="margin-top:10px;">
+        ${q.options.map((o,i) => `<button class="opt-btn" onclick="checkComplete(${i})" style="font-family:var(--mono);">${o}</button>`).join('')}
+      </div></div>
+      <div class="feedback" id="complete-fb"></div>
+    </div>
+  `;
+  updateScore(completeScore, COMPLETE_QUESTIONS.length);
+}
+
+function checkComplete(i) {
+  const q = COMPLETE_QUESTIONS[completeIdx];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+  const fb = document.getElementById('complete-fb');
+  if (i === q.correct) {
+    btns[i].classList.add('correct');
+    fb.className = 'feedback show ok';
+    fb.innerHTML = `✓ Correct! The complete line is: <code style="color:var(--accent1)">${q.before}${q.blank}${q.after}</code>`;
+    completeScore++;
+  } else {
+    btns[i].classList.add('wrong');
+    btns[q.correct].classList.add('correct');
+    fb.className = 'feedback show err';
+    fb.textContent = `✗ Hint: ${q.hint}`;
+  }
+  updateScore(completeScore, COMPLETE_QUESTIONS.length);
+  setTimeout(() => {
+    completeIdx++;
+    if (completeIdx < COMPLETE_QUESTIONS.length) renderComplete();
+    else showResult(completeScore, COMPLETE_QUESTIONS.length, '🧩');
+  }, 1800);
+}
+
+/* ═══════════════════════════════════════════════
+   GAME 6 – ARRANGE THE CODE
+═══════════════════════════════════════════════ */
+let arrangeIdx = 0, arrangeScore = 0;
+let arrangeOrder = [];
+
+function initArrange() {
+  arrangeIdx = 0; arrangeScore = 0;
+  renderArrange();
+}
+
+function renderArrange() {
+  const q = ARRANGE_QUESTIONS[arrangeIdx];
+  arrangeOrder = [...q.lines].sort(() => Math.random() - .5);
+  document.getElementById('game-content').innerHTML = `
+    <div class="g-heading">🔀 Arrange the Code</div>
+    <div class="g-sub">Puzzle ${arrangeIdx+1} of ${ARRANGE_QUESTIONS.length} · ${q.title}</div>
+    <div class="g-card">
+      <div class="g-label">Goal</div>
+      <p style="font-size:.88rem;color:var(--muted);font-family:var(--mono);">${q.desc}</p>
+    </div>
+    <div class="g-card">
+      <div class="g-label">Drag to reorder</div>
+      <div id="drag-list"></div>
+      <div class="feedback" id="arrange-fb"></div>
+      <div class="action-row" style="margin-top:16px;">
+        <button class="btn-primary" onclick="checkArrange()">Check Order</button>
+        <button class="btn-ghost" onclick="renderArrange()">Shuffle Again</button>
+      </div>
+    </div>
+  `;
+  renderDragList();
+  updateScore(arrangeScore, ARRANGE_QUESTIONS.length);
+}
+
+function renderDragList() {
+  const list = document.getElementById('drag-list');
+  list.innerHTML = arrangeOrder.map((line, i) => `
+    <div class="drag-item" draggable="true" data-idx="${i}"
+      ondragstart="dragStart(event,${i})"
+      ondragover="dragOver(event)"
+      ondrop="dropOn(event,${i})"
+      ondragleave="dragLeave(event)"
+    >
+      <span class="drag-handle">⠿</span>
+      <code style="font-size:.8rem;">${line}</code>
+    </div>
+  `).join('');
+}
+
+let draggingIdx = null;
+
+function dragStart(e, i) {
+  draggingIdx = i;
+  setTimeout(() => document.querySelectorAll('.drag-item')[i].classList.add('dragging'), 0);
+}
+
+function dragOver(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+
+function dragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+function dropOn(e, targetIdx) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (draggingIdx === null || draggingIdx === targetIdx) return;
+  const tmp = arrangeOrder[draggingIdx];
+  arrangeOrder[draggingIdx] = arrangeOrder[targetIdx];
+  arrangeOrder[targetIdx] = tmp;
+  draggingIdx = null;
+  renderDragList();
+}
+
+function checkArrange() {
+  const q = ARRANGE_QUESTIONS[arrangeIdx];
+  const correct = JSON.stringify(arrangeOrder) === JSON.stringify(q.lines);
+  const fb = document.getElementById('arrange-fb');
+  if (correct) {
+    fb.className = 'feedback show ok';
+    fb.textContent = '✓ Perfect order! Well done.';
+    arrangeScore++;
+    updateScore(arrangeScore, ARRANGE_QUESTIONS.length);
+    setTimeout(() => {
+      arrangeIdx++;
+      if (arrangeIdx < ARRANGE_QUESTIONS.length) renderArrange();
+      else showResult(arrangeScore, ARRANGE_QUESTIONS.length, '🔀');
+    }, 1600);
+  } else {
+    fb.className = 'feedback show err';
+    fb.textContent = '✗ Not quite right — try reordering the lines again.';
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   SHARED UTILS
+═══════════════════════════════════════════════ */
+function updateScore(s, total) {
+  document.getElementById('score-badge').innerHTML =
+    `<span style="color:var(--muted);">Score</span>&nbsp;${s}/${total}`;
+}
+
+function showResult(score, total, icon) {
+  const pct = Math.round((score / total) * 100);
+  let msg = pct === 100 ? 'Perfect score! 🔥' :
+            pct >= 70  ? 'Great work! Keep it up.' :
+            pct >= 40  ? 'Decent run. Practice more!' : 'Keep learning — you\'ve got this!';
+  document.getElementById('game-content').innerHTML = `
+    <div class="result-screen" style="animation:fadeUp .5s ease both;">
+      <div style="font-size:3rem;">${icon}</div>
+      <div class="big-score">${score}/${total}</div>
+      <div style="font-size:1.4rem;font-weight:700;margin-bottom:8px;">${pct}%</div>
+      <p>${msg}</p>
+      <div class="action-row" style="justify-content:center;margin-top:28px;">
+        <button class="btn-primary" onclick="initGame('${currentGame}')">Play Again</button>
+        <button class="btn-ghost" onclick="backToHub()">Back to Hub</button>
+      </div>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
