@@ -1,0 +1,22 @@
+name: Branch Name Linter
+
+on:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Branch Name
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          PATTERN="^(feat|fix|docs|refactor|style|workflow|chore|perf|security|accessibility)\/[a-z0-9-]+$"
+          if [[ ! "$BRANCH" =~ $PATTERN ]]; then
+            echo "Error: Branch name '$BRANCH' does not match pattern '$PATTERN'."
+            echo "Examples of valid branch names:"
+            echo "  feat/new-sidebar-icons"
+            echo "  fix/navbar-mobile-view"
+            echo "  docs/setup-instructions"
+            exit 1
+          fi
+          echo "Branch name matches naming conventions."
