@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grand Hall of Achievements • TaskQuest</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #04060b;
+            --surface: rgba(15, 18, 30, 0.6);
+            --border: rgba(245, 200, 66, 0.15);
+            --gold: #f5c842;
+            --gold-dim: #c99e28;
+            --gold-glow: rgba(245, 200, 66, 0.3);
+            --text: #f1f5f9;
+            --text-dim: #94a3b8;
+            --primary: #8b5cf6;
+            --radius-lg: 24px;
+            --premium-grad: linear-gradient(135deg, #f5c842 0%, #c99e28 50%, #8a6a1a 100%);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(245, 200, 66, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 40%);
+        }
+
+        /* Animated Background Sparkles */
+        .sparkles {
+            position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 1; }
+
+        /* Header */
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px; }
+        .btn-back { 
+            text-decoration: none; color: var(--text-dim); display: flex; align-items: center; gap: 8px; 
+            font-size: 14px; font-weight: 600; transition: 0.3s; padding: 10px 20px; border-radius: 12px;
+            border: 1px solid var(--border); background: var(--surface);
+        }
+        .btn-back:hover { color: var(--gold); border-color: var(--gold); transform: translateX(-5px); }
+
+        /* Profile Showcase Card */
+        .profile-showcase {
+            background: var(--surface); backdrop-filter: blur(20px); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 40px; display: flex; align-items: center; gap: 40px;
+            margin-bottom: 40px; position: relative; overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .profile-showcase::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        .avatar-frame {
+            width: 140px; height: 140px; border-radius: 50%; padding: 5px;
+            background: var(--premium-grad); position: relative; flex-shrink: 0;
+            box-shadow: 0 0 30px var(--gold-glow);
+        }
+        .avatar-inner { 
+            width: 100%; height: 100%; border-radius: 50%; background: var(--bg); 
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .avatar-inner img { width: 100%; height: 100%; object-fit: cover; }
+        .level-badge {
+            position: absolute; bottom: 5px; right: 5px; background: var(--premium-grad);
+            color: #000; font-weight: 800; font-size: 14px; width: 36px; height: 36px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            border: 2px solid var(--bg);
+        }
+
+        .profile-info h1 { 
+            font-family: 'Cinzel', serif; font-size: 32px; letter-spacing: 2px; color: var(--gold);
+            margin-bottom: 8px; text-shadow: 0 0 10px var(--gold-glow);
+        }
+        .profile-title { 
+            font-size: 16px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 3px;
+            margin-bottom: 20px; display: block;
+        }
+
+        .quick-stats { display: flex; gap: 30px; }
+        .q-stat { display: flex; flex-direction: column; gap: 4px; }
+        .q-stat span:first-child { font-size: 24px; font-weight: 800; color: #fff; }
+        .q-stat span:last-child { font-size: 11px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 1px; }
+
+        /* Grid Layout */
+        .achievement-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        @media (max-width: 900px) { .achievement-grid { grid-template-columns: 1fr; } }
+
+        .section-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+            padding: 30px; height: 100%;
+        }
+        .section-header { 
+            display: flex; align-items: center; gap: 12px; margin-bottom: 25px; 
+            font-family: 'Poppins', sans-serif; font-size: 18px; color: var(--gold);
+        }
+
+        /* Badges Styling */
+        .badge-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 20px; }
+        .badge-item {
+            display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px;
+            padding: 20px 10px; border-radius: 18px; border: 1px solid transparent; transition: 0.3s;
+            background: rgba(255,255,255,0.02);
+        }
+        .badge-item.locked { opacity: 0.3; filter: grayscale(1); }
+        .badge-item.unlocked { border-color: var(--border); background: rgba(245, 200, 66, 0.03); }
+        .badge-item.unlocked:hover { transform: translateY(-5px); border-color: var(--gold); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        
+        .badge-icon { font-size: 40px; margin-bottom: 5px; display: block; }
+        .badge-name { font-size: 12px; font-weight: 700; color: #fff; }
+        .badge-rarity { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--gold-dim); }
+
+        /* Trophy Cabinet */
+        .trophy-shelf { display: flex; flex-direction: column; gap: 15px; }
+        .trophy-item {
+            display: flex; align-items: center; gap: 15px; padding: 15px;
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 16px;
+        }
+        .trophy-icon { 
+            width: 50px; height: 50px; background: var(--premium-grad); border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; font-size: 24px; color: #000;
+        }
+        .trophy-info h4 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+        .trophy-info p { font-size: 11px; color: var(--text-dim); }
+
+        /* Progress Milestones */
+        .milestone-container { margin-top: 30px; display: flex; flex-direction: column; gap: 20px; }
+        .milestone-row { display: flex; flex-direction: column; gap: 8px; }
+        .milestone-label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; }
+        .milestone-bar { height: 8px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
+        .milestone-fill { height: 100%; background: var(--premium-grad); border-radius: 10px; transition: width 1s ease; }
+
+        /* Record Summary */
+        .records-list { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
+        .record-box { 
+            padding: 20px; border-radius: 16px; background: rgba(255,255,255,0.02); 
+            border: 1px solid rgba(255,255,255,0.05); text-align: center;
+        }
+        .record-box h5 { font-size: 11px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; letter-spacing: 1px; }
+        .record-box .val { font-size: 22px; font-weight: 800; color: #fff; font-family: 'Poppins', sans-serif; }
+
+    </style>
+</head>
+<body>
+    <div class="sparkles"></div>
+    
+    <div class="container">
+        <header>
+            <a href="../index.html" class="btn-back"><i class="ri-arrow-left-line"></i> Hall of Quests</a>
+            <div class="logo-text" style="text-align: right;">
+                <span style="font-family: 'Cinzel', serif; color: var(--gold); font-size: 20px; letter-spacing: 2px;">TaskQuest</span>
+                <p style="font-size: 10px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 3px;">Scholar Honors</p>
+            </div>
+        </header>
+
+        <!-- PROFILE HERO SECTION -->
+        <section class="profile-showcase">
+            <div class="avatar-frame">
+                <div class="avatar-inner">
+                    <img id="displayAvatar" src="../assets/male_avatar.svg" alt="Profile">
+                </div>
+                <div class="level-badge" id="displayLevel">1</div>
+            </div>
+            <div class="profile-info">
+                <h1 id="displayName">Scholar Name</h1>
+                <span class="profile-title" id="displayTitle">Novice Initiate</span>
+                <div class="quick-stats">
+                    <div class="q-stat">
+                        <span id="statPoints">0</span>
+                        <span>Coins</span>
+                    </div>
+                    <div class="q-stat">
+                        <span id="statStreak">0</span>
+                        <span>Streak</span>
+                    </div>
+                    <div class="q-stat">
+                        <span id="statXP">0</span>
+                        <span>XP</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="achievement-grid">
+            <!-- LEFT COLUMN: BADGES -->
+            <div class="left-col">
+                <div class="section-card">
+                    <div class="section-header">
+                        <i class="ri-medal-line"></i>
+                        <h2>Honorary Badges</h2>
+                    </div>
+                    <div class="badge-gallery" id="badgeGallery">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: RECORDS & MILESTONES -->
+            <div class="right-col">
+                <div class="section-card" style="margin-bottom: 30px;">
+                    <div class="section-header">
+                        <i class="ri-history-line"></i>
+                        <h2>Grand Records</h2>
+                    </div>
+                    <div class="records-list">
+                        <div class="record-box">
+                            <h5>Quests Done</h5>
+                            <div class="val" id="recQuests">0</div>
+                        </div>
+                        <div class="record-box">
+                            <h5>Study Time</h5>
+                            <div class="val" id="recHours">0h</div>
+                        </div>
+                    </div>
+
+                    <div class="milestone-container">
+                        <div class="milestone-row">
+                            <div class="milestone-label">
+                                <span>Next Level Progress</span>
+                                <span id="levelLabel">0/300 XP</span>
+                            </div>
+                            <div class="milestone-bar">
+                                <div class="milestone-fill" id="levelFill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="milestone-row">
+                            <div class="milestone-label">
+                                <span>Goal Master (Today)</span>
+                                <span id="goalLabel">0/5</span>
+                            </div>
+                            <div class="milestone-bar">
+                                <div class="milestone-fill" id="goalFill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-header">
+                        <i class="ri- trophy-line"></i>
+                        <h2>Trophy Shelf</h2>
+                    </div>
+                    <div class="trophy-shelf" id="trophyShelf">
+                        <div class="trophy-item">
+                            <div class="trophy-icon"><i class="ri-fire-fill"></i></div>
+                            <div class="trophy-info">
+                                <h4>Consistency King</h4>
+                                <p>Maintain a 7-day active streak.</p>
+                            </div>
+                        </div>
+                        <div class="trophy-item">
+                            <div class="trophy-icon"><i class="ri-book-open-fill"></i></div>
+                            <div class="trophy-info">
+                                <h4>Bibliophile</h4>
+                                <p>Complete 50 theory-based quests.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/storage.js"></script>
+    <script>
+        // Achievement Specifications matching script.js
+        const achievementSpecs = [
+            { id: "novice", title: "Novice Scholar", desc: "Complete 1 quest", icon: "🎓", rarity: "Common" },
+            { id: "spark", title: "Productivity Spark", desc: "Complete 5 quests", icon: "⚡", rarity: "Rare" },
+            { id: "streak_flame", title: "Streak Flame", desc: "3-day active streak", icon: "🔥", rarity: "Rare" },
+            { id: "focus_master", title: "Focus Master", desc: "60 mins of study", icon: "🧭", rarity: "Epic" },
+            { id: "quest_master", title: "Quest Elite", desc: "Complete 15 quests", icon: "🏆", rarity: "Legendary" },
+            { id: "champion", title: "Grand Champion", desc: "Reach Level 5", icon: "👑", rarity: "Legendary" }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadShowcaseData();
+        });
+
+        function loadShowcaseData() {
+            // Use TaskQuestStorage if available, otherwise raw localStorage
+            const storage = window.TaskQuestStorage || null;
+            
+            // Load Basic Stats
+            const tasks = storage ? storage.getTasks() : JSON.parse(localStorage.getItem('taskquest_v1.tasks') || '[]');
+            const profile = storage ? storage.getProfile() : JSON.parse(localStorage.getItem('taskquest_v1.profile') || '{}');
+            const analytics = JSON.parse(localStorage.getItem('quests_analytics') || '{}');
+            const coins = storage ? storage.getCoins() : parseInt(localStorage.getItem('taskquest_v1.coins') || '0');
+            const xp = storage ? storage.getXP() : parseInt(localStorage.getItem('taskquest_v1.xp') || '120');
+            const streak = storage ? storage.getStreak() : parseInt(localStorage.getItem('taskquest_v1.streak') || '0');
+
+            const completedCount = tasks.filter(t => t.completed).length;
+            const studyMins = Object.values(analytics.dailyStudyMinutes || {}).reduce((a, b) => a + b, 0);
+            const level = Math.floor(xp / 300) + 1;
+            const currentLevelXp = xp % 300;
+
+            // Update Hero Section
+            document.getElementById('displayName').textContent = profile.name || "Student Hero";
+            document.getElementById('displayTitle').textContent = profile.title || "Focus Warrior ⚔️";
+            document.getElementById('displayLevel').textContent = level;
+            
+            if (profile.photo) {
+                document.getElementById('displayAvatar').src = profile.photo;
+            } else if (profile.gender === "Female") {
+                document.getElementById('displayAvatar').src = "../assets/female_avatar.svg";
+            }
+
+            document.getElementById('statPoints').textContent = coins;
+            document.getElementById('statStreak').textContent = streak;
+            document.getElementById('statXP').textContent = xp;
+
+            // Update Records
+            document.getElementById('recQuests').textContent = completedCount;
+            document.getElementById('recHours').textContent = (studyMins / 60).toFixed(1) + 'h';
+
+            // Update Progress Bars
+            document.getElementById('levelLabel').textContent = `${currentLevelXp} / 300 XP`;
+            document.getElementById('levelFill').style.width = (currentLevelXp / 300 * 100) + '%';
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            const todayDone = analytics.completedTasksPerDay ? (analytics.completedTasksPerDay[todayStr] || 0) : 0;
+            document.getElementById('goalLabel').textContent = `${todayDone} / 5`;
+            document.getElementById('goalFill').style.width = Math.min(100, (todayDone / 5 * 100)) + '%';
+
+            // Render Badges
+            renderBadges(analytics.unlockedAchievements || [], completedCount, streak, studyMins, level);
+        }
+
+        function renderBadges(unlockedIds, completedCount, streak, studyMins, level) {
+            const container = document.getElementById('badgeGallery');
+            container.innerHTML = '';
+
+            achievementSpecs.forEach(ach => {
+                const isUnlocked = unlockedIds.includes(ach.id) || checkAchievement(ach.id, completedCount, streak, studyMins, level);
+                
+                const item = document.createElement('div');
+                item.className = `badge-item ${isUnlocked ? 'unlocked' : 'locked'}`;
+                
+                item.innerHTML = `
+                    <span class="badge-icon">${isUnlocked ? ach.icon : '🔒'}</span>
+                    <span class="badge-name">${ach.title}</span>
+                    <span class="badge-rarity">${ach.rarity}</span>
+                `;
+                
+                if (!isUnlocked) {
+                    item.title = `Condition: ${ach.desc}`;
+                }
+                
+                container.appendChild(item);
+            });
+        }
+
+        // Fallback logic to check achievements if analytics data is missing
+        function checkAchievement(id, completedCount, streak, studyMins, level) {
+            switch(id) {
+                case 'novice': return completedCount >= 1;
+                case 'spark': return completedCount >= 5;
+                case 'streak_flame': return streak >= 3;
+                case 'focus_master': return studyMins >= 60;
+                case 'quest_master': return completedCount >= 15;
+                case 'champion': return level >= 5;
+                default: return false;
+            }
+        }
+    </script>
+</body>
+</html>

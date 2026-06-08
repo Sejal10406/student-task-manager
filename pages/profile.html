@@ -380,16 +380,28 @@ header{
         </button>
       </div>
 
+
       <div class="avatar-edit-row">
         <div class="avatar" id="editAvatarPreview">
           <span id="editInitialsPreview">?</span>
         </div>
         <div class="avatar-edit-info">
           <strong>Profile Photo</strong><br>
-          Click the avatar above or the ✎ button to upload a photo.<br>
-          JPG, PNG, GIF — up to any size.
+          Select one of our preset gradients or upload a custom photo:<br>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="btn btn-ghost" onclick="profile.photo='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80'; render(); selectPresetAvatar(profile.photo);" style="padding:4px 8px;">Preset 1</button>
+            <button class="btn btn-ghost" onclick="profile.photo='https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=80&q=80'; render(); selectPresetAvatar(profile.photo);" style="padding:4px 8px;">Preset 2</button>
+            <button class="btn btn-ghost" onclick="profile.photo='https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&q=80'; render(); selectPresetAvatar(profile.photo);" style="padding:4px 8px;">Preset 3</button>
+          </div>
         </div>
       </div>
+      <script>
+        function selectPresetAvatar(url) {
+          document.getElementById('editAvatarPreview').innerHTML = `<img src="${url}" alt="Profile photo">`;
+          document.getElementById('viewAvatar').innerHTML = `<img src="${url}" alt="Profile photo">`;
+        }
+      </script>
+    
 
       <div class="edit-section-title">Personal Info</div>
       <div class="form-grid">

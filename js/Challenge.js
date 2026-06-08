@@ -55,6 +55,39 @@ let state = {
   usedIndices: [],
 };
 
+function saveState() {
+  localStorage.setItem("taskquest_v1.challenge", JSON.stringify(state));
+}
+
+function loadState() {
+  const saved = localStorage.getItem("taskquest_v1.challenge");
+  if (saved) {
+    const loaded = JSON.parse(saved);
+    state = { ...state, ...loaded };
+    updatePoints();
+    elements.achBadges.innerHTML = "";
+    if (state.earnedBadges.length === 0) {
+      elements.achBadges.innerHTML = '<span class="ach-empty">No badges yet — complete challenges to earn!</span>';
+    } else {
+      state.earnedBadges.forEach(label => {
+        const badge = document.createElement("span");
+        badge.className = "badge-item";
+        badge.textContent = label;
+        elements.achBadges.appendChild(badge);
+      });
+    }
+    elements.badgeCount.textContent = state.badgeCount;
+    renderActiveChallenges();
+    renderCompletedChallenges();
+    if (state.currentChallenge) {
+      elements.challengeTag.textContent = state.currentChallenge.tag;
+      elements.challengePts.textContent = `+${state.currentChallenge.pts} pts`;
+      elements.challengeText.textContent = state.currentChallenge.text;
+      elements.challengeCard.classList.remove("hidden");
+    }
+  }
+}
+
 function showFeedback(type, message) {
   elements.feedbackMsg.className = `feedback-msg ${type}`;
   elements.feedbackMsg.textContent = message;
@@ -111,6 +144,7 @@ function generateChallenge() {
   elements.challengeCard.classList.remove(
     "hidden"
   );
+  saveState();
 
   addToActive(state.currentChallenge);
 
@@ -128,6 +162,7 @@ function addToActive(challenge) {
   state.activeChallenges.push(challenge);
 
   renderActiveChallenges();
+  saveState();
 
 }
 
@@ -200,6 +235,7 @@ function handleResponse() {
     checkBadges();
     renderActiveChallenges();
     renderCompletedChallenges();
+    saveState();
 
     setTimeout(() => {
 
@@ -215,6 +251,7 @@ function handleResponse() {
       "warning",
       "⚠️ Complete Task ASAP! Don't let this one slip — you're better than this!"
     );
+    saveState();
 
   } else {
 
@@ -286,6 +323,8 @@ function addBadgeToBar(label) {
   );
 
 }
+
+loadState();
 
 function renderActiveChallenges() {
 

@@ -1,0 +1,27 @@
+name: Validate File Names
+
+on:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check newly added file names
+        run: |
+          files=$(git diff --name-only --diff-filter=AM origin/main...HEAD)
+          for file in $files; do
+            if [[ "$file" =~ ^\.github/ ]] || [[ "$file" =~ ^\. ]]; then
+              continue
+            fi
+            basename=$(basename "$file")
+            if [[ ! "$basename" =~ ^[a-z0-9_.-]+$ ]]; then
+              echo "Error: File '$file' does not conform to lowercase kebab-case naming standard."
+              exit 1
+            fi
+          done
+          echo "All file names conform to conventions."

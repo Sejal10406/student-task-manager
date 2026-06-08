@@ -1,0 +1,17 @@
+name: First Contribution Greeting
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: 'Welcome to the Student Task Manager community! 🎉 Thank you for opening your first issue. Our maintainers will review it shortly. Please make sure to follow our Code of Conduct and Contributing Guidelines.'
+          pr-message: 'Thank you for your first pull request! 🚀 We appreciate your contribution to Student Task Manager. Please ensure your branch is updated with main and all checks pass.'
