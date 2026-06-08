@@ -73,10 +73,29 @@
 
   // ── Core helpers ──────────────────────────────────────────────────────────
 
+  // Data Integrity Verification Checksum
+  function calculateChecksum(data) {
+    const str = typeof data === 'string' ? data : JSON.stringify(data);
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return hash.toString(36);
+  }
+
+
   function get(key, fallback) {
     try {
       const raw = localStorage.getItem(key);
       if (raw === null) return fallback !== undefined ? fallback : null;
+      const storedChecksum = localStorage.getItem(key + "_checksum");
+      if (storedChecksum) {
+        const calculated = calculateChecksum(raw);
+        if (calculated !== storedChecksum) {
+          console.warn("[TaskQuest Storage] Checksum mismatch for key:", key, "Data may be modified or corrupted!");
+        }
+      }
       return JSON.parse(raw);
     } catch (e) {
       return fallback !== undefined ? fallback : null;
@@ -85,7 +104,9 @@
 
   function set(key, value) {
     try {
-      localStorage.setItem(key, JSON.stringify(value));
+      const rawString = JSON.stringify(value);
+      localStorage.setItem(key, rawString);
+      localStorage.setItem(key + "_checksum", calculateChecksum(rawString));
       return true;
     } catch (e) {
       console.warn("[TaskQuest Storage] Failed to write key:", key, e);
