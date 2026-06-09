@@ -1568,10 +1568,12 @@ function createTaskEl(task) {
 
   // Delete task event
   div.querySelector(".delete-btn").addEventListener("click", () => {
-    tasks = tasks.filter(t => t.id !== task.id);
-    saveData();
-    renderTasks();
-    announce(`Task deleted: "${task.text}"`);
+    if (confirm("Are you sure you want to delete this task? This action cannot be undone.")) {
+      tasks = tasks.filter(t => t.id !== task.id);
+      saveData();
+      renderTasks();
+      announce(`Task deleted: "${task.text}"`);
+    }
   });
 
   // recurrence pill click -> edit/stop recurring if this task belongs to a template
