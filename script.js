@@ -4058,3 +4058,17 @@ function escapeHtml(str){
 
 /* Export JSON Logic */
 document.getElementById('exportJsonBtn')?.addEventListener('click', () => { const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tasks, null, 2)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute('href', dataStr); dlAnchorElem.setAttribute('download', 'taskquest_backup.json'); dlAnchorElem.click(); });
+
+/* Enter key to save task */
+document.addEventListener('DOMContentLoaded', () => {
+  const tInput = document.getElementById('taskInput');
+  const tBtn = document.getElementById('addTaskBtn');
+  if (tInput && tBtn) {
+    tInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        tBtn.click();
+      }
+    });
+  }
+});
