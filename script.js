@@ -4058,3 +4058,19 @@ function escapeHtml(str){
 
 /* Export JSON Logic */
 document.getElementById('exportJsonBtn')?.addEventListener('click', () => { const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tasks, null, 2)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute('href', dataStr); dlAnchorElem.setAttribute('download', 'taskquest_backup.json'); dlAnchorElem.click(); });
+
+/* Dark Mode Toggle Logic */
+document.addEventListener('DOMContentLoaded', () => {
+  const darkModeToggleBtn = document.getElementById('darkModeToggleBtn');
+  if (darkModeToggleBtn) {
+    darkModeToggleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const currentTheme = document.body.getAttribute('data-theme');
+      if (currentTheme === 'dark') {
+        setTheme('cosmic'); // Fallback to default light/cosmic
+      } else {
+        setTheme('dark');
+      }
+    });
+  }
+});
