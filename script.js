@@ -524,11 +524,24 @@ function setTheme(themeName) {
   });
 
   // Re-render active charts to match new theme guidelines
-  if (document.getElementById("analytics-tab").classList.contains("active")) {
-    initStudyHoursChart();
-    initCategoryChart();
+  if (document.getElementById("analytics-tab")?.classList.contains("active")) {
+    if (typeof initStudyHoursChart === "function") initStudyHoursChart();
+    if (typeof initCategoryChart === "function") initCategoryChart();
   }
 }
+
+// Add event listeners to theme dots
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".theme-dot").forEach(dot => {
+    dot.addEventListener("click", () => {
+      setTheme(dot.dataset.theme);
+    });
+  });
+  
+  // Initialize theme on load
+  const savedTheme = localStorage.getItem("quests_theme") || "cosmic";
+  setTheme(savedTheme);
+});
 
 function loadData() {
   // Load tasks
