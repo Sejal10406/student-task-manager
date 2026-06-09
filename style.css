@@ -7702,3 +7702,30 @@ textarea:focus-visible {
   outline: 2px solid var(--secondary, #06b6d4);
   outline-offset: 3px;
 }
+
+/* Mobile Layout Fixes */
+@media (max-width: 768px) {
+  .task-box {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .topbar-right, .header-nav {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .nav-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .daily-goals-add-wrap {
+    flex-direction: column;
+  }
+  .task-list li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .task-list li > span, .task-list li > div {
+    max-width: 100%;
+    word-break: break-word;
+  }
+}
