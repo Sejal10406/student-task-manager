@@ -88,12 +88,23 @@ cd student-task-manager
 
 ### 3️⃣ Open the Project
 
+You can just open the file directly in your browser:
 ```bash
 # No build step required — just open the file!
 open index.html        # macOS
 start index.html       # Windows
 xdg-open index.html    # Linux
 ```
+
+**Alternative (Recommended):** Use a local development server to avoid potential CORS issues with local files:
+```bash
+# Python 3
+python -m http.server 8000
+
+# Node.js
+npx serve .
+```
+Then visit `http://localhost:8000` (or the URL provided) in your browser.
 
 ---
 
