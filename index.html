@@ -390,6 +390,17 @@
             <div class="deadline-alerts" id="deadlineAlerts"></div>
             <div class="smart-suggestion-banner" id="smartSuggestionBanner"></div>
 
+            <!-- TASK PROGRESS -->
+            <div class="task-progress-container glass" style="margin-bottom: 15px; padding: 15px; border-radius: 12px; display: none;" id="taskProgressWrapper">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-weight: 500;"><i class="ri-checkbox-circle-line"></i> Daily Progress</span>
+                <span id="taskProgressText" style="font-weight: 600; color: var(--primary);">0%</span>
+              </div>
+              <div class="progress-bar-track" style="height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden;">
+                <div id="taskProgressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #10b981, #3b82f6); transition: width 0.4s ease;"></div>
+              </div>
+            </div>
+
             <!-- TASKS -->
             <div class="task-list-wrapper">
               <div class="task-list" id="taskList">
