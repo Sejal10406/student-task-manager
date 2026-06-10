@@ -8723,10 +8723,16 @@ button:focus-visible {
 /* Motivation Page Styles */
 .motivation-page {
   padding: 10px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .hero {
   margin-bottom: 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .hero__badge {
@@ -8764,6 +8770,7 @@ button:focus-visible {
   list-style: none;
   padding: 0;
   margin: 0;
+  justify-content: center;
 }
 
 .badges--productivity .badge {
@@ -8791,6 +8798,7 @@ button:focus-visible {
   font-weight: 700;
   margin: 0 0 20px;
   color: var(--text);
+  text-align: center;
 }
 
 .quote-grid {
@@ -8807,6 +8815,8 @@ button:focus-visible {
   border-radius: 20px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   transition: transform 0.3s ease, background 0.3s ease;
 }
 
@@ -8833,10 +8843,12 @@ button:focus-visible {
 
 .quote-card__meta {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  gap: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 16px;
+  width: 100%;
 }
 
 .quote-card__author {
@@ -8864,6 +8876,7 @@ button:focus-visible {
   text-transform: uppercase;
   letter-spacing: 1px;
   margin: 0 0 16px;
+  text-align: center;
 }
 
 .daily-banner__inner {
@@ -8920,6 +8933,10 @@ button:focus-visible {
   border: 1px dashed rgba(255, 255, 255, 0.15);
   padding: 20px;
   border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .tip-card__title {
@@ -8957,7 +8974,8 @@ button:focus-visible {
   display: flex;
   align-items: center;
   gap: 16px;
-  flex-direction: row;
+  flex-direction: column;
+  text-align: center;
 }
 
 .motivation-page .achievement-card__icon {
@@ -8970,13 +8988,14 @@ button:focus-visible {
   align-items: center;
   justify-content: center;
   font-size: 20px;
+  margin-bottom: 8px;
 }
 
 .motivation-page .achievement-card__body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .motivation-page .achievement-card__value {
