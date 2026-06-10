@@ -4866,3 +4866,19 @@ const playSoundEffect = (type) => {
     console.warn("Audio feedback failed:", e);
   }
 };
+
+
+// Native Browser Notification Dispatcher
+function dispatchNativeBrowserAlert(title, message) {
+  if ("Notification" in window) {
+    if (Notification.permission === "granted") {
+      new Notification(title, { body: message });
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          new Notification(title, { body: message });
+        }
+      });
+    }
+  }
+}
