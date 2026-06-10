@@ -2862,7 +2862,12 @@ function startTimer() {
       if (isStudy) {
         sendNotification("Session Complete!", "Study session complete! Take a well-deserved break ☕");
         addNotification({ type: 'break', title: 'Study session complete', body: 'Time for a break ☕' });
-        alert("Study session complete! Take a break.");
+        // Use showTaskPopup() instead of alert() to avoid blocking the main thread.
+        // alert() pauses the setInterval loop while the dialog is open — when
+        // the user dismisses it, the elapsed-time calculation (Date.now() delta)
+        // reports the entire dialog wait time as timer ticks, instantly expiring
+        // the next phase and corrupting the break-time tracking.
+        showTaskPopup('✅ Study session complete! Time for a well-deserved break ☕');
 
         // Log session in focus history
         if (!analyticsData.focusHistory) analyticsData.focusHistory = [];
@@ -2899,7 +2904,8 @@ function startTimer() {
       } else {
         sendNotification("Break Over!", "Break over! Time to focus back on your tasks ⚔️");
         addNotification({ type: 'break', title: 'Break over', body: 'Break finished — back to study!' });
-        alert("Break over! Back to study.");
+        // Same reason as above — non-blocking notification avoids timer drift.
+        showTaskPopup('⚔️ Break over! Time to focus back on your tasks.');
 
         isStudy = true;
         currentTime = studyTime;
