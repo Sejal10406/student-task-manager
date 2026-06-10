@@ -4866,3 +4866,17 @@ const playSoundEffect = (type) => {
     console.warn("Audio feedback failed:", e);
   }
 };
+
+
+// Local student reflection sentiment helper
+function calculateReflectionSentiment(text) {
+  const positive = ["happy", "proud", "great", "excellent", "motivated", "productive", "success"];
+  const negative = ["stressed", "tired", "sad", "failed", "unmotivated", "anxious", "struggling"];
+  const words = text.toLowerCase().split(/\s+/);
+  let score = 0;
+  words.forEach(w => {
+    if (positive.includes(w)) score++;
+    else if (negative.includes(w)) score--;
+  });
+  return score;
+}
