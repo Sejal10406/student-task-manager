@@ -4866,3 +4866,21 @@ const playSoundEffect = (type) => {
     console.warn("Audio feedback failed:", e);
   }
 };
+
+
+// Global Keyboard Shortcuts Registry
+const KeyboardShortcutsRegistry = {
+  shortcuts: {},
+  register(key, callback, desc) {
+    this.shortcuts[key] = { callback, desc };
+  },
+  handleEvent(e) {
+    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+    const match = this.shortcuts[e.key];
+    if (match) {
+      e.preventDefault();
+      match.callback();
+    }
+  }
+};
+document.addEventListener("keydown", (e) => KeyboardShortcutsRegistry.handleEvent(e));
