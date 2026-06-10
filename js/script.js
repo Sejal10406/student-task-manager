@@ -4866,3 +4866,25 @@ const playSoundEffect = (type) => {
     console.warn("Audio feedback failed:", e);
   }
 };
+
+
+// Task Dependency Graph validation helper
+function validateTaskDependencies(taskList) {
+  const adj = {};
+  taskList.forEach(t => { adj[t.id] = t.dependsOn ? [t.dependsOn] : []; });
+  const visited = {};
+  const recStack = {};
+  function hasCycle(v) {
+    if (!visited[v]) {
+      visited[v] = true;
+      recStack[v] = true;
+      for (let neighbor of (adj[v] || [])) {
+        if (!visited[neighbor] && hasCycle(neighbor)) return true;
+        else if (recStack[neighbor]) return true;
+      }
+    }
+    recStack[v] = false;
+    return false;
+  }
+  return Object.keys(adj).some(node => hasCycle(node));
+}
