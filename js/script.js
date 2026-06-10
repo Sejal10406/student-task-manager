@@ -2504,12 +2504,12 @@ function initTimetableNotifier() {
           slot.lastNotified = currentTime;
           dataUpdated = true;
           
-          // Play a gentle alert sound if browser allows
-          try {
-            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-            audio.volume = 0.4;
-            audio.play();
-          } catch(e) {}
+          // Use the built-in Web Audio API sound system.
+          // NOTE: External audio URLs (e.g. assets.mixkit.co) are blocked by
+          // the app's Content Security Policy and produce a CSP violation
+          // error in the browser console on every notification. playSoundEffect()
+          // generates audio locally via Web Audio API — no network request needed.
+          try { playSoundEffect('complete'); } catch (e) {}
         }
       }
       
@@ -2654,11 +2654,9 @@ function initCalendarNotifier() {
         ev.lastNotified = timeStr;
         changed = true;
         
-        try {
-          const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-          audio.volume = 0.5;
-          audio.play();
-        } catch(e) {}
+        // Use built-in Web Audio API (playSoundEffect) instead of an external
+        // URL that violates the Content Security Policy of this application.
+        try { playSoundEffect('complete'); } catch (e) {}
       }
 
       // Cleanup notification flag
