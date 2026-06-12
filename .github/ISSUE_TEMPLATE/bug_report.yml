@@ -1,0 +1,73 @@
+name: 🐛 Bug Report
+description: Report a bug to help improve TaskQuest.
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the Bug
+      description: A clear and concise description of what the bug is.
+      placeholder: Describe what went wrong...
+    validations:
+      required: true
+  - type: textarea
+    id: current-behavior
+    attributes:
+      label: Current Behavior
+      description: Explain what actually happens instead of the expected behavior.
+      placeholder: What happens currently...
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: Describe what you expected to happen.
+      placeholder: What should have happened...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: List the steps required to reproduce the bug.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Details
+      description: Provide details about your system and browser.
+      placeholder: |
+        - OS: [e.g. Windows, macOS]
+        - Browser: [e.g. Chrome, Firefox]
+        - Screen / Viewport: [e.g. Desktop, Mobile]
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console Logs / Screenshots
+      description: Paste any relevant console logs or errors here. Screenshots can be dragged and dropped directly.
+      placeholder: Paste console output here...
+    validations:
+      required: false
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Validation Checklist
+      options:
+        - label: I have verified this bug exists on the latest `main` branch.
+          required: true
+        - label: I checked existing issues to ensure this is not a duplicate.
+          required: true
