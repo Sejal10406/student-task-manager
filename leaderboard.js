@@ -6,7 +6,9 @@
   const STREAK_KEY = "streak";
   const XP_KEY = "xp";
   const REFRESH_INTERVAL = 900;
+  const BOOST_COOLDOWN_MS = 500;
   const currentTimestamp = () => new Date().toISOString();
+  let lastBoostTime = 0;
 
   const elements = {
     leaderboardTable: document.getElementById("leaderboardTable"),
@@ -201,6 +203,12 @@
   }
 
   function simulateScoreBoost() {
+    const now = Date.now();
+    if (now - lastBoostTime < BOOST_COOLDOWN_MS) {
+      return;
+    }
+    lastBoostTime = now;
+
     const entries = loadLeaderboard();
     if (!entries.length) return;
     const randomPlayer = entries[Math.floor(Math.random() * entries.length)];
