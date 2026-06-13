@@ -4868,14 +4868,17 @@ const playSoundEffect = (type) => {
 };
 
 
-// Dynamic HSL Theme customizer generator
-function generateCustomThemeCSS(hue, saturation, lightness) {
-  return `
-    [data-theme="custom"] {
-      --bg-color: hsl(${hue}, ${saturation}%, 95%);
-      --text-color: hsl(${hue}, ${saturation}%, 15%);
-      --primary-color: hsl(${hue}, ${saturation}%, ${lightness}%);
-      --accent-color: hsl(${(hue + 180) % 360}, ${saturation}%, ${lightness}%);
+// Native Browser Notification Dispatcher
+function dispatchNativeBrowserAlert(title, message) {
+  if ("Notification" in window) {
+    if (Notification.permission === "granted") {
+      new Notification(title, { body: message });
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          new Notification(title, { body: message });
+        }
+      });
     }
-  `;
+  }
 }

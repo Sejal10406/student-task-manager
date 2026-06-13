@@ -136,5 +136,20 @@
       });
     }
   </script>
+<script>
+// Lightweight local page search indexing
+document.addEventListener("DOMContentLoaded", () => {
+  const searchInput = document.getElementById("docs-search-input");
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase();
+      document.querySelectorAll(".doc-section").forEach(sec => {
+        const text = sec.textContent.toLowerCase();
+        sec.style.display = text.includes(q) ? "" : "none";
+      });
+    });
+  }
+});
+</script>
 </body>
 </html>
