@@ -4868,19 +4868,17 @@ const playSoundEffect = (type) => {
 };
 
 
-// Global Keyboard Shortcuts Registry
-const KeyboardShortcutsRegistry = {
-  shortcuts: {},
-  register(key, callback, desc) {
-    this.shortcuts[key] = { callback, desc };
-  },
-  handleEvent(e) {
-    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
-    const match = this.shortcuts[e.key];
-    if (match) {
-      e.preventDefault();
-      match.callback();
+// Native Browser Notification Dispatcher
+function dispatchNativeBrowserAlert(title, message) {
+  if ("Notification" in window) {
+    if (Notification.permission === "granted") {
+      new Notification(title, { body: message });
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          new Notification(title, { body: message });
+        }
+      });
     }
   }
-};
-document.addEventListener("keydown", (e) => KeyboardShortcutsRegistry.handleEvent(e));
+}

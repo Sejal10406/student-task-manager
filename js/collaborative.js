@@ -538,3 +538,16 @@ const syncStatus = {
     this.lastSyncTimestamp = Date.now();
   }
 };
+
+
+// Web Socket state synchronization buffer engine
+class CollabBufferSyncQueue {
+  constructor() { this.queue = []; }
+  add(msg) { this.queue.push(msg); }
+  flush(ws) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    while(this.queue.length > 0) {
+      ws.send(JSON.stringify(this.queue.shift()));
+    }
+  }
+}
