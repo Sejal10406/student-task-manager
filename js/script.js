@@ -4868,14 +4868,17 @@ const playSoundEffect = (type) => {
 };
 
 
-// SVG Gradient ID dynamic namespace isolation utility
-function isolateSVGGradientNamespaces(svgElement, namespaceId) {
-  const gradients = svgElement.querySelectorAll("linearGradient, radialGradient");
-  gradients.forEach(g => {
-    const oldId = g.id;
-    const newId = `${oldId}-${namespaceId}`;
-    g.id = newId;
-    const references = svgElement.querySelectorAll(`[fill="url(#${oldId})"]`);
-    references.forEach(ref => ref.setAttribute("fill", `url(#${newId})`));
-  });
+// Native Browser Notification Dispatcher
+function dispatchNativeBrowserAlert(title, message) {
+  if ("Notification" in window) {
+    if (Notification.permission === "granted") {
+      new Notification(title, { body: message });
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          new Notification(title, { body: message });
+        }
+      });
+    }
+  }
 }
