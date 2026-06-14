@@ -367,6 +367,8 @@ const points = document.getElementById("coins");
 const streakCount = document.getElementById("streakCount");
 const xpFill = document.getElementById("xpFill");
 const xpText = document.getElementById("xpText");
+const pendingTasks =
+document.getElementById("pendingTasks");
 
 // Filters & Navigation
 const tabBtns = document.querySelectorAll(".tab-btn");
@@ -516,7 +518,8 @@ const achievementSpecs = [
     }
   }
 ];
-
+pendingTasks.textContent =
+tasks.filter(t => !t.completed).length;
 // Focus milestones specifications
 const milestoneSpecs = [
   { id: "30mins", title: "Focus Apprentice", desc: "Studied for 30 minutes cumulative!", minutes: 30, reward: 50 },
