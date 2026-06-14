@@ -1,0 +1,56 @@
+name: 🚀 Feature Request
+description: Propose a new capability or UI enhancement for TaskQuest.
+title: "[FEATURE]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature to help improve TaskQuest!
+  - type: textarea
+    id: problem
+    attributes:
+      label: Core Problem
+      description: Describe the problem or limitation this feature request addresses. Why is this capability needed?
+      placeholder: What problem does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Feature / Solution
+      description: A clear and concise description of what you want to happen. Explain how the proposed feature improves user experience.
+      placeholder: Describe the proposed solution...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Describe any alternative solutions or workarounds you've considered.
+      placeholder: What else have you considered?
+    validations:
+      required: false
+  - type: textarea
+    id: ui-design
+    attributes:
+      label: UI / Interaction Design Idea
+      description: If applicable, describe how the interface should look and behave (layout, styling, animations).
+      placeholder: Describe the layout or animation ideas...
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Add any other context, screenshots, or mockup diagrams about the feature request here.
+      placeholder: Any other info...
+    validations:
+      required: false
+  - type: checkboxes
+    id: duplicate-check
+    attributes:
+      label: Duplicate Check
+      options:
+        - label: I have searched existing feature requests to ensure this is not a duplicate.
+          required: true

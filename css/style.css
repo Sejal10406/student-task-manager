@@ -8400,3 +8400,19 @@ button:focus-visible {
 .perf-marks {
   color: rgba(255, 255, 255, 0.7) !important;
 }
+
+
+/* Task Dependency Validation Styles */
+.task-dependency-blocked {
+  opacity: 0.65;
+  pointer-events: none;
+  position: relative;
+}
+.task-dependency-blocked::after {
+  content: "🔒 Locked by dependency";
+  font-size: 11px;
+  color: var(--warning);
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+}
