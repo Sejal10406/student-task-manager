@@ -7,6 +7,18 @@
 
 // Core Elements
 const taskInput = document.getElementById("taskInput");
+
+// Centralized logging utility
+const Log = {
+  info: function (msg, data) { console.info("[TaskQuest]", msg, data || ''); },
+  warn: function (msg, data) { console.warn("[TaskQuest]", msg, data || ''); },
+  error: function (msg, data) { console.error("[TaskQuest]", msg, data || ''); },
+  debug: function (msg, data) {
+    if (localStorage.getItem('taskquest_debug') === 'true') {
+      console.debug("[TaskQuest DEBUG]", msg, data || '');
+    }
+  }
+};
 const addTaskBtn = document.getElementById("addTaskBtn");
 const taskList = document.getElementById("taskList");
 const categorySelect = document.getElementById("categorySelect");
@@ -99,7 +111,7 @@ function playSound(name) {
       setTimeout(() => { os.forEach(o => { try { o.stop(); o.disconnect(); } catch(e){} }); }, 900);
     }
   } catch (e) {
-    console.warn('playSound error', e);
+    console.warn("[TaskQuest] playSound error", e);
   }
 }
 
