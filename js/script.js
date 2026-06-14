@@ -4929,3 +4929,44 @@ function dispatchNativeBrowserAlert(title, message) {
     }
   }
 }
+function updateTaskProgressBar() {
+  const total = tasks.length;
+
+  const completed =
+    tasks.filter(
+      task => task.completed
+    ).length;
+
+  const percent =
+    total === 0
+      ? 0
+      : Math.round(
+          (completed / total) * 100
+        );
+
+  const fill =
+    document.getElementById(
+      "taskProgressFill"
+    );
+
+  const text =
+    document.getElementById(
+      "taskProgressPercent"
+    );
+
+  if (fill) {
+    fill.style.width = `${percent}%`;
+  }
+
+  if (text) {
+    text.textContent = `${percent}%`;
+  }
+}
+function renderTasks() {
+
+  // existing code
+
+  updateStats();
+
+  updateTaskProgressBar();
+}
