@@ -1,0 +1,39 @@
+name: Stale Branch Cleaner
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  clean-branches:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Delete stale branches
+        run: |
+          # Delete branches that have been merged and are older than 30 days
+          git branch -r --merged origin/main | 
+            grep -v 'origin/main' | 
+            grep -v 'origin/HEAD' |
+            sed 's/origin\///' |
+            while read branch; do
+              last_commit=$(git log -1 --format=%ci "origin/$branch" 2>/dev/null)
+              if [ -n "$last_commit" ]; then
+                branch_date=$(date -d "$last_commit" +%s)
+                now=$(date +%s)
+                age=$(( (now - branch_date) / 86400 ))
+                if [ $age -gt 30 ]; then
+                  echo "Deleting stale branch: $branch (last commit: $last_commit)"
+                  git push origin --delete "$branch" 2>/dev/null || echo "Failed to delete $branch"
+                fi
+              fi
+            done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
