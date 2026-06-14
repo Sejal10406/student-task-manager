@@ -406,16 +406,3 @@ const saveGameState = (gameId, state) => {
     console.warn('Could not save game state');
   }
 };
-
-// Achievements secure streak verification
-function verifyAndSaveStreak(streakCount) {
-  const key = "taskquest_v1.games_streak_checksum";
-  const payload = `streak:${streakCount}`;
-  let hash = 0;
-  for(let i=0; i<payload.length; i++) {
-    hash = (hash << 5) - hash + payload.charCodeAt(i);
-    hash |= 0;
-  }
-  localStorage.setItem("taskquest_v1.games_streak", streakCount);
-  localStorage.setItem(key, hash.toString(36));
-}

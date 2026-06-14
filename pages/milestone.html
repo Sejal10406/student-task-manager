@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milestone Notification Center • TaskQuest</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&family=Poppins:wght@600;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #f5c842;
+            --gold-dim: #c99e28;
+            --gold-glow: rgba(245, 200, 66, 0.2);
+            --bg: #0a0c10;
+            --card: rgba(18, 22, 30, 0.85);
+            --border: rgba(245, 200, 66, 0.2);
+            --text: #e8edf5;
+            --text-dim: #94a3b8;
+            --radius: 24px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 40px 20px;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(245, 200, 66, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+            overflow-x: hidden;
+        }
+
+        .sparkles {
+            position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+        }
+
+        .container { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
+
+        header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 50px; border-bottom: 2px solid var(--border); padding-bottom: 25px;
+        }
+        header h1 { 
+            font-family: 'Cinzel', serif; font-size: 2.2rem; color: var(--gold); 
+            text-shadow: 0 0 20px rgba(245, 200, 66, 0.3); letter-spacing: 2px;
+        }
+
+        .glory-stats {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 20px; margin-bottom: 50px;
+        }
+        .glory-card {
+            background: var(--card); border: 1px solid var(--border); padding: 25px;
+            border-radius: var(--radius); text-align: center; backdrop-filter: blur(15px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: 0.3s;
+        }
+        .glory-card:hover { transform: translateY(-5px); border-color: var(--gold); }
+        .glory-card i { font-size: 2.2rem; color: var(--gold); margin-bottom: 12px; display: block; filter: drop-shadow(0 0 8px var(--gold-glow)); }
+        .glory-card .val { font-size: 2rem; font-weight: 800; color: #fff; font-family: 'Poppins', sans-serif; }
+        .glory-card .lbl { font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); letter-spacing: 2px; margin-top: 5px; font-weight: 700; }
+
+        .feed-section { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 35px; backdrop-filter: blur(15px); }
+        .section-header { 
+            display: flex; align-items: center; gap: 15px; margin-bottom: 30px; 
+            font-family: 'Poppins', sans-serif; font-size: 1.4rem; color: var(--gold); font-weight: 700;
+        }
+
+        .notification-list { display: flex; flex-direction: column; gap: 18px; }
+        .notif-item {
+            display: flex; gap: 20px; align-items: flex-start; padding: 20px;
+            background: rgba(255,255,255,0.02); border: 1px solid rgba(245, 200, 66, 0.1);
+            border-radius: 18px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .notif-item:hover { transform: scale(1.01); background: rgba(245, 200, 66, 0.05); border-color: var(--gold); }
+        
+        .notif-icon-circle { 
+            width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+            display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #000;
+            flex-shrink: 0; box-shadow: 0 0 15px var(--gold-glow);
+        }
+        .notif-body { flex: 1; }
+        .notif-title { font-weight: 800; font-size: 1.1rem; color: #fff; margin-bottom: 4px; }
+        .notif-desc { font-size: 0.9rem; color: var(--text-dim); line-height: 1.5; }
+        .notif-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+        .notif-time { font-size: 0.8rem; color: var(--text-dim); font-weight: 600; display: flex; align-items: center; gap: 5px; }
+        .notif-type-tag { font-size: 10px; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; color: var(--gold); background: var(--gold-glow); padding: 3px 10px; border-radius: 99px; }
+
+        .btn-back {
+            text-decoration: none; color: var(--text-dim); display: flex; align-items: center; gap: 10px;
+            font-size: 14px; font-weight: 700; transition: 0.3s; padding: 12px 24px; border-radius: 14px;
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border); text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-back:hover { color: var(--gold); border-color: var(--gold); background: rgba(245,200,66,0.1); }
+
+        .empty-state { text-align: center; padding: 80px 40px; color: var(--text-dim); }
+        .empty-state i { font-size: 4rem; color: var(--gold); opacity: 0.2; margin-bottom: 25px; display: block; }
+    </style>
+</head>
+<body>
+    <div class="sparkles"></div>
+    <div class="container">
+        <header>
+            <a href="../index.html" class="btn-back"><i class="ri-home-4-line"></i> Dashboard</a>
+            <h1>Milestone Center</h1>
+            <div style="font-family: 'Cinzel', serif; color: var(--gold); font-size: 1.2rem; opacity: 0.8;">PREMIUM</div>
+        </header>
+
+        <div class="glory-stats">
+            <div class="glory-card">
+                <i class="ri-fire-fill"></i>
+                <div class="val" id="streakVal">0</div>
+                <div class="lbl">Days Streak</div>
+            </div>
+            <div class="glory-card">
+                <i class="ri-trophy-fill"></i>
+                <div class="val" id="badgeVal">0</div>
+                <div class="lbl">Honor Badges</div>
+            </div>
+            <div class="glory-card">
+                <i class="ri-vip-diamond-fill"></i>
+                <div class="val" id="coinsVal">0</div>
+                <div class="lbl">Golden Coins</div>
+            </div>
+            <div class="glory-card">
+                <i class="ri-flashlight-fill"></i>
+                <div class="val" id="xpVal">0</div>
+                <div class="lbl">Total XP</div>
+            </div>
+        </div>
+
+        <div class="feed-section">
+            <div class="section-header">
+                <i class="ri-history-line"></i>
+                <span>Chronicles of Mastery</span>
+            </div>
+            <div class="notification-list" id="milestoneFeed">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadChronicles();
+        });
+
+        function loadChronicles() {
+            const coins = localStorage.getItem('taskquest_v1.coins') || localStorage.getItem('coins') || '0';
+            const xp = localStorage.getItem('taskquest_v1.xp') || localStorage.getItem('xp') || '0';
+            const analytics = JSON.parse(localStorage.getItem('quests_analytics') || '{}');
+            const notifications = JSON.parse(localStorage.getItem('quests_notifications') || '[]');
+
+            document.getElementById('streakVal').textContent = analytics.currentStreak || 0;
+            document.getElementById('badgeVal').textContent = (analytics.unlockedAchievements || []).length;
+            document.getElementById('coinsVal').textContent = coins;
+            document.getElementById('xpVal').textContent = xp;
+
+            const feed = document.getElementById('milestoneFeed');
+            
+            const chronicles = notifications.filter(n => 
+                ['achievement', 'exam', 'deadline'].includes(n.type) || 
+                n.title.toLowerCase().includes('conquered') ||
+                n.title.toLowerCase().includes('level up') ||
+                n.title.toLowerCase().includes('milestone')
+            );
+
+            if (chronicles.length === 0) {
+                feed.innerHTML = `
+                    <div class="empty-state">
+                        <i class="ri-quill-pen-line"></i>
+                        <p>No grand chronicles recorded yet. Conquer your first quest to begin your legacy.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            feed.innerHTML = chronicles.map(n => {
+                let icon = 'ri-shield-star-fill';
+                let tag = n.type || 'milestone';
+                
+                if (n.type === 'achievement') icon = 'ri-medal-fill';
+                else if (n.type === 'exam') icon = 'ri-honour-fill';
+                else if (n.type === 'deadline') icon = 'ri-alarm-warning-fill';
+                else if (n.title.includes('XP')) icon = 'ri-flashlight-line';
+
+                return `
+                    <div class="notif-item">
+                        <div class="notif-icon-circle"><i class="${icon}"></i></div>
+                        <div class="notif-body">
+                            <div class="notif-title">${escapeHtml(n.title)}</div>
+                            <div class="notif-desc">${escapeHtml(n.body)}</div>
+                            <div class="notif-footer">
+                                <div class="notif-time"><i class="ri-time-line"></i> ${new Date(n.time).toLocaleString()}</div>
+                                <div class="notif-type-tag">${tag}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(str) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return String(str).replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+    </script>
+</body>
+</html>

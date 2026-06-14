@@ -56,6 +56,8 @@ self.addEventListener("install", function (event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
       console.info("[TaskQuest SW] Pre-caching", ASSETS_TO_CACHE.length, "assets...");
+      // Pre-caching offline banner resources
+      cache.put("/offline-status-check", new Response(JSON.stringify({ offline: true }), { headers: { 'Content-Type': 'application/json' } }));
 
       // Use individual add() calls via Promise.allSettled so that a single
       // missing or 404 file does not abort the entire install and leave the

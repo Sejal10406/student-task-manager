@@ -1263,6 +1263,11 @@ function checkLevelUp(oldXp, newXp) {
       xp += 100; // Bonus XP
       saveData();
       updateGamification();
+
+      // Add notification for level up
+      if (typeof addNotification === 'function') {
+        addNotification({ type: 'achievement', title: `Level Up!`, body: `You reached Level ${newLevel}. +50 Coins and +100 XP bonus claimed!`, ref: `level-${newLevel}` });
+      }
     }
   }
 }
@@ -1310,6 +1315,12 @@ function checkStudyMilestones() {
           overlay.classList.add("active");
           popup.classList.add("active");
           triggerConfetti();
+
+          // Add notification for milestone
+          if (typeof addNotification === 'function') {
+            addNotification({ type: 'achievement', title: `Milestone Unlocked: ${mil.title}`, body: mil.desc, ref: `milestone-${mil.id}` });
+          }
+
           announce(`Milestone unlocked: ${mil.title}. ${mil.desc}`);
           enableFocusTrap(popup);
 
@@ -2033,9 +2044,12 @@ function renderTasks() {
       return;
     }
 
+    const fragment = document.createDocumentFragment();
     filteredTasks.forEach(task => {
-      taskListEl.appendChild(createTaskEl(task));
+      fragment.appendChild(createTaskEl(task));
     });
+    taskListEl.innerHTML = "";
+    taskListEl.appendChild(fragment);
 
   } else {
     taskListEl.style.display = "none";
@@ -4866,3 +4880,19 @@ const playSoundEffect = (type) => {
     console.warn("Audio feedback failed:", e);
   }
 };
+
+
+// Native Browser Notification Dispatcher
+function dispatchNativeBrowserAlert(title, message) {
+  if ("Notification" in window) {
+    if (Notification.permission === "granted") {
+      new Notification(title, { body: message });
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          new Notification(title, { body: message });
+        }
+      });
+    }
+  }
+}

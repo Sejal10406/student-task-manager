@@ -657,10 +657,14 @@ const logEventSafely = (eventName, eventData) => {
   }
 };
 
-const logEventSafely = (eventName, eventData) => {
-  try {
-    console.log(`[Analytics] ${eventName}:`, eventData);
-  } catch (error) {
-    console.error('Failed to log analytics event');
-  }
-};
+// Productivity heat matrix generation helper
+function calculateProductiveHeatMatrix(studySessions) {
+  const matrix = Array(7).fill(0).map(() => Array(24).fill(0));
+  studySessions.forEach(s => {
+    const date = new Date(s.timestamp);
+    const day = date.getDay();
+    const hour = date.getHours();
+    matrix[day][hour] += s.durationMinutes;
+  });
+  return matrix;
+}

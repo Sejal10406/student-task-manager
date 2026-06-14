@@ -178,7 +178,20 @@
    * @param {"success"|"error"|"warning"|"info"} [type="info"] - Toast variant
    * @param {number} [duration] - Auto-dismiss delay in ms (0 = no auto-dismiss)
    */
-  function showToast(message, type = "info", duration = TOAST_DURATION_MS) {
+  // Screen reader live region alert announcer
+function announceToastLiveRegion(msg) {
+  const container = document.getElementById("toast-live-announcer") || (() => {
+    const el = document.createElement("div");
+    el.id = "toast-live-announcer";
+    el.setAttribute("aria-live", "polite");
+    el.setAttribute("style", "position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;");
+    document.body.appendChild(el);
+    return el;
+  })();
+  container.textContent = msg;
+}
+
+function showToast(message, type = "info", duration = TOAST_DURATION_MS) {
     const config = TOAST_TYPES[type] || TOAST_TYPES.info;
     const container = getContainer();
 

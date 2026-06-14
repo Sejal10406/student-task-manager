@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Velocity • TaskQuest</title>
+    <meta name="description" content="Track your learning velocity: measure and visualize the rate at which you complete topics, chapters, and syllabus sections.">
+    <meta name="keywords" content="learning velocity, progress tracking, study rate, topic completion, gamified learning">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Poppins:wght@600;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* CSS variables and general styling similar to other pages */
+        :root {
+            --bg: #060814;
+            --card: rgba(15, 12, 38, 0.45);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #a855f7;
+            --secondary: #06b6d4;
+            --text: #ffffff;
+            --text-light: #94a3b8;
+            --success: #22c55e;
+            --radius: 24px;
+        }
+
+        [data-theme="sunset"] {
+            --bg: #fffcf8;
+            --card: rgba(255, 255, 255, 0.75);
+            --border: rgba(0, 0, 0, 0.07);
+            --text: #1e293b;
+            --text-light: #64748b;
+            --primary: #f59e0b;
+            --secondary: #f43f5e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 40px 20px;
+            background-image: radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.05) 0%, var(--bg) 100%);
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 30px; }
+        .glass-card { background: var(--card); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: var(--radius); padding: 30px; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+        header h1 { font-family: 'Poppins', sans-serif; font-size: 2rem; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .report-date { color: var(--text-light); font-size: 14px; }
+
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .metric-item { text-align: center; padding: 20px; border-radius: 20px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); }
+        .metric-item h3 { font-size: 12px; text-transform: uppercase; color: var(--text-light); letter-spacing: 1px; margin-bottom: 10px; }
+        .metric-item .value { font-size: 32px; font-weight: 800; color: var(--primary); }
+
+        .section-title { font-family: 'Poppins', sans-serif; font-size: 1.2rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .section-title i { color: var(--secondary); }
+
+        .charts-row { display: grid; grid-template-columns: 1fr; gap: 25px; }
+        .chart-container { height: 300px; width: 100%; }
+
+        .btn-back { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text); text-decoration: none; padding: 10px 18px; border-radius: 12px; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+        .btn-back:hover { background: rgba(255,255,255,0.1); border-color: var(--primary); color: var(--primary); }
+
+        .recent-completions-list { display: flex; flex-direction: column; gap: 10px; }
+        .completion-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .completion-item-info h4 { font-size: 1rem; font-weight: 600; margin-bottom: 5px; }
+        .completion-item-info p { font-size: 0.85rem; color: var(--text-light); }
+        .completion-item-date { font-size: 0.85rem; color: var(--text-light); }
+
+        .empty-state { text-align: center; padding: 40px; color: var(--text-light); }
+        .empty-state i { font-size: 3rem; margin-bottom: 15px; opacity: 0.5; }
+        .empty-state p { font-size: 1rem; }
+
+        @media (max-width: 800px) { .charts-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>Learning Velocity</h1>
+                <p class="report-date" id="reportDate">Tracking your progress rate</p>
+            </div>
+            <a href="../index.html" class="btn-back"><i class="ri-home-4-line"></i> Dashboard</a>
+        </header>
+
+        <div class="metrics-grid">
+            <div class="glass-card metric-item">
+                <h3>Total Topics</h3>
+                <div class="value" id="totalTopics">0</div>
+            </div>
+            <div class="glass-card metric-item">
+                <h3>Completed Topics</h3>
+                <div class="value" id="completedTopics">0</div>
+            </div>
+            <div class="glass-card metric-item">
+                <h3>Avg. Daily Rate</h3>
+                <div class="value" id="avgDailyRate">0</div>
+            </div>
+            <div class="glass-card metric-item">
+                <h3>Avg. Weekly Rate</h3>
+                <div class="value" id="avgWeeklyRate">0</div>
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <div class="glass-card">
+                <h2 class="section-title"><i class="ri-line-chart-line"></i> Topics Completed Over Time</h2>
+                <div class="chart-container">
+                    <canvas id="topicsCompletionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <h2 class="section-title"><i class="ri-history-line"></i> Recent Completions</h2>
+            <div class="recent-completions-list" id="recentCompletionsList">
+                <div class="empty-state">
+                    <i class="ri-checkbox-circle-line"></i>
+                    <p>No topics completed recently.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let topicsCompletionChart = null;
+        let subjects = []; // This will hold data from localStorage.studytrack_subjects
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Apply theme from localStorage
+            const savedTheme = localStorage.getItem('quests_theme') || 'cosmic';
+            document.body.setAttribute('data-theme', savedTheme);
+
+            loadSubjectsData();
+            renderVelocityMetrics();
+            renderTopicsCompletionChart();
+            renderRecentCompletions();
+        });
+
+        function loadSubjectsData() {
+            try {
+                const savedSubjects = localStorage.getItem('studytrack_subjects'); // Corrected key
+                subjects = savedSubjects ? JSON.parse(savedSubjects) : [];
+            } catch (e) {
+                console.error("Error loading subjects from localStorage:", e);
+                subjects = [];
+            }
+        }
+
+        function getAllTopics() {
+            const allTopics = [];
+            subjects.forEach(subject => {
+                if (subject.topics && Array.isArray(subject.topics)) {
+                    subject.topics.forEach(topic => {
+                        allTopics.push({
+                            ...topic,
+                            subjectName: subject.title // Add subject name for context
+                        });
+                    });
+                }
+            });
+            return allTopics;
+        }
+
+        function renderVelocityMetrics() {
+            const allTopics = getAllTopics();
+            const total = allTopics.length;
+            const completed = allTopics.filter(t => t.done).length;
+
+            document.getElementById('totalTopics').textContent = total;
+            document.getElementById('completedTopics').textContent = completed;
+
+            const completedTopicsWithDate = allTopics.filter(t => t.done && t.completedAt);
+            if (completedTopicsWithDate.length > 0) {
+                const firstCompletionDate = new Date(Math.min(...completedTopicsWithDate.map(t => new Date(t.completedAt))));
+                const lastCompletionDate = new Date(Math.max(...completedTopicsWithDate.map(t => new Date(t.completedAt))));
+                const daysActive = Math.ceil(Math.abs(lastCompletionDate - firstCompletionDate) / (1000 * 60 * 60 * 24)) + 1;
+
+                const avgDailyRate = daysActive > 0 ? (completedTopicsWithDate.length / daysActive).toFixed(1) : 0;
+                document.getElementById('avgDailyRate').textContent = avgDailyRate;
+
+                const weeksActive = daysActive > 0 ? Math.ceil(daysActive / 7) : 0;
+                const avgWeeklyRate = weeksActive > 0 ? (completedTopicsWithDate.length / weeksActive).toFixed(1) : 0;
+                document.getElementById('avgWeeklyRate').textContent = avgWeeklyRate;
+            } else {
+                document.getElementById('avgDailyRate').textContent = '0';
+                document.getElementById('avgWeeklyRate').textContent = '0';
+            }
+        }
+
+        function renderTopicsCompletionChart() {
+            const ctx = document.getElementById('topicsCompletionChart').getContext('2d');
+            const allTopics = getAllTopics();
+            const completedTopics = allTopics.filter(t => t.done && t.completedAt);
+
+            if (completedTopics.length === 0) {
+                document.getElementById('topicsCompletionChart').style.display = 'none';
+                const chartContainer = document.getElementById('topicsCompletionChart').closest('.chart-container');
+                if (chartContainer) {
+                    chartContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="ri-line-chart-line"></i>
+                            <p>Complete topics to see your learning velocity chart.</p>
+                        </div>
+                    `;
+                }
+                return;
+            } else {
+                document.getElementById('topicsCompletionChart').style.display = 'block';
+            }
+
+            // Group completions by week
+            const completionsByWeek = {};
+            completedTopics.forEach(topic => {
+                const date = new Date(topic.completedAt);
+                const startOfWeek = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
+                const weekKey = startOfWeek.toISOString().split('T')[0];
+                completionsByWeek[weekKey] = (completionsByWeek[weekKey] || 0) + 1;
+            });
+
+            const sortedWeeks = Object.keys(completionsByWeek).sort();
+            const labels = sortedWeeks.map(weekKey => {
+                const date = new Date(weekKey);
+                return `${date.getMonth() + 1}/${date.getDate()}`;
+            });
+            const data = sortedWeeks.map(weekKey => completionsByWeek[weekKey]);
+
+            const chartColors = getChartColors();
+
+            if (topicsCompletionChart) {
+                topicsCompletionChart.destroy();
+            }
+
+            topicsCompletionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Topics Completed',
+                        data: data,
+                        borderColor: chartColors.primary,
+                        backgroundColor: chartColors.primary + '33', // 20% opacity
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: chartColors.gridLine
+                            },
+                            ticks: {
+                                color: chartColors.textColor
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: chartColors.gridLine
+                            },
+                            ticks: {
+                                color: chartColors.textColor,
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderRecentCompletions() {
+            const listContainer = document.getElementById('recentCompletionsList');
+            const allTopics = getAllTopics();
+            const recentCompletions = allTopics
+                .filter(t => t.done && t.completedAt)
+                .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
+                .slice(0, 10); // Show last 10 completions
+
+            if (recentCompletions.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="ri-checkbox-circle-line"></i>
+                        <p>No topics completed recently.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            listContainer.innerHTML = recentCompletions.map(topic => `
+                <div class="completion-item">
+                    <div class="completion-item-info">
+                        <h4>${escapeHtml(topic.text)}</h4>
+                        <p>Subject: ${escapeHtml(topic.subjectName)}</p>
+                    </div>
+                    <div class="completion-item-date">${new Date(topic.completedAt).toLocaleDateString()}</div>
+                </div>
+            `).join('');
+        }
+
+        function getChartColors() {
+            const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+            const secondary = getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim();
+            const text = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+            const textLight = getComputedStyle(document.documentElement).getPropertyValue('--text-light').trim();
+            const border = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
+
+            return {
+                primary: primary,
+                secondary: secondary,
+                textColor: textLight,
+                gridLine: border
+            };
+        }
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+    </script>
+</body>
+</html>
