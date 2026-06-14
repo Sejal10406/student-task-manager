@@ -1,0 +1,328 @@
+/*
+ * task-categories.css
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Issue #10 — Task Categorization & Visual Status Indicators
+ *
+ * This stylesheet adds:
+ *   1. Coloured category badge tokens per category (Theory, Practical,
+ *      Assignment, Revision) — visible on every task card and on the
+ *      category filter buttons.
+ *   2. Strikethrough + muted-text style for completed tasks.
+ *   3. Animated completion checkmark on the check-btn.
+ *   4. Category-specific left-border accent on task cards.
+ *   5. Filter-chip active-state colour that matches the category colour.
+ *   6. Accessible focus-visible ring for the check-btn.
+ *
+ * All rules use CSS custom properties from the existing design system so they
+ * adapt automatically across all four colour themes (cosmic, aurora,
+ * cyberpunk, sunset).
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   1.  CATEGORY COLOUR TOKENS
+   Each category gets three values: background tint, border, and text.
+   These are used for badges, filter chips, and task-card accents.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Theory — blue */
+  --cat-theory-bg   : rgba(59, 130, 246, 0.14);
+  --cat-theory-border: rgba(59, 130, 246, 0.35);
+  --cat-theory-text : #60a5fa;
+  --cat-theory-solid: #3b82f6;
+
+  /* Practical — green */
+  --cat-practical-bg   : rgba(16, 185, 129, 0.14);
+  --cat-practical-border: rgba(16, 185, 129, 0.35);
+  --cat-practical-text : #34d399;
+  --cat-practical-solid: #10b981;
+
+  /* Assignment — amber */
+  --cat-assignment-bg   : rgba(245, 158, 11, 0.14);
+  --cat-assignment-border: rgba(245, 158, 11, 0.35);
+  --cat-assignment-text : #fbbf24;
+  --cat-assignment-solid: #f59e0b;
+
+  /* Revision — purple */
+  --cat-revision-bg   : rgba(139, 92, 246, 0.14);
+  --cat-revision-border: rgba(139, 92, 246, 0.35);
+  --cat-revision-text : #a78bfa;
+  --cat-revision-solid: #8b5cf6;
+}
+
+/* Sunset / light theme overrides for better contrast */
+[data-theme="sunset"] {
+  --cat-theory-bg    : rgba(59, 130, 246, 0.10);
+  --cat-theory-text  : #1d4ed8;
+  --cat-practical-bg : rgba(16, 185, 129, 0.10);
+  --cat-practical-text: #065f46;
+  --cat-assignment-bg: rgba(245, 158, 11, 0.10);
+  --cat-assignment-text: #92400e;
+  --cat-revision-bg  : rgba(139, 92, 246, 0.10);
+  --cat-revision-text: #5b21b6;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   2.  CATEGORY BADGE — the coloured pill on each task card
+   Rendered by script.js via the .subject-pill class.  These rules override
+   the inline background/color set by JS with a more accessible token-based
+   approach for the four known categories.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Theory */
+.subject-pill[data-category="Theory"],
+.task-category-badge[data-category="Theory"] {
+  background : var(--cat-theory-bg) !important;
+  color      : var(--cat-theory-text) !important;
+  border     : 1px solid var(--cat-theory-border) !important;
+}
+
+/* Practical */
+.subject-pill[data-category="Practical"],
+.task-category-badge[data-category="Practical"] {
+  background : var(--cat-practical-bg) !important;
+  color      : var(--cat-practical-text) !important;
+  border     : 1px solid var(--cat-practical-border) !important;
+}
+
+/* Assignment */
+.subject-pill[data-category="Assignment"],
+.task-category-badge[data-category="Assignment"] {
+  background : var(--cat-assignment-bg) !important;
+  color      : var(--cat-assignment-text) !important;
+  border     : 1px solid var(--cat-assignment-border) !important;
+}
+
+/* Revision */
+.subject-pill[data-category="Revision"],
+.task-category-badge[data-category="Revision"] {
+  background : var(--cat-revision-bg) !important;
+  color      : var(--cat-revision-text) !important;
+  border     : 1px solid var(--cat-revision-border) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   3.  TASK CARD — category left-border accent
+   A 4 px coloured strip on the left edge of each task card communicates
+   category at a glance without needing to read the badge text.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.task[data-category="Theory"] {
+  border-left: 4px solid var(--cat-theory-solid) !important;
+}
+
+.task[data-category="Practical"] {
+  border-left: 4px solid var(--cat-practical-solid) !important;
+}
+
+.task[data-category="Assignment"] {
+  border-left: 4px solid var(--cat-assignment-solid) !important;
+}
+
+.task[data-category="Revision"] {
+  border-left: 4px solid var(--cat-revision-solid) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   4.  COMPLETION VISUAL — strikethrough + muted text + check animation
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Strike through the task title */
+.task.completed .task-title {
+  text-decoration        : line-through !important;
+  text-decoration-color  : var(--text-light, #94a3b8);
+  text-decoration-thickness: 2px;
+  color                  : var(--text-light, #94a3b8) !important;
+  opacity                : 0.75;
+  transition             : all 0.3s ease;
+}
+
+/* Also mute the category badge and tags when completed */
+.task.completed .subject-pill,
+.task.completed .task-tag,
+.task.completed .priority-pill {
+  opacity: 0.45;
+  filter : grayscale(0.6);
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+/* Dim the deadline chip */
+.task.completed .task-deadline {
+  opacity: 0.45;
+}
+
+/* ── Check-button: unchecked state ── */
+.check-btn {
+  position         : relative;
+  width            : 28px;
+  height           : 28px;
+  border-radius    : 50%;
+  border           : 2px solid var(--primary, #8b5cf6);
+  background       : transparent;
+  cursor           : pointer;
+  flex-shrink      : 0;
+  display          : flex;
+  align-items      : center;
+  justify-content  : center;
+  transition       : background 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                     border-color 0.25s ease,
+                     box-shadow 0.25s ease,
+                     transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.check-btn:hover {
+  background  : rgba(139, 92, 246, 0.12);
+  border-color: var(--secondary, #06b6d4);
+  transform   : scale(1.1);
+  box-shadow  : 0 0 0 4px rgba(139, 92, 246, 0.15);
+}
+
+/* ── Check-button: checked / completed state ── */
+.task.completed .check-btn {
+  background  : linear-gradient(135deg, var(--primary, #8b5cf6), var(--secondary, #06b6d4));
+  border-color: transparent;
+  box-shadow  : 0 4px 12px rgba(139, 92, 246, 0.4);
+  animation   : checkPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* SVG checkmark drawn with a pseudo-element */
+.task.completed .check-btn::after {
+  content      : '';
+  display      : block;
+  position     : absolute;
+  left         : 8px;
+  top          : 4px;
+  width        : 6px;
+  height       : 11px;
+  border       : 2px solid #ffffff;
+  border-top   : none;
+  border-left  : none;
+  transform    : rotate(45deg);
+  animation    : drawCheck 0.25s ease 0.05s both;
+}
+
+@keyframes checkPop {
+  0%   { transform: scale(0.8); }
+  60%  { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes drawCheck {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0% 0 0); }
+}
+
+/* Accessible focus ring */
+.check-btn:focus-visible {
+  outline      : 3px solid var(--primary, #8b5cf6) !important;
+  outline-offset: 3px !important;
+  box-shadow   : 0 0 0 5px rgba(139, 92, 246, 0.3) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   5.  FILTER BUTTONS — active state matches category colour
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Theory filter button */
+.filter-btn[data-filter="Theory"].active,
+.filter-btn[data-filter="Theory"]:hover {
+  background  : var(--cat-theory-bg) !important;
+  border-color: var(--cat-theory-border) !important;
+  color       : var(--cat-theory-text) !important;
+  box-shadow  : 0 4px 14px rgba(59, 130, 246, 0.25) !important;
+}
+
+/* Practical filter button */
+.filter-btn[data-filter="Practical"].active,
+.filter-btn[data-filter="Practical"]:hover {
+  background  : var(--cat-practical-bg) !important;
+  border-color: var(--cat-practical-border) !important;
+  color       : var(--cat-practical-text) !important;
+  box-shadow  : 0 4px 14px rgba(16, 185, 129, 0.25) !important;
+}
+
+/* Assignment filter button */
+.filter-btn[data-filter="Assignment"].active,
+.filter-btn[data-filter="Assignment"]:hover {
+  background  : var(--cat-assignment-bg) !important;
+  border-color: var(--cat-assignment-border) !important;
+  color       : var(--cat-assignment-text) !important;
+  box-shadow  : 0 4px 14px rgba(245, 158, 11, 0.25) !important;
+}
+
+/* Revision filter button */
+.filter-btn[data-filter="Revision"].active,
+.filter-btn[data-filter="Revision"]:hover {
+  background  : var(--cat-revision-bg) !important;
+  border-color: var(--cat-revision-border) !important;
+  color       : var(--cat-revision-text) !important;
+  box-shadow  : 0 4px 14px rgba(139, 92, 246, 0.25) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   6.  CATEGORY SELECT DROPDOWN — coloured left border cue while choosing
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+#categorySelect {
+  border-left-width: 4px !important;
+  border-left-style: solid !important;
+  border-left-color: var(--primary, #8b5cf6);
+  transition       : border-left-color 0.2s ease;
+}
+
+#categorySelect[data-selected="Theory"]     { border-left-color: var(--cat-theory-solid)     !important; }
+#categorySelect[data-selected="Practical"]  { border-left-color: var(--cat-practical-solid)  !important; }
+#categorySelect[data-selected="Assignment"] { border-left-color: var(--cat-assignment-solid) !important; }
+#categorySelect[data-selected="Revision"]   { border-left-color: var(--cat-revision-solid)   !important; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   7.  MOBILE QUICK-ADD DRAWER — category select colour cue
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+#mobileCategorySelect {
+  border-left-width: 4px !important;
+  border-left-style: solid !important;
+  border-left-color: var(--primary, #8b5cf6);
+  transition       : border-left-color 0.2s ease;
+}
+
+#mobileCategorySelect[data-selected="Theory"]     { border-left-color: var(--cat-theory-solid)     !important; }
+#mobileCategorySelect[data-selected="Practical"]  { border-left-color: var(--cat-practical-solid)  !important; }
+#mobileCategorySelect[data-selected="Assignment"] { border-left-color: var(--cat-assignment-solid) !important; }
+#mobileCategorySelect[data-selected="Revision"]   { border-left-color: var(--cat-revision-solid)   !important; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   8.  KANBAN BOARD COLUMN HEADERS — category colour badge
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.board-column[data-category="Theory"]     .column-title { color: var(--cat-theory-text); }
+.board-column[data-category="Practical"]  .column-title { color: var(--cat-practical-text); }
+.board-column[data-category="Assignment"] .column-title { color: var(--cat-assignment-text); }
+.board-column[data-category="Revision"]   .column-title { color: var(--cat-revision-text); }
+
+.board-column[data-category="Theory"]     .column-count { background: var(--cat-theory-bg);     color: var(--cat-theory-text); }
+.board-column[data-category="Practical"]  .column-count { background: var(--cat-practical-bg);  color: var(--cat-practical-text); }
+.board-column[data-category="Assignment"] .column-count { background: var(--cat-assignment-bg); color: var(--cat-assignment-text); }
+.board-column[data-category="Revision"]   .column-count { background: var(--cat-revision-bg);   color: var(--cat-revision-text); }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   9.  SCRATCHPAD "SAVING" STATUS BADGE — smooth colour transitions
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+#scratchpadStatus {
+  transition: color 0.3s ease, opacity 0.3s ease;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   10. REDUCED-MOTION — respect user preference
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .check-btn,
+  .task.completed .check-btn,
+  .task.completed .check-btn::after {
+    animation  : none !important;
+    transition : none !important;
+  }
+}
