@@ -77,7 +77,7 @@ self.addEventListener("install", function (event) {
 });
 
 // ---------------------------------------------------------------------------
-// Activate — evict stale caches from previous versions
+// Activate — evict stale caches from previous versions + enable nav preload
 // ---------------------------------------------------------------------------
 self.addEventListener("activate", function (event) {
   event.waitUntil(
@@ -93,6 +93,11 @@ self.addEventListener("activate", function (event) {
     }).then(function () {
       // Take control of uncontrolled clients immediately
       return self.clients.claim();
+    }).then(function () {
+      // Enable navigation preload for faster page loads
+      if (self.registration.navigationPreload) {
+        return self.registration.navigationPreload.enable();
+      }
     })
   );
 });
@@ -113,8 +118,16 @@ self.addEventListener("fetch", function (event) {
         return cachedResponse;
       }
 
+      // Try the preloaded response first (faster than full fetch)
+      const fetchPromise = event.preloadResponse
+        ? event.preloadResponse.then(function (preloadResponse) {
+            if (preloadResponse) return preloadResponse;
+            return fetch(event.request);
+          })
+        : fetch(event.request);
+
       // Otherwise fetch from network and opportunistically cache the response
-      return fetch(event.request).then(function (networkResponse) {
+      return fetchPromise.then(function (networkResponse) {
         if (
           networkResponse &&
           networkResponse.status === 200 &&
