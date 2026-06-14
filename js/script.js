@@ -1420,6 +1420,10 @@ function addTask() {
   }
   
   let priority = "Medium";
+  const newTask = {
+  id: generateTaskId(),
+  text: taskText,
+  completed: false,};
   const prioritySelect = document.getElementById("prioritySelect");
   if (prioritySelect && prioritySelect.value && prioritySelect.value.trim() !== "") {
     priority = prioritySelect.value;
@@ -1537,6 +1541,16 @@ function createTaskEl(task) {
   if (task.completed) {
     div.classList.add("completed");
   }
+  const li = document.createElement("li");
+  if (task.isNew) {
+  li.classList.add("new-task-highlight");
+
+  setTimeout(() => {
+    task.isNew = false;
+    saveData();
+    renderTasks();
+  }, 5000);
+}
 
   const pri = task.priority || "Medium";
   const urgencyInfo = window.Prioritization ? window.Prioritization.getUrgencyInfo(task) : null;
@@ -1569,6 +1583,7 @@ function createTaskEl(task) {
       </button>
       <button class="icon-btn delete-btn" aria-label="Delete Quest">
         <i class="ri-delete-bin-6-line"></i>
+        
       </button>
     </div>
   `;

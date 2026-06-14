@@ -8416,3 +8416,18 @@ button:focus-visible {
   bottom: 4px;
   right: 8px;
 }
+.new-task-highlight {
+  animation: newTaskGlow 5s ease;
+  border: 2px solid #22c55e !important;
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+}
+
+@keyframes newTaskGlow {
+  0% {
+    background: rgba(34, 197, 94, 0.25);
+  }
+
+  100% {
+    background: transparent;
+  }
+}
