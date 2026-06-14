@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Sitemap: https://sejal10406.github.io/student-task-manager/sitemap.xml
+
+# Disallow internal pages with no SEO value
+Disallow: /pages/failure.html
+Disallow: /pages/history.html
