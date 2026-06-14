@@ -4,10 +4,19 @@
 
 <div align="center">
 
-[![GitHub stars](https://img.shields.io/github/stars/Sejal10406/student-task-manager?style=flat-square)](https://github.com/Sejal10406/student-task-manager/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/Sejal10406/student-task-manager?style=flat-square)](https://github.com/Sejal10406/student-task-manager/network)
-[![GitHub issues](https://img.shields.io/github/issues/Sejal10406/student-task-manager?style=flat-square)](https://github.com/Sejal10406/student-task-manager/issues)
-[![License](https://img.shields.io/github/license/Sejal10406/student-task-manager?style=flat-square)](./License.md)
+<div align="center">
+
+[![GitHub stars](https://img.shields.io/github/stars/Sejal10406/student-task-manager?style=for-the-badge&logo=github)](https://github.com/Sejal10406/student-task-manager/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/Sejal10406/student-task-manager?style=for-the-badge&logo=git)](https://github.com/Sejal10406/student-task-manager/network)
+[![GitHub issues](https://img.shields.io/github/issues/Sejal10406/student-task-manager?style=for-the-badge&logo=github)](https://github.com/Sejal10406/student-task-manager/issues)
+[![GitHub PRs](https://img.shields.io/github/issues-pr/Sejal10406/student-task-manager?style=for-the-badge&logo=github)](https://github.com/Sejal10406/student-task-manager/pulls)
+[![License](https://img.shields.io/github/license/Sejal10406/student-task-manager?style=for-the-badge)](./License.md)
+[![Contributors](https://img.shields.io/github/contributors/Sejal10406/student-task-manager?style=for-the-badge&logo=contributorcovenant)](https://github.com/Sejal10406/student-task-manager/graphs/contributors)
+[![Last Commit](https://img.shields.io/github/last-commit/Sejal10406/student-task-manager?style=for-the-badge&logo=github)](https://github.com/Sejal10406/student-task-manager/commits/main)
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/Sejal10406/student-task-manager/codeql-analysis.yml?style=for-the-badge&label=CodeQL&logo=github)](https://github.com/Sejal10406/student-task-manager/actions/workflows/codeql-analysis.yml)
+[![Deploy](https://img.shields.io/github/actions/workflow/status/Sejal10406/student-task-manager/deploy.yml?style=for-the-badge&label=Deploy&logo=githubpages)](https://github.com/Sejal10406/student-task-manager/actions/workflows/deploy.yml)
+[![PWA](https://img.shields.io/badge/PWA-Ready-8B5CF6?style=for-the-badge&logo=pwa)](.)
+[![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%20AA-10B981?style=for-the-badge)](.)
 
 **Level up your productivity! A gamified, interactive web application** designed to help students manage their daily tasks with XP, badges, and focus timers.
 
@@ -141,12 +150,32 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full contribution guide includi
 
 ---
 
+## 📈 GitHub Stats
+
+<div align="center">
+
+![Repo Stars](https://img.shields.io/github/stars/Sejal10406/student-task-manager?style=social)
+![Repo Forks](https://img.shields.io/github/forks/Sejal10406/student-task-manager?style=social)
+![Watchers](https://img.shields.io/github/watchers/Sejal10406/student-task-manager?style=social)
+
+</div>
+
+---
+
 ## 📝 License
 
 This project is open-source and available under the [MIT License](./License.md).
 
 ## 💬 Community
 Join our community and help us build a better task manager for students.
+
+---
+
+## 👥 Contributors
+
+<a href="https://github.com/Sejal10406/student-task-manager/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Sejal10406/student-task-manager" alt="Contributors" />
+</a>
 
 ---
 
