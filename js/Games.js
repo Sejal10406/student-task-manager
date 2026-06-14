@@ -406,11 +406,3 @@ const saveGameState = (gameId, state) => {
     console.warn('Could not save game state');
   }
 };
-
-const saveGameState = (gameId, state) => {
-  try {
-    localStorage.setItem(`gameState_${gameId}`, JSON.stringify(state));
-  } catch (e) {
-    console.warn('Could not save game state');
-  }
-};
