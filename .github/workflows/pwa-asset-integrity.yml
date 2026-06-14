@@ -1,0 +1,64 @@
+name: PWA Cache Integrity Check
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  validate-pwa-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate PWA Offline Cache List
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          
+          console.log('Reading sw.js...');
+          const swContent = fs.readFileSync('sw.js', 'utf8');
+          
+          // Regex to extract items inside ASSETS_TO_CACHE array
+          const match = swContent.match(/const ASSETS_TO_CACHE = \[\s*([\s\S]*?)\s*\];/);
+          if (!match) {
+            console.error('❌ Could not find ASSETS_TO_CACHE array in sw.js');
+            process.exit(1);
+          }
+          
+          const rawItems = match[1];
+          const files = rawItems
+            .split(',')
+            .map(item => item.trim().replace(/['\"`]/g, ''))
+            .filter(item => item.length > 0 && item !== './');
+            
+          console.log(\`Found \${files.length} assets to validate.\`);
+          
+          let missingCount = 0;
+          for (const file of files) {
+            // Clean path
+            const cleanPath = file.startsWith('./') ? file.slice(2) : file;
+            const absolutePath = path.resolve(cleanPath);
+            
+            if (fs.existsSync(absolutePath)) {
+              console.log(\`✅ Verified: \${file}\`);
+            } else {
+              console.error(\`❌ Missing Asset: \${file} (Resolved: \${absolutePath})\`);
+              missingCount++;
+            }
+          }
+          
+          if (missingCount > 0) {
+            console.error(\`❌ Validation Failed: \${missingCount} missing cache assets found.\`);
+            process.exit(1);
+          }
+          console.log('🎉 PWA offline cache integrity validation passed successfully!');
+          "

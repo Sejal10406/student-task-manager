@@ -1,0 +1,16 @@
+name: Bundle Size Monitor
+on:
+  pull_request:
+    branches: [ main ]
+jobs:
+  check-size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Calculate directory size
+        run: |
+          size=$(du -sb . | cut -f1)
+          echo "Total size: $size bytes"
+          if [ $size -gt 52428800 ]; then
+            echo "Warning: Bundle size exceeds 50MB limits!"
+          fi

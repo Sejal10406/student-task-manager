@@ -13,6 +13,16 @@ const categorySelect = document.getElementById("categorySelect");
 const taskTemplate = document.getElementById("taskTemplate");
 const taskTagsInput = document.getElementById("taskTagsInput");
 
+// Consolidated escapeHtml defined before first use
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Audio state & helpers for subtle feedback
 const audioState = {
   muted: localStorage.getItem('quests_sound_muted') === 'true',
@@ -1253,6 +1263,11 @@ function checkLevelUp(oldXp, newXp) {
       xp += 100; // Bonus XP
       saveData();
       updateGamification();
+
+      // Add notification for level up
+      if (typeof addNotification === 'function') {
+        addNotification({ type: 'achievement', title: `Level Up!`, body: `You reached Level ${newLevel}. +50 Coins and +100 XP bonus claimed!`, ref: `level-${newLevel}` });
+      }
     }
   }
 }
@@ -1300,6 +1315,12 @@ function checkStudyMilestones() {
           overlay.classList.add("active");
           popup.classList.add("active");
           triggerConfetti();
+
+          // Add notification for milestone
+          if (typeof addNotification === 'function') {
+            addNotification({ type: 'achievement', title: `Milestone Unlocked: ${mil.title}`, body: mil.desc, ref: `milestone-${mil.id}` });
+          }
+
           announce(`Milestone unlocked: ${mil.title}. ${mil.desc}`);
           enableFocusTrap(popup);
 
@@ -2004,9 +2025,12 @@ function renderTasks() {
       return;
     }
 
+    const fragment = document.createDocumentFragment();
     filteredTasks.forEach(task => {
-      taskListEl.appendChild(createTaskEl(task));
+      fragment.appendChild(createTaskEl(task));
     });
+    taskListEl.innerHTML = "";
+    taskListEl.appendChild(fragment);
 
   } else {
     taskListEl.style.display = "none";
@@ -2334,10 +2358,24 @@ function renderSubjectTracker() {
 
   if (!subjects || subjects.length === 0) {
     grid.innerHTML = `
-      <div class="empty-state" style="grid-column:1/-1; text-align:center; padding:40px;">
-        <i class="ri-book-open-line" style="font-size: 2.5rem; opacity: 0.3;"></i>
+      <div class="empty-state enhanced-empty" style="grid-column:1/-1; text-align:center; padding:60px 40px; border-radius: var(--radius-lg); background: rgba(255, 255, 255, 0.015); border: 1px dashed var(--border);">
+        <svg width="120" height="90" viewBox="0 0 120 90" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin: 0 auto 20px;">
+          <defs>
+            <linearGradient id="subjGrad" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stop-color="#10b981" />
+              <stop offset="1" stop-color="#06b6d4" />
+            </linearGradient>
+          </defs>
+          <rect x="20" y="10" width="80" height="70" rx="6" fill="url(#subjGrad)" opacity="0.2" />
+          <path d="M40 30h40M40 45h40M40 60h25" stroke="url(#subjGrad)" stroke-width="4" stroke-linecap="round" />
+          <circle cx="90" cy="70" r="14" fill="#06b6d4" opacity="0.8" />
+          <path d="M85 70l4 4 8-8" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
         <h3>No subjects added yet</h3>
-        <p>Create a subject to track homework, revision, and mastery progress.</p>
+        <p class="muted" style="max-width: 400px; margin: 0 auto 24px; opacity: 0.85;">Organize your learning by creating a subject to track your homework, revision, and overall mastery progress.</p>
+        <div class="empty-cta-row" style="display:flex; justify-content:center; gap:12px;">
+          <button class="view-btn primary" onclick="document.getElementById('addSubjectBtn').click()" style="background: var(--primary); color: white; border: none; padding: 10px 20px; font-weight: 600;">Add Your First Subject</button>
+        </div>
       </div>
     `;
     return;
@@ -2449,9 +2487,21 @@ window.deleteTimetableSlot = (id) => {
     showTaskPopup("SCHEDULE UPDATED");
   }
 };
+// Module-level interval handles used by initTimetableNotifier() and
+// initCalendarNotifier() to prevent accumulating duplicate intervals.
+// Without these guards, calling updateAnalyticsDashboard() multiple times
+// (e.g. on each analytics tab visit) creates a new concurrent interval on
+// every call, leading to exponential saveData() and renderTimetable() calls.
+let _timetableNotifierInterval = null;
+let _calendarNotifierInterval = null;
 
 function initTimetableNotifier() {
-  setInterval(() => {
+  // Clear any previously registered interval before starting a new one.
+  // This is the primary guard against the timer-leak bug.
+  if (_timetableNotifierInterval !== null) {
+    clearInterval(_timetableNotifierInterval);
+  }
+  _timetableNotifierInterval = setInterval(() => {
     const now = new Date();
     const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const currentDay = dayNames[now.getDay()];
@@ -2473,12 +2523,12 @@ function initTimetableNotifier() {
           slot.lastNotified = currentTime;
           dataUpdated = true;
           
-          // Play a gentle alert sound if browser allows
-          try {
-            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-            audio.volume = 0.4;
-            audio.play();
-          } catch(e) {}
+          // Use the built-in Web Audio API sound system.
+          // NOTE: External audio URLs (e.g. assets.mixkit.co) are blocked by
+          // the app's Content Security Policy and produce a CSP violation
+          // error in the browser console on every notification. playSoundEffect()
+          // generates audio locally via Web Audio API — no network request needed.
+          try { playSoundEffect('complete'); } catch (e) {}
         }
       }
       
@@ -2606,7 +2656,11 @@ function renderCalendar() {
 }
 
 function initCalendarNotifier() {
-  setInterval(() => {
+  // Clear any previously registered interval before starting a new one.
+  if (_calendarNotifierInterval !== null) {
+    clearInterval(_calendarNotifierInterval);
+  }
+  _calendarNotifierInterval = setInterval(() => {
     const now = new Date();
     const dateStr = getFormattedDate(now);
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -2619,11 +2673,9 @@ function initCalendarNotifier() {
         ev.lastNotified = timeStr;
         changed = true;
         
-        try {
-          const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-          audio.volume = 0.5;
-          audio.play();
-        } catch(e) {}
+        // Use built-in Web Audio API (playSoundEffect) instead of an external
+        // URL that violates the Content Security Policy of this application.
+        try { playSoundEffect('complete'); } catch (e) {}
       }
 
       // Cleanup notification flag
@@ -2783,11 +2835,6 @@ function getCategoryEmoji(cat) {
   }
 }
 
-function escapeHtml(text) {
-  const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-  return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-}
-
 // ==========================================================================
 // 4. POMODORO TIMER & STUDY HOUR LOGGER
 // ==========================================================================
@@ -2843,7 +2890,12 @@ function startTimer() {
       if (isStudy) {
         sendNotification("Session Complete!", "Study session complete! Take a well-deserved break ☕");
         addNotification({ type: 'break', title: 'Study session complete', body: 'Time for a break ☕' });
-        alert("Study session complete! Take a break.");
+        // Use showTaskPopup() instead of alert() to avoid blocking the main thread.
+        // alert() pauses the setInterval loop while the dialog is open — when
+        // the user dismisses it, the elapsed-time calculation (Date.now() delta)
+        // reports the entire dialog wait time as timer ticks, instantly expiring
+        // the next phase and corrupting the break-time tracking.
+        showTaskPopup('✅ Study session complete! Time for a well-deserved break ☕');
 
         // Log session in focus history
         if (!analyticsData.focusHistory) analyticsData.focusHistory = [];
@@ -2880,7 +2932,8 @@ function startTimer() {
       } else {
         sendNotification("Break Over!", "Break over! Time to focus back on your tasks ⚔️");
         addNotification({ type: 'break', title: 'Break over', body: 'Break finished — back to study!' });
-        alert("Break over! Back to study.");
+        // Same reason as above — non-blocking notification avoids timer drift.
+        showTaskPopup('⚔️ Break over! Time to focus back on your tasks.');
 
         isStudy = true;
         currentTime = studyTime;
@@ -3463,10 +3516,16 @@ function updateAnalyticsDashboard() {
   });
 
   const searchInput = document.getElementById("searchInput");
+  let searchDebounceTimeout = null;
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
       searchQuery = e.target.value.trim().toLowerCase();
-      renderTasks();
+      if (searchDebounceTimeout) {
+        clearTimeout(searchDebounceTimeout);
+      }
+      searchDebounceTimeout = setTimeout(() => {
+        renderTasks();
+      }, 200);
     });
   }
 
@@ -4363,214 +4422,6 @@ function applySyllabusToTasks(syllabusTopics, defaultCategory = "Theory", defaul
   return { added: addedCount, skipped: skippedCount };
 }
 
-// ==========================================================================
-// MOBILE DRAWER FUNCTIONS - FIX FOR ISSUE #5
-// ==========================================================================
-
-function closeDrawer() {
-  const drawerOverlay = document.getElementById('drawerOverlay');
-  const quickDrawer = document.getElementById('quickDrawer');
-  
-  if (drawerOverlay) {
-    drawerOverlay.classList.remove('active');
-  }
-  if (quickDrawer) {
-    quickDrawer.classList.remove('active');
-  }
-  
-  if (drawerOverlay) {
-    drawerOverlay.style.display = '';
-  }
-  if (quickDrawer) {
-    quickDrawer.style.display = '';
-  }
-  
-  document.body.style.overflow = '';
-}
-
-function openDrawer() {
-  const drawerOverlay = document.getElementById('drawerOverlay');
-  const quickDrawer = document.getElementById('quickDrawer');
-  
-  if (drawerOverlay) {
-    drawerOverlay.classList.add('active');
-  }
-  if (quickDrawer) {
-    quickDrawer.classList.add('active');
-  }
-  
-  document.body.style.overflow = 'hidden';
-  const drawerTaskInput = document.getElementById('drawerTaskInput');
-  if (drawerTaskInput) {
-    setTimeout(() => {
-      drawerTaskInput.focus();
-    }, 100);
-  }
-}
-
-function initMobileDrawer() {
-  const mobileAddTaskBtn = document.getElementById('mobileAddTaskBtn');
-  if (mobileAddTaskBtn) {
-    const newBtn = mobileAddTaskBtn.cloneNode(true);
-    mobileAddTaskBtn.parentNode.replaceChild(newBtn, mobileAddTaskBtn);
-    
-    newBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      openDrawer();
-    });
-  }
-  
-  const closeDrawerBtn = document.getElementById('closeDrawerBtn');
-  if (closeDrawerBtn) {
-    const newCloseBtn = closeDrawerBtn.cloneNode(true);
-    closeDrawerBtn.parentNode.replaceChild(newCloseBtn, closeDrawerBtn);
-    
-    newCloseBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      closeDrawer();
-    });
-  }
-  
-  const drawerOverlay = document.getElementById('drawerOverlay');
-  if (drawerOverlay) {
-    const newOverlay = drawerOverlay.cloneNode(true);
-    drawerOverlay.parentNode.replaceChild(newOverlay, drawerOverlay);
-    
-    newOverlay.addEventListener('click', (e) => {
-      if (e.target === newOverlay) {
-        closeDrawer();
-      }
-    });
-  }
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      const drawer = document.getElementById('quickDrawer');
-      if (drawer && drawer.classList.contains('active')) {
-        closeDrawer();
-      }
-    }
-  });
-  
-  const drawerAddTaskBtn = document.getElementById('drawerAddTaskBtn');
-  if (drawerAddTaskBtn) {
-    const newDrawerBtn = drawerAddTaskBtn.cloneNode(true);
-    drawerAddTaskBtn.parentNode.replaceChild(newDrawerBtn, drawerAddTaskBtn);
-    
-    newDrawerBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      
-      const drawerTaskInput = document.getElementById('drawerTaskInput');
-      const drawerCategorySelect = document.getElementById('drawerCategorySelect');
-      const drawerPrioritySelect = document.getElementById('drawerPrioritySelect');
-      const drawerTagsInput = document.getElementById('drawerTagsInput');
-      const drawerDeadlineInput = document.getElementById('drawerDeadlineInput');
-      const drawerRecurrenceSelect = document.getElementById('drawerRecurrenceSelect');
-      
-      const text = drawerTaskInput ? drawerTaskInput.value.trim() : '';
-      let category = "Theory";
-      let priority = "Medium";
-      
-      if (drawerCategorySelect && drawerCategorySelect.value && drawerCategorySelect.value.trim() !== "") {
-        category = drawerCategorySelect.value;
-      }
-      
-      if (drawerPrioritySelect && drawerPrioritySelect.value && drawerPrioritySelect.value.trim() !== "") {
-        priority = drawerPrioritySelect.value;
-      }
-      
-      const tags = drawerTagsInput ? parseTags(drawerTagsInput.value) : [];
-      const deadline = drawerDeadlineInput ? drawerDeadlineInput.value : "";
-      const recurrence = drawerRecurrenceSelect ? (drawerRecurrenceSelect.value || 'none') : 'none';
-      
-      if (text === "") {
-        if (drawerTaskInput) {
-          drawerTaskInput.classList.add("input-invalid");
-          setTimeout(() => {
-            drawerTaskInput.classList.remove("input-invalid");
-          }, 400);
-        }
-        announce("Failed to add task. Please enter a task description.");
-        return;
-      }
-      
-      if (text.length > 200) {
-        if (window.showToast) window.showToast("Task description is too long (maximum 200 characters).", "warning");
-        return;
-      }
-      
-      const task = {
-        id: Date.now(),
-        text,
-        category,
-        priority,
-        completed: false,
-        createdAt: getFormattedDateTime(new Date()),
-        deadline: deadline || null,
-        penaltyApplied: false,
-        tags
-      };
-      
-      if (recurrence && recurrence !== 'none') {
-        task.recurrence = recurrence;
-        const template = {
-          id: `rt-${Date.now()}`,
-          text,
-          category,
-          priority,
-          recurrence,
-          active: true,
-          startDate: deadline || new Date().toISOString()
-        };
-        recurringTemplates.push(template);
-        task.masterId = template.id;
-      }
-      
-      tasks.push(task);
-      
-      if (drawerTaskInput) drawerTaskInput.value = "";
-      if (drawerTagsInput) drawerTagsInput.value = "";
-      if (drawerDeadlineInput) drawerDeadlineInput.value = "";
-      if (drawerRecurrenceSelect) drawerRecurrenceSelect.value = "none";
-      
-      storeRecentTags(tags);
-      
-      if (!analyticsData.categoryStats[category]) {
-        analyticsData.categoryStats[category] = { created: 0, completed: 0 };
-      }
-      analyticsData.categoryStats[category].created += 1;
-      
-      saveData();
-      renderTasks();
-      renderCalendar();
-      updateDeadlineAlerts();
-      
-      sendNotification("Quest Assigned", `COMPLETE ${text} TASK ASAP`);
-      showTaskPopup(`COMPLETE ${text.toUpperCase()} TASK ASAP`);
-      announce(`Task added: "${text}". Category: ${category}, Priority: ${priority}.`);
-      
-      closeDrawer();
-    });
-  }
-  
-  const drawerTaskInput = document.getElementById('drawerTaskInput');
-  if (drawerTaskInput) {
-    drawerTaskInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const drawerAddBtn = document.getElementById('drawerAddTaskBtn');
-        if (drawerAddBtn) {
-          drawerAddBtn.click();
-        }
-      }
-    });
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  initMobileDrawer();
-});
-
 try {
   const _raw = window.TaskQuestStorage
     ? window.TaskQuestStorage.getTasks()
@@ -4639,106 +4490,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// --- Core Functions ---
-
-function addTask() {
-  const text = taskInput.value.trim();
-  const category = categorySelect ? categorySelect.value : "Theory";
-  const prioritySelect = document.getElementById("prioritySelect");
-  const priority = prioritySelect ? prioritySelect.value : "Medium";
-  const tags = typeof parseTags === "function" && taskTagsInput ? parseTags(taskTagsInput.value) : [];
-
-  const deadlineInput = document.getElementById("deadlineInput");
-  const deadline = deadlineInput ? deadlineInput.value : "";
-  const recurrenceSelect = document.getElementById("recurrenceSelect");
-  const recurrence = recurrenceSelect ? (recurrenceSelect.value || "none") : "none";
-
-  if (text === "") {
-    errorMsg.textContent = "Please enter a task.";
-    return;
-  }
-
-  if (text.length > 200) {
-    errorMsg.textContent = `Task is too long. Please keep it under 200 characters (currently ${text.length}).`;
-    return;
-  }
-
-  errorMsg.textContent = "";
-
-  const newTask = {
-    id: generateTaskId(),
-    text: text,
-    category,
-    priority,
-    completed: false,
-    createdAt: typeof getFormattedDateTime === "function" ? getFormattedDateTime(new Date()) : new Date().toLocaleString(),
-    deadline: deadline || null,
-    penaltyApplied: false,
-    tags
-  };
-
-  if (recurrence && recurrence !== "none") {
-    newTask.recurrence = recurrence;
-    const template = {
-      id: `rt-${Date.now()}`,
-      text,
-      category,
-      priority,
-      recurrence,
-      active: true,
-      startDate: deadline || new Date().toISOString()
-    };
-    recurringTemplates.push(template);
-    newTask.masterId = template.id;
-  }
-
-  try {
-    const dependsSel = document.getElementById("dependsSelect");
-    if (dependsSel) {
-      const selected = Array.from(dependsSel.selectedOptions).map(o => o.value).filter(v => v !== "");
-      newTask.depends = selected.map(v => parseInt(v)).filter(Boolean);
-      const safeDeps = [];
-      newTask.depends.forEach(did => {
-        if (typeof hasCircularDependency === "function" && hasCircularDependency(newTask.id, did)) {
-          if (window && window.showToast) window.showToast("Dependency removed to avoid circular reference", "warning");
-        } else {
-          safeDeps.push(did);
-        }
-      });
-      newTask.depends = safeDeps;
-    } else {
-      newTask.depends = [];
-    }
-  } catch (e) {
-    newTask.depends = [];
-  }
-
-  tasks.push(newTask);
-  playSoundEffect("assign");
-  taskInput.value = "";
-  if (taskTagsInput) taskTagsInput.value = "";
-  if (deadlineInput) deadlineInput.value = "";
-
-  if (typeof storeRecentTags === "function") storeRecentTags(tags);
-
-  if (analyticsData && analyticsData.categoryStats) {
-    if (!analyticsData.categoryStats[category]) {
-      analyticsData.categoryStats[category] = { created: 0, completed: 0 };
-    }
-    analyticsData.categoryStats[category].created += 1;
-  }
-
-  if (typeof saveData === "function") saveData();
-  renderTasks();
-
-  if (typeof renderCalendar === "function") renderCalendar();
-  if (typeof updateDeadlineAlerts === "function") updateDeadlineAlerts();
-
-  if (typeof sendNotification === "function") sendNotification("Quest Assigned", `COMPLETE ${text} TASK ASAP`);
-  if (typeof showTaskPopup === "function") showTaskPopup(`COMPLETE ${text.toUpperCase()} TASK ASAP`);
-  if (typeof announce === "function") announce(`Task added: "${text}". Category: ${category}, Priority: ${priority}.`);
-}
-
 function removeTask(id) {
   // Remove references from other tasks' dependency lists
   tasks.forEach(t => {
@@ -4779,8 +4530,8 @@ function editTask(id) {
   if (!task) return;
   const newText = prompt("Edit task:", task.text);
   if (newText !== null && newText.trim() !== "") {
-    if (newText.trim().length > 200) {
-      alert(`Task is too long. Please keep it under 200 characters.`);
+    if (newText.trim().length > MAX_TASK_LENGTH) {
+      alert(`Task is too long. Please keep it under ${MAX_TASK_LENGTH} characters.`);
       return;
     }
     task.text = newText.trim();
@@ -4827,115 +4578,6 @@ function updateOverdueFlags(){
     }
     return copy;
   });
-}
-
-function renderTasks() {
-  const taskListEl = document.getElementById("taskList");
-  const boardColumns = document.getElementById("boardColumns");
-  const filtersDiv = document.querySelector(".filters");
-
-  if (!taskListEl) return;
-
-  // Ensure new tasks always have a category for Kanban grouping
-  tasks = tasks.map(task => {
-    if (!task.category) task.category = "Theory";
-    if (!task.priority) task.priority = "Medium";
-    if (!task.tags) task.tags = [];
-    return task;
-  });
-
-  if (currentView === "list" || !boardColumns) {
-    taskListEl.style.display = "flex";
-    if (boardColumns) boardColumns.style.display = "none";
-    if (filtersDiv) filtersDiv.style.display = "flex";
-
-    taskListEl.innerHTML = "";
-
-    let filteredTasks = tasks;
-    if (typeof taskMatchesFilters === "function") {
-      filteredTasks = filteredTasks.filter(task => taskMatchesFilters(task));
-    } else if (typeof activeFilter !== "undefined" && activeFilter === "Overdue") {
-      filteredTasks = filteredTasks.filter(task => task.overdue);
-    }
-
-    if (smartSortEnabled && window.Prioritization) {
-      filteredTasks = window.Prioritization.getSortedTasksByPriority(filteredTasks);
-    }
-
-    if (currentSort === "priority") {
-      const priorityOrder = { High: 1, Medium: 2, Low: 3 };
-      filteredTasks.sort((a, b) => (priorityOrder[a.priority] || 99) - (priorityOrder[b.priority] || 99));
-    } else if (currentSort === "alphabetical") {
-      filteredTasks.sort((a, b) => a.text.localeCompare(b.text));
-    } else if (currentSort === "deadline") {
-      filteredTasks.sort((a, b) => {
-        const aD = a.deadline ? new Date(a.deadline).getTime() : Infinity;
-        const bD = b.deadline ? new Date(b.deadline).getTime() : Infinity;
-        return aD - bD;
-      });
-    }
-
-    if (filteredTasks.length === 0) {
-      taskListEl.innerHTML = `
-        <div class="empty-state">
-          <i class="ri-ghost-2-line"></i>
-          <h3>No Quests Yet</h3>
-          <p>Add tasks and begin your productivity journey ✨</p>
-        </div>
-      `;
-    } else {
-      filteredTasks.forEach(task => {
-        if (typeof createTaskEl === "function") {
-          taskListEl.appendChild(createTaskEl(task));
-        } else {
-          const li = document.createElement("li");
-          li.textContent = task.text;
-          taskListEl.appendChild(li);
-        }
-      });
-    }
-  } else {
-    taskListEl.style.display = "none";
-    boardColumns.style.display = "grid";
-    if (filtersDiv) filtersDiv.style.display = "none";
-
-    boardColumns.innerHTML = "";
-    const categories = ["Theory", "Practical", "Assignment", "Revision"];
-
-    categories.forEach(cat => {
-      const colDiv = document.createElement("div");
-      colDiv.className = "board-column";
-      colDiv.setAttribute("data-category", cat);
-
-      const colTasks = tasks.filter(t => (t.category || "Theory") === cat);
-      const catEmoji = typeof getCategoryEmoji === "function" ? getCategoryEmoji(cat) : "📌";
-
-      colDiv.innerHTML = `
-        <div class="board-column-header">
-          <div class="column-title">${catEmoji} ${cat}</div>
-          <div class="column-count">${colTasks.length}</div>
-        </div>
-        <div class="board-column-body" data-category="${cat}"></div>
-      `;
-
-      const bodyDiv = colDiv.querySelector(".board-column-body");
-      colTasks.forEach(task => {
-        if (typeof createTaskEl === "function") {
-          bodyDiv.appendChild(createTaskEl(task));
-        }
-      });
-
-      if (typeof setupColumnDragOver === "function") {
-        setupColumnDragOver(bodyDiv);
-      }
-      boardColumns.appendChild(colDiv);
-    });
-  }
-
-  if (typeof renderTagSuggestions === "function") renderTagSuggestions();
-  if (typeof renderTagFilters === "function") renderTagFilters();
-  if (typeof updateStats === "function") updateStats();
-  try { if (typeof renderDependsSelect === "function") renderDependsSelect(); } catch (e) {}
 }
 
 // ==========================
@@ -5271,3 +4913,19 @@ const playSoundEffect = (type) => {
     console.warn("Audio feedback failed:", e);
   }
 };
+
+
+// Native Browser Notification Dispatcher
+function dispatchNativeBrowserAlert(title, message) {
+  if ("Notification" in window) {
+    if (Notification.permission === "granted") {
+      new Notification(title, { body: message });
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          new Notification(title, { body: message });
+        }
+      });
+    }
+  }
+}

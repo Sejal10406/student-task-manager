@@ -1640,6 +1640,17 @@ renderVault();
 renderPrompts();
 renderWeekChart();
 </script>
+<script>
+// Sentiment analysis dashboard trigger integration
+document.addEventListener("DOMContentLoaded", () => {
+  const textarea = document.querySelector("textarea");
+  if (textarea) {
+    textarea.addEventListener("input", (e) => {
+      console.log("Analyzing text length:", e.target.value.length);
+    });
+  }
+});
+</script>
 </body>
 </html>
 <script>

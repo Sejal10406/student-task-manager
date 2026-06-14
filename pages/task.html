@@ -563,6 +563,12 @@ function toggleTopic(subjectId, topicId) {
   if (!topic) return;
   topic.done = !topic.done;
   save();
+  // Add or remove completedAt timestamp
+  if (topic.done) {
+    topic.completedAt = new Date().toISOString();
+  } else {
+    delete topic.completedAt; // Remove if unchecked
+  }
 
   // update just this topic item
   const item = document.getElementById('topic-' + topicId);
