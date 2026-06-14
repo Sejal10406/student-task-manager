@@ -8416,3 +8416,9 @@ button:focus-visible {
   bottom: 4px;
   right: 8px;
 }
+#taskCharCounter{
+  text-align:right;
+  font-size:12px;
+  color:var(--text-light);
+  margin-top:4px;
+}
