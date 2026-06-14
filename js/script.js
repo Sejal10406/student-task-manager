@@ -1549,7 +1549,7 @@ function createTaskEl(task) {
   div.innerHTML = `
     <div class="drag-handle" title="Drag to reorder"><i class="ri-drag-move-fill"></i></div>
     <div class="task-left">
-      <div class="check-btn" tabindex="0" aria-label="Toggle completed task"></div>
+        title="Mark Complete" tabindex="0" aria-label="Toggle completed task"></div>
       <div>
         <h3 class="task-title">${escapeHtml(task.text)}</h3>
         <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px; flex-wrap: wrap;">
@@ -1564,10 +1564,16 @@ function createTaskEl(task) {
       </div>
     </div>
     <div class="task-actions">
-      <button class="icon-btn edit-btn" aria-label="Edit Quest">
+     <button
+  class="icon-btn edit-btn"
+  aria-label="Edit Quest"
+  title="Edit Task">
         <i class="ri-edit-line"></i>
       </button>
-      <button class="icon-btn delete-btn" aria-label="Delete Quest">
+      <button
+  class="icon-btn delete-btn"
+  aria-label="Delete Quest"
+  title="Delete Task">
         <i class="ri-delete-bin-6-line"></i>
       </button>
     </div>
