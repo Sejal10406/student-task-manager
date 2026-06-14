@@ -13,6 +13,12 @@ const categorySelect = document.getElementById("categorySelect");
 const taskTemplate = document.getElementById("taskTemplate");
 const taskTagsInput = document.getElementById("taskTagsInput");
 
+// Protocol check for file:// limitations
+var IS_FILE_PROTOCOL = window.location.protocol === 'file:';
+if (IS_FILE_PROTOCOL) {
+  console.info("[TaskQuest] Running from file: protocol — PDF/PNG exports, Chart.js, and service worker require a local HTTP server.");
+}
+
 // Consolidated escapeHtml defined before first use
 function escapeHtml(str) {
   return String(str || '')
@@ -4875,7 +4881,16 @@ function populateDependsSelect(){
 }
 
 /* Export JSON Logic */
-document.getElementById('exportJsonBtn')?.addEventListener('click', () => { const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tasks, null, 2)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute('href', dataStr); dlAnchorElem.setAttribute('download', 'taskquest_backup.json'); dlAnchorElem.click(); });
+document.getElementById('exportJsonBtn')?.addEventListener('click', () => {
+  if (IS_FILE_PROTOCOL && typeof window.showToast === 'function') {
+    showToast("Export may not work on file:// protocol. Use a local server (npx http-server).", "warning");
+  }
+  const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tasks, null, 2));
+  const dlAnchorElem = document.createElement('a');
+  dlAnchorElem.setAttribute('href', dataStr);
+  dlAnchorElem.setAttribute('download', 'taskquest_backup.json');
+  dlAnchorElem.click();
+});
 
 window.addEventListener('error', (e) => console.error('Global Error:', e.message));
 
