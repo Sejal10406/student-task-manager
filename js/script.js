@@ -4839,6 +4839,23 @@ function initTheme() {
       }
     });
   }
+
+  // Handle custom dynamic color theme builder changes (#377)
+  const customColorInput = document.getElementById("customThemePrimary");
+  if (customColorInput) {
+    const savedCustomColor = localStorage.getItem("taskquest_v1.custom_primary");
+    if (savedCustomColor) {
+      customColorInput.value = savedCustomColor;
+      document.documentElement.style.setProperty("--primary-custom", savedCustomColor);
+      document.documentElement.style.setProperty("--primary", savedCustomColor);
+    }
+    customColorInput.addEventListener("input", (e) => {
+      const color = e.target.value;
+      document.documentElement.style.setProperty("--primary-custom", color);
+      document.documentElement.style.setProperty("--primary", color);
+      localStorage.setItem("taskquest_v1.custom_primary", color);
+    });
+  }
 }
 
 function populateDependsSelect(){

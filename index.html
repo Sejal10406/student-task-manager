@@ -251,11 +251,13 @@
             <i class="ri-search-line" style="position: absolute; left: 10px; color: var(--text-muted);"></i>
             <input type="text" id="taskSearchInput" placeholder="Search tasks..." style="padding: 8px 10px 8px 32px; border-radius: 20px; border: 1px solid var(--border); background: var(--card); color: var(--text); outline: none; width: 100%; max-width: 200px; font-size: 0.9rem;">
           </div>
-          <div class="theme-selector-panel">
+          <div class="theme-selector-panel" style="display:flex;align-items:center;gap:6px;">
             <button class="theme-dot active" data-theme="cosmic" aria-label="Cosmic Theme" style="background: linear-gradient(135deg, #a855f7, #06b6d4);"></button>
             <button class="theme-dot" data-theme="aurora" aria-label="Aurora Theme" style="background: linear-gradient(135deg, #10b981, #2dd4bf);"></button>
             <button class="theme-dot" data-theme="cyberpunk" aria-label="Cyberpunk Theme" style="background: linear-gradient(135deg, #ec4899, #3b82f6);"></button>
             <button class="theme-dot" data-theme="sunset" aria-label="Sunset Theme" style="background: linear-gradient(135deg, #f59e0b, #f43f5e);"></button>
+            <span style="font-size:11px;color:var(--text-muted);margin-left:5px;">Custom:</span>
+            <input type="color" id="customThemePrimary" title="Custom Primary Theme Color" value="#a855f7" style="width:20px;height:20px;border:none;border-radius:50%;cursor:pointer;background:transparent;">
           </div>
           <!-- Notification Bell -->
           <div class="notification-wrap">
