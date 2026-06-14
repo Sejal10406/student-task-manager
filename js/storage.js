@@ -267,7 +267,7 @@
         const data = JSON.parse(jsonString);
         Object.keys(data).forEach(function (key) {
           if (key.startsWith(NS)) {
-            localStorage.setItem(key, JSON.stringify(data[key]));
+            set(key, data[key]);
           }
         });
         return true;
