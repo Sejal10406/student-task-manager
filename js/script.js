@@ -1564,6 +1564,11 @@ function createTaskEl(task) {
       </div>
     </div>
     <div class="task-actions">
+    <button
+ class="copy-btn"
+ title="Copy Task">
+ <i class="ri-file-copy-line"></i>
+</button>
       <button class="icon-btn edit-btn" aria-label="Edit Quest">
         <i class="ri-edit-line"></i>
       </button>
@@ -4943,4 +4948,15 @@ document
 
   saveData();
   renderTasks();
+});
+copyBtn.addEventListener("click", () => {
+
+  navigator.clipboard.writeText(
+    task.text
+  );
+
+  showToast?.(
+    "Task copied successfully",
+    "success"
+  );
 });
