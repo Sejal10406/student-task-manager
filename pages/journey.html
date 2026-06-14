@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskQuest Journey • Level Up Your Path</title>
+    <meta name="description" content="Embark on an interactive learning journey. Complete checkpoints, unlock legendary locations, and map your path to mastery." />
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Poppins:wght@600;800&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060814;
+            --card: rgba(15, 12, 38, 0.45);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #f59e0b; /* Sandy Gold */
+            --secondary: #fb923c;
+            --accent: #d97706;
+            --text: #ffffff;
+            --text-light: #94a3b8;
+            --sand: #c2b280;
+            --sand-light: #e6d5ac;
+            --success: #10b981;
+            --radius: 24px;
+        }
+
+        [data-theme="sunset"] {
+            --bg: #fffcf8;
+            --card: rgba(255, 255, 255, 0.75);
+            --border: rgba(0, 0, 0, 0.07);
+            --text: #1e293b;
+            --text-light: #64748b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.05) 0%, var(--bg) 100%);
+        }
+
+        .container { width: 100%; max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; flex-wrap: wrap; gap: 20px; }
+        header h1 { font-family: 'Cinzel', serif; font-size: 2.2rem; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .btn-back { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); color: var(--text); text-decoration: none; padding: 10px 18px; border-radius: 12px; display: flex; align-items: center; gap: 8px; transition: 0.3s; font-weight: 600; }
+        .btn-back:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--primary); color: var(--primary); }
+
+        /* Journey Map UI */
+        .journey-map {
+            position: relative;
+            background: rgba(194, 178, 128, 0.05);
+            border: 2px solid rgba(194, 178, 128, 0.2);
+            border-radius: 40px;
+            padding: 100px 40px;
+            min-height: 1000px;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            background-image: 
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E"),
+                radial-gradient(circle at 10% 10%, rgba(194, 178, 128, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(217, 119, 6, 0.1) 0%, transparent 40%);
+        }
+
+        .map-path {
+            position: absolute;
+            top: 100px;
+            bottom: 100px;
+            width: 4px;
+            background: repeating-linear-gradient(to bottom, transparent, transparent 15px, var(--sand) 15px, var(--sand) 30px);
+            z-index: 1;
+        }
+
+        .location-node {
+            position: relative;
+            z-index: 2;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--card);
+            border: 4px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 100px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .location-node:nth-child(even) { transform: translateX(120px); }
+        .location-node:nth-child(odd) { transform: translateX(-120px); }
+        @media (max-width: 600px) {
+            .location-node:nth-child(even), .location-node:nth-child(odd) { transform: none; }
+        }
+
+        .location-node.unlocked { border-color: var(--primary); background: rgba(245, 158, 11, 0.1); }
+        .location-node.completed { border-color: var(--success); background: rgba(34, 197, 94, 0.1); }
+        .location-node.locked { filter: grayscale(1); cursor: not-allowed; opacity: 0.6; }
+
+        .location-node i { font-size: 2.5rem; color: var(--text-light); }
+        .location-node.unlocked i { color: var(--primary); }
+        .location-node.completed i { color: var(--success); }
+
+        .node-label {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            white-space: nowrap;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text);
+            pointer-events: none;
+        }
+
+        .location-node:nth-child(odd) .node-label { left: 120px; }
+        .location-node:nth-child(even) .node-label { right: 120px; }
+        
+        @media (max-width: 600px) {
+            .node-label { top: 110px; left: 50% !important; right: auto !important; transform: translateX(-50%); }
+        }
+
+        .location-node:hover:not(.locked) { transform: scale(1.15) translateY(-5px); box-shadow: 0 15px 40px rgba(245, 158, 11, 0.3); }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+
+        .journey-modal { background: var(--card); border: 1px solid var(--border); border-radius: 32px; width: 100%; max-width: 500px; padding: 30px; position: relative; animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } }
+
+        .modal-icon { font-size: 3.5rem; color: var(--primary); margin-bottom: 20px; display: block; text-align: center; }
+        .modal-title { font-family: 'Poppins', sans-serif; font-size: 1.8rem; font-weight: 800; margin-bottom: 10px; text-align: center; }
+        .modal-desc { color: var(--text-light); font-size: 1rem; line-height: 1.6; margin-bottom: 25px; text-align: center; }
+        .modal-req { font-size: 0.9rem; font-weight: 700; color: var(--accent); margin-bottom: 20px; text-transform: uppercase; text-align: center; display: block; }
+        .modal-close { position: absolute; top: 20px; right: 20px; font-size: 2rem; color: var(--text-light); cursor: pointer; transition: 0.3s; }
+        .modal-close:hover { color: var(--primary); transform: rotate(90deg); }
+    </style>
+</head>
+<body data-theme="cosmic">
+    <div class="container">
+        <header>
+            <div>
+                <h1>The Mastery Path</h1>
+                <p style="color: var(--text-light);">Visualize your progress across legendary lands.</p>
+            </div>
+            <a href="../index.html" class="btn-back"><i class="ri-home-4-line"></i> Dashboard</a>
+        </header>
+
+        <div class="journey-map" id="journeyMap">
+            <div class="map-path"></div>
+            <!-- Nodes injected by JS -->
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="journey-modal">
+            <i class="ri-close-line modal-close" onclick="closeModal()"></i>
+            <div id="modalContent">
+                <i class="ri-treasure-map-line modal-icon"></i>
+                <h2 class="modal-title">Land Name</h2>
+                <p class="modal-desc">Description of this legendary location.</p>
+                <span class="modal-req">Required: 0 XP</span>
+                <button class="btn-back" style="width: 100%; justify-content: center; background: var(--primary); color: black; border: none;" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const locations = [
+            { id: 1, name: "Initiate's Camp", icon: "ri-map-pin-2-fill", xp: 0, desc: "Where your journey into productivity begins. Small steps lead to great achievements." },
+            { id: 2, name: "Focus Valley", icon: "ri-compass-3-fill", xp: 150, desc: "A serene valley where the noise of the world fades, allowing pure concentration to bloom." },
+            { id: 3, name: "River of Flow", icon: "ri-water-flash-fill", xp: 400, desc: "Master the art of deep, uninterrupted work as you navigate the currents of your own mind." },
+            { id: 4, name: "Peak of Wisdom", icon: "ri-mountain-fill", xp: 800, desc: "A daunting climb that rewards you with a vantage point over everything you have mastered." },
+            { id: 5, name: "Mastery Citadel", icon: "ri-castle-fill", xp: 1500, desc: "The ultimate destination for the elite scholar. You have reached the pinnacle of discipline." }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('taskquest_v1.theme') || 'cosmic';
+            document.body.setAttribute('data-theme', savedTheme);
+            renderJourney();
+        });
+
+        function renderJourney() {
+            const map = document.getElementById('journeyMap');
+            const currentXp = parseInt(localStorage.getItem('taskquest_v1.xp') || '0');
+            
+            // Keep path, remove existing nodes
+            const path = map.querySelector('.map-path');
+            map.innerHTML = '';
+            map.appendChild(path);
+
+            locations.forEach((loc, index) => {
+                const node = document.createElement('div');
+                const isUnlocked = currentXp >= loc.xp;
+                const isLastUnlocked = isUnlocked && (index === locations.length - 1 || currentXp < locations[index+1].xp);
+                
+                node.className = `location-node ${isUnlocked ? (isLastUnlocked ? 'unlocked' : 'completed') : 'locked'}`;
+                node.setAttribute('data-name', loc.name);
+                node.onclick = () => openModal(loc, isUnlocked);
+                
+                node.innerHTML = `
+                    <i class="${loc.icon}"></i>
+                    <span class="node-label">${loc.name}</span>
+                `;
+                
+                map.appendChild(node);
+            });
+        }
+
+        function openModal(loc, isUnlocked) {
+            if (!isUnlocked) {
+                const currentXp = parseInt(localStorage.getItem('taskquest_v1.xp') || '0');
+                const diff = loc.xp - currentXp;
+                alert(`This land is shrouded in fog. You need ${diff} more XP to reach ${loc.name}!`);
+                return;
+            }
+
+            const content = document.getElementById('modalContent');
+            content.innerHTML = `
+                <i class="${loc.icon} modal-icon"></i>
+                <h2 class="modal-title">${loc.name}</h2>
+                <p class="modal-desc">${loc.desc}</p>
+                <span class="modal-req">Discovery Requirement: ${loc.xp} XP (Reached)</span>
+                <button class="btn-back" style="width: 100%; justify-content: center; background: var(--primary); color: black; border: none;" onclick="closeModal()">Continue Path</button>
+            `;
+
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+        }
+
+        // Close modal on click outside
+        document.getElementById('modalOverlay').onclick = (e) => {
+            if (e.target.id === 'modalOverlay') closeModal();
+        };
+
+        // Global listener for XP changes if they happen in other tabs
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'taskquest_v1.xp') renderJourney();
+        });
+    </script>
+</body>
+</html>

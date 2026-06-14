@@ -1,0 +1,15 @@
+name: PR Description Compliance
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+jobs:
+  verify-compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify PR description has checklist
+        run: |
+          desc="${{ github.event.pull_request.body }}"
+          if [[ ! "$desc" =~ "- [x]" && ! "$desc" =~ "- [ ]" ]]; then
+            echo "PR description does not contain checklist items!"
+            exit 1
+          fi

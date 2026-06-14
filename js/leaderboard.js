@@ -346,3 +346,15 @@
 
   init();
 })();
+
+// Score signature verification system
+function signLeaderboardScore(score, username) {
+  const secretSalt = "tq_salt_98724";
+  let hash = 0;
+  const payload = `${username}:${score}:${secretSalt}`;
+  for (let i = 0; i < payload.length; i++) {
+    hash = (hash << 5) - hash + payload.charCodeAt(i);
+    hash |= 0;
+  }
+  return hash.toString(16);
+}

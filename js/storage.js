@@ -267,7 +267,7 @@
         const data = JSON.parse(jsonString);
         Object.keys(data).forEach(function (key) {
           if (key.startsWith(NS)) {
-            localStorage.setItem(key, JSON.stringify(data[key]));
+            set(key, data[key]);
           }
         });
         return true;
@@ -279,6 +279,24 @@
   };
 
   // ── Expose globally ───────────────────────────────────────────────────────
+  // IndexedDB Automated Backup Fallback Engine
+  function saveBackupToIndexedDB(backupData) {
+    if (!window.indexedDB) return;
+    const request = window.indexedDB.open("TaskQuestBackupDB", 1);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains("backups")) {
+        db.createObjectStore("backups", { keyPath: "timestamp" });
+      }
+    };
+    request.onsuccess = (e) => {
+      const db = e.target.result;
+      const tx = db.transaction("backups", "readwrite");
+      const store = tx.objectStore("backups");
+      store.put({ timestamp: new Date().toISOString(), data: backupData });
+    };
+  }
+  Storage.saveBackupToIndexedDB = saveBackupToIndexedDB;
   global.TaskQuestStorage = Storage;
 
 })(window);

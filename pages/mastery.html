@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastery Tree • TaskQuest</title>
+    <meta name="description" content="Unlock your potential through a visual skill progression tree. Earn XP and master your craft." />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Poppins:wght@600;800&family=Rajdhani:wght@700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060814;
+            --card: rgba(15, 12, 38, 0.45);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #8b5cf6;
+            --secondary: #06b6d4;
+            --accent: #f59e0b;
+            --text: #ffffff;
+            --text-light: #94a3b8;
+            --locked: #1e1b4b;
+            --radius: 24px;
+        }
+
+        [data-theme="sunset"] {
+            --bg: #fffcf8;
+            --card: rgba(255, 255, 255, 0.75);
+            --border: rgba(0, 0, 0, 0.07);
+            --text: #1e293b;
+            --text-light: #64748b;
+            --primary: #f59e0b;
+            --secondary: #f43f5e;
+            --locked: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 40px 20px;
+            background-image: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.05) 0%, var(--bg) 100%);
+        }
+
+        .container { width: 100%; max-width: 1100px; margin: 0 auto; }
+
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; flex-wrap: wrap; gap: 20px; }
+        header h1 { font-family: 'Poppins', sans-serif; font-size: 2.2rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .stats-banner { display: flex; gap: 20px; margin-bottom: 30px; }
+        .stat-pill { background: var(--card); border: 1px solid var(--border); padding: 15px 25px; border-radius: 20px; flex: 1; display: flex; flex-direction: column; align-items: center; backdrop-filter: blur(10px); }
+        .stat-pill label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-light); letter-spacing: 1px; }
+        .stat-pill .val { font-family: 'Rajdhani', sans-serif; font-size: 2rem; font-weight: 700; color: var(--accent); }
+
+        .mastery-layout { display: grid; grid-template-columns: 250px 1fr; gap: 30px; }
+        @media (max-width: 768px) { .mastery-layout { grid-template-columns: 1fr; } }
+
+        .categories-nav { display: flex; flex-direction: column; gap: 10px; }
+        .cat-btn { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 15px; color: var(--text-light); text-align: left; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 12px; font-weight: 600; }
+        .cat-btn:hover { background: rgba(255, 255, 255, 0.05); }
+        .cat-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .tree-container { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px; position: relative; min-height: 600px; display: flex; flex-direction: column; align-items: center; gap: 50px; overflow: hidden; }
+        
+        .tree-tier { display: flex; justify-content: center; gap: 60px; position: relative; z-index: 2; width: 100%; }
+        
+        .skill-node { position: relative; width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--border); background: var(--locked); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .skill-node i { font-size: 2rem; color: var(--text-light); opacity: 0.5; }
+        .skill-node .lvl-badge { position: absolute; bottom: -5px; right: -5px; background: var(--accent); color: black; font-weight: 800; font-size: 10px; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg); }
+        
+        .skill-node.available { background: var(--card); border-color: var(--text-light); }
+        .skill-node.available i { opacity: 1; color: var(--text); }
+        .skill-node.unlocked { background: var(--card); border-color: var(--primary); box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
+        .skill-node.unlocked i { color: var(--primary); opacity: 1; }
+        .skill-node.mastered { border-color: var(--accent); box-shadow: 0 0 30px rgba(245, 158, 11, 0.4); animation: masterGlow 2s infinite alternate; }
+        .skill-node.mastered i { color: var(--accent); opacity: 1; }
+
+        @keyframes masterGlow { from { transform: scale(1); } to { transform: scale(1.05); } }
+
+        .skill-node:hover { transform: translateY(-5px) scale(1.1); z-index: 10; }
+        .skill-node:hover::after { content: attr(data-name); position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; white-space: nowrap; font-weight: 600; }
+
+        .connector-line { position: absolute; background: var(--border); z-index: 1; transition: 0.3s; }
+        .connector-line.active { background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+
+        .skill-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(10px); }
+        .skill-overlay.active { display: flex; }
+        .skill-modal { background: var(--card); border: 1px solid var(--border); width: 100%; max-width: 400px; border-radius: 30px; padding: 30px; text-align: center; }
+        .modal-icon { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2.5rem; color: var(--primary); }
+        .modal-title { font-family: 'Poppins', sans-serif; font-size: 1.5rem; margin-bottom: 10px; }
+        .modal-desc { color: var(--text-light); font-size: 14px; line-height: 1.6; margin-bottom: 25px; }
+        .modal-req { font-size: 12px; color: var(--accent); margin-bottom: 20px; font-weight: 700; text-transform: uppercase; }
+
+        .btn { border: none; border-radius: 12px; cursor: pointer; font-weight: 700; padding: 12px 20px; transition: all 0.3s; font-family: 'Poppins', sans-serif; width: 100%; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
+        .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .btn-back { width: auto; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); color: var(--text); text-decoration: none; padding: 10px 18px; border-radius: 12px; display: flex; align-items: center; gap: 8px; }
+    </style>
+</head>
+<body data-theme="cosmic">
+    <div class="container">
+        <header>
+            <div>
+                <h1>Mastery Tree</h1>
+                <p style="color: var(--text-light);">Ascend through tiers of wisdom. Level up your life.</p>
+            </div>
+            <a href="../index.html" class="btn-back"><i class="ri-home-4-line"></i> Dashboard</a>
+        </header>
+
+        <div class="stats-banner">
+            <div class="stat-pill">
+                <label>Current Rank</label>
+                <div class="val" id="userRank">Apprentice</div>
+            </div>
+            <div class="stat-pill">
+                <label>Total XP</label>
+                <div class="val" id="totalXP">0</div>
+            </div>
+            <div class="stat-pill">
+                <label>Skills Mastered</label>
+                <div class="val" id="masteredCount">0</div>
+            </div>
+        </div>
+
+        <div class="mastery-layout">
+            <aside class="categories-nav">
+                <button class="cat-btn active" onclick="switchCategory('Academics', this)">
+                    <i class="ri-book-open-line"></i> Academics
+                </button>
+                <button class="cat-btn" onclick="switchCategory('Coding', this)">
+                    <i class="ri-code-s-slash-line"></i> Coding
+                </button>
+                <button class="cat-btn" onclick="switchCategory('Wellness', this)">
+                    <i class="ri-heart-pulse-line"></i> Wellness
+                </button>
+            </aside>
+
+            <main class="tree-container" id="treeContainer">
+                <!-- Tiers will be injected here -->
+            </main>
+        </div>
+    </div>
+
+    <div class="skill-overlay" id="skillOverlay" onclick="closeModal(event)">
+        <div class="skill-modal" id="skillModal">
+            <div class="modal-icon" id="modalIcon"><i class="ri-question-mark"></i></div>
+            <h2 class="modal-title" id="modalTitle">Skill Name</h2>
+            <p class="modal-desc" id="modalDesc">Skill description goes here.</p>
+            <div class="modal-req" id="modalReq">Requires: Previous Skill</div>
+            <button class="btn btn-primary" id="unlockBtn" onclick="upgradeSkill()">Unlock Skill (100 XP)</button>
+        </div>
+    </div>
+
+    <script>
+        const SKILLS_DATA = {
+            'Academics': [
+                { id: 'acad_1', name: 'Study Basics', tier: 1, icon: 'ri-pencil-line', desc: 'The foundation of effective learning.', cost: 50, prereq: null },
+                { id: 'acad_2', name: 'Deep Focus', tier: 2, icon: 'ri-focus-3-line', desc: 'Achieve a flow state during study sessions.', cost: 150, prereq: 'acad_1' },
+                { id: 'acad_3', name: 'Note Architect', tier: 2, icon: 'ri-organization-chart', desc: 'Create perfect visual summaries of any topic.', cost: 150, prereq: 'acad_1' },
+                { id: 'acad_4', name: 'Scholar King', tier: 3, icon: 'ri-vip-crown-line', desc: 'Mastery of academic research and recall.', cost: 500, prereq: 'acad_2' }
+            ],
+            'Coding': [
+                { id: 'code_1', name: 'Logic Loops', tier: 1, icon: 'ri-terminal-box-line', desc: 'Understand the core flow of programming.', cost: 100, prereq: null },
+                { id: 'code_2', name: 'Architect', tier: 2, icon: 'ri-bubble-chart-line', desc: 'Design scalable and clean project structures.', cost: 250, prereq: 'code_1' },
+                { id: 'code_3', name: 'Algorithm Wizard', tier: 3, icon: 'ri-magic-line', desc: 'Solve complex problems with extreme efficiency.', cost: 600, prereq: 'code_2' }
+            ],
+            'Wellness': [
+                { id: 'well_1', name: 'Zen Mind', tier: 1, icon: 'ri-windy-line', desc: 'Basic mindfulness to reduce exam stress.', cost: 80, prereq: null },
+                { id: 'well_2', name: 'Sleep God', tier: 2, icon: 'ri-moon-clear-line', desc: 'Optimized circadian rhythm for cognitive peak.', cost: 200, prereq: 'well_1' },
+                { id: 'well_3', name: 'Vitality', tier: 3, icon: 'ri-flashlight-line', desc: 'Unending energy through physical consistency.', cost: 400, prereq: 'well_2' }
+            ]
+        };
+
+        let userState = JSON.parse(localStorage.getItem('taskquest_v1.mastery_tree') || JSON.stringify({
+            xp: 200, // Starting demo XP
+            unlocked: {}, // { id: level }
+            masteryCount: 0
+        }));
+
+        let currentCategory = 'Academics';
+        let selectedSkillId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('taskquest_v1.theme') || 'cosmic';
+            document.body.setAttribute('data-theme', savedTheme);
+            renderTree();
+            updateStats();
+        });
+
+        function updateStats() {
+            document.getElementById('totalXP').textContent = userState.xp;
+            document.getElementById('masteredCount').textContent = userState.masteryCount;
+            
+            let rank = 'Apprentice';
+            if(userState.masteryCount >= 3) rank = 'Scholar';
+            if(userState.masteryCount >= 7) rank = 'Master';
+            document.getElementById('userRank').textContent = rank;
+            
+            localStorage.setItem('taskquest_v1.mastery_tree', JSON.stringify(userState));
+        }
+
+        function switchCategory(cat, btn) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderTree();
+        }
+
+        function renderTree() {
+            const container = document.getElementById('treeContainer');
+            container.innerHTML = '';
+            const skills = SKILLS_DATA[currentCategory];
+            const tiers = [...new Set(skills.map(s => s.tier))].sort();
+
+            tiers.forEach(tier => {
+                const tierEl = document.createElement('div');
+                tierEl.className = 'tree-tier';
+                
+                const tierSkills = skills.filter(s => s.tier === tier);
+                tierSkills.forEach(skill => {
+                    const isUnlocked = userState.unlocked[skill.id] > 0;
+                    const isMastered = userState.unlocked[skill.id] >= 5;
+                    const isAvailable = !skill.prereq || userState.unlocked[skill.prereq] > 0;
+                    
+                    let statusClass = '';
+                    if(isMastered) statusClass = 'mastered';
+                    else if(isUnlocked) statusClass = 'unlocked';
+                    else if(isAvailable) statusClass = 'available';
+
+                    tierEl.innerHTML += `
+                        <div class="skill-node ${statusClass}" 
+                             onclick="openSkill('${skill.id}')"
+                             data-name="${skill.name}"
+                             id="node_${skill.id}">
+                            <i class="${skill.icon}"></i>
+                            <div class="lvl-badge">${userState.unlocked[skill.id] || 0}/5</div>
+                        </div>
+                    `;
+                });
+                container.appendChild(tierEl);
+            });
+        }
+
+        function openSkill(id) {
+            const skill = SKILLS_DATA[currentCategory].find(s => s.id === id);
+            selectedSkillId = id;
+            
+            const isAvailable = !skill.prereq || userState.unlocked[skill.prereq] > 0;
+            const currentLvl = userState.unlocked[id] || 0;
+            const isMastered = currentLvl >= 5;
+
+            document.getElementById('modalIcon').innerHTML = `<i class="${skill.icon}"></i>`;
+            document.getElementById('modalTitle').textContent = skill.name + ` (Lvl ${currentLvl})`;
+            document.getElementById('modalDesc').textContent = skill.desc;
+            
+            const reqEl = document.getElementById('modalReq');
+            if(skill.prereq) {
+                const preSkill = Object.values(SKILLS_DATA).flat().find(s => s.id === skill.prereq);
+                reqEl.textContent = `Requires: ${preSkill.name}`;
+                reqEl.style.color = (userState.unlocked[skill.prereq] > 0) ? 'var(--success)' : 'var(--danger)';
+            } else {
+                reqEl.textContent = 'Free Entrance Skill';
+                reqEl.style.color = 'var(--success)';
+            }
+
+            const btn = document.getElementById('unlockBtn');
+            if(!isAvailable) {
+                btn.textContent = 'Skill Locked';
+                btn.disabled = true;
+            } else if(isMastered) {
+                btn.textContent = 'Max Mastery Achieved';
+                btn.disabled = true;
+            } else {
+                const nextCost = skill.cost + (currentLvl * 50);
+                btn.textContent = `Upgrade (${nextCost} XP)`;
+                btn.disabled = userState.xp < nextCost;
+            }
+
+            document.getElementById('skillOverlay').classList.add('active');
+        }
+
+        function upgradeSkill() {
+            const skill = SKILLS_DATA[currentCategory].find(s => s.id === selectedSkillId);
+            const currentLvl = userState.unlocked[selectedSkillId] || 0;
+            const cost = skill.cost + (currentLvl * 50);
+
+            if(userState.xp >= cost) {
+                userState.xp -= cost;
+                userState.unlocked[selectedSkillId] = currentLvl + 1;
+                
+                if(userState.unlocked[selectedSkillId] === 5) {
+                    userState.masteryCount++;
+                    alert(`Achievement Unlocked: Master of ${skill.name}!`);
+                }
+                
+                updateStats();
+                renderTree();
+                document.getElementById('skillOverlay').classList.remove('active');
+            }
+        }
+
+        function closeModal(e) {
+            if(e.target.id === 'skillOverlay') {
+                document.getElementById('skillOverlay').classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

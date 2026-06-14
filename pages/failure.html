@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Failure Vault • TaskQuest</title>
+    <meta name="description" content="Record mistakes, analyze errors, and track your learning progress to avoid repeating mistakes." />
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Poppins:wght@600;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060814;
+            --card: rgba(15, 12, 38, 0.45);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #f43f5e;
+            --secondary: #fb923c;
+            --text: #ffffff;
+            --text-light: #94a3b8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --radius: 24px;
+        }
+
+        [data-theme="sunset"] {
+            --bg: #fffcf8;
+            --card: rgba(255, 255, 255, 0.75);
+            --border: rgba(0, 0, 0, 0.07);
+            --text: #1e293b;
+            --text-light: #64748b;
+            --primary: #ef4444;
+            --secondary: #f97316;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 40px 20px;
+            background-image: radial-gradient(circle at 50% 50%, rgba(244, 63, 94, 0.05) 0%, var(--bg) 100%);
+        }
+
+        .container { width: 100%; max-width: 1000px; margin: 0 auto; }
+
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; flex-wrap: wrap; gap: 20px; }
+        header h1 { font-family: 'Poppins', sans-serif; font-size: 2.2rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .glass-card { background: var(--card); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: var(--radius); padding: 30px; margin-bottom: 30px; }
+
+        .failure-form { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (max-width: 768px) { .failure-form { grid-template-columns: 1fr; } }
+
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        .input-group.full { grid-column: 1 / -1; }
+        .input-group label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-light); }
+
+        input, select, textarea { background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); padding: 12px 16px; border-radius: 12px; color: var(--text); font-size: 14px; outline: none; transition: all 0.3s; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); background: rgba(255, 255, 255, 0.08); }
+        textarea { height: 100px; resize: vertical; }
+
+        .btn { border: none; border-radius: 12px; cursor: pointer; font-weight: 700; padding: 12px 20px; transition: all 0.3s; display: flex; align-items: center; gap: 8px; justify-content: center; text-decoration: none; font-family: 'Poppins', sans-serif; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; margin-top: 10px; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(244, 63, 94, 0.4); }
+
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 20px; flex-wrap: wrap; }
+        .search-bar { position: relative; flex: 1; max-width: 400px; }
+        .search-bar i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .search-bar input { padding-left: 40px; width: 100%; }
+
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+        .filter-btn { padding: 8px 16px; border-radius: 20px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); color: var(--text-light); cursor: pointer; font-size: 13px; transition: 0.2s; }
+        .filter-btn:hover { background: rgba(255, 255, 255, 0.1); }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .vault-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .failure-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; transition: all 0.3s; display: flex; flex-direction: column; gap: 12px; }
+        .failure-card:hover { border-color: var(--primary); background: rgba(255, 255, 255, 0.02); }
+
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .category-tag { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 6px; text-transform: uppercase; background: rgba(244, 63, 94, 0.1); color: var(--primary); border: 1px solid rgba(244, 63, 94, 0.2); }
+        .status-pill { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 12px; border: 1px solid var(--border); }
+        .status-learning { background: rgba(245, 158, 11, 0.1); color: var(--warning); border-color: rgba(245, 158, 11, 0.2); }
+        .status-mastered { background: rgba(34, 197, 94, 0.1); color: var(--success); border-color: rgba(34, 197, 94, 0.2); }
+
+        .mistake-text { font-family: 'Poppins', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--text); }
+        .correction-box { background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 12px; font-size: 13px; color: var(--text-light); line-height: 1.5; border-left: 3px solid var(--success); }
+        .correction-box strong { color: var(--success); display: block; margin-bottom: 4px; font-size: 11px; text-transform: uppercase; }
+
+        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+        .date { font-size: 11px; color: var(--text-light); opacity: 0.6; }
+        .card-actions { display: flex; gap: 8px; }
+        .action-btn { background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 1.1rem; transition: 0.2s; padding: 4px; border-radius: 6px; }
+        .action-btn:hover { background: rgba(255, 255, 255, 0.05); color: var(--text); }
+        .action-btn.delete:hover { color: var(--primary); }
+
+        .empty-state { text-align: center; padding: 80px 20px; color: var(--text-light); grid-column: 1 / -1; }
+        .empty-state i { font-size: 4rem; display: block; margin-bottom: 20px; opacity: 0.3; }
+
+        .btn-back { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); color: var(--text); text-decoration: none; padding: 10px 18px; border-radius: 12px; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+        .btn-back:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--primary); color: var(--primary); }
+    </style>
+</head>
+<body data-theme="cosmic">
+    <div class="container">
+        <header>
+            <div>
+                <h1>Failure Vault</h1>
+                <p style="color: var(--text-light);">Turn every error into a lesson. Review and rise.</p>
+            </div>
+            <a href="../index.html" class="btn-back"><i class="ri-home-4-line"></i> Dashboard</a>
+        </header>
+
+        <div class="glass-card">
+            <div class="failure-form">
+                <div class="input-group full">
+                    <label for="mistakeText">The Mistake</label>
+                    <input type="text" id="mistakeText" placeholder="What went wrong? (e.g. Mixed up sine and cosine rules)">
+                </div>
+                <div class="input-group">
+                    <label for="errorCategory">Category</label>
+                    <select id="errorCategory">
+                        <option value="Conceptual">Conceptual 🧠</option>
+                        <option value="Silly Mistake">Silly Mistake 🤦‍♂️</option>
+                        <option value="Time Management">Time Management ⏱️</option>
+                        <option value="Lack of Practice">Lack of Practice 📚</option>
+                        <option value="Misread Question">Misread Question 🔍</option>
+                        <option value="Other">Other ✨</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="errorStatus">Learning Status</label>
+                    <select id="errorStatus">
+                        <option value="Learning">Learning 🚀</option>
+                        <option value="Reviewing">Still Reviewing ⏳</option>
+                        <option value="Mastered">Mastered / Avoided ✅</option>
+                    </select>
+                </div>
+                <div class="input-group full">
+                    <label for="correctionNote">Correction & Improvement Note</label>
+                    <textarea id="correctionNote" placeholder="How to solve it next time? What's the correct way?"></textarea>
+                </div>
+                <div class="input-group full">
+                    <button class="btn btn-primary" onclick="addFailure()"><i class="ri-save-3-line"></i> Deposit into Vault</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="search-bar">
+                <i class="ri-search-line"></i>
+                <input type="text" id="vaultSearch" placeholder="Search mistakes or corrections..." oninput="renderVault()">
+            </div>
+            <div class="filters">
+                <button class="filter-btn active" onclick="setFilter('All', this)">All</button>
+                <button class="filter-btn" onclick="setFilter('Learning', this)">Learning</button>
+                <button class="filter-btn" onclick="setFilter('Mastered', this)">Mastered</button>
+            </div>
+        </div>
+
+        <div class="vault-grid" id="vaultGrid"></div>
+    </div>
+
+    <script>
+        let vault = JSON.parse(localStorage.getItem('taskquest_v1.failure_vault') || '[]');
+        let currentFilter = 'All';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('taskquest_v1.theme') || 'cosmic';
+            document.body.setAttribute('data-theme', savedTheme);
+            renderVault();
+        });
+
+        function addFailure() {
+            const mistake = document.getElementById('mistakeText').value.trim();
+            const category = document.getElementById('errorCategory').value;
+            const status = document.getElementById('errorStatus').value;
+            const correction = document.getElementById('correctionNote').value.trim();
+
+            if (!mistake || !correction) {
+                alert('Please provide details for both the mistake and the correction.');
+                return;
+            }
+
+            const entry = {
+                id: Date.now(),
+                mistake,
+                category,
+                status,
+                correction,
+                timestamp: new Date().toISOString()
+            };
+
+            vault.unshift(entry);
+            saveVault();
+            
+            document.getElementById('mistakeText').value = '';
+            document.getElementById('correctionNote').value = '';
+            
+            renderVault();
+        }
+
+        function saveVault() {
+            localStorage.setItem('taskquest_v1.failure_vault', JSON.stringify(vault));
+        }
+
+        function deleteEntry(id) {
+            if (!confirm('Permanently remove this lesson from the vault?')) return;
+            vault = vault.filter(v => v.id !== id);
+            saveVault();
+            renderVault();
+        }
+
+        function toggleStatus(id) {
+            const entry = vault.find(v => v.id === id);
+            if (entry) {
+                entry.status = entry.status === 'Mastered' ? 'Learning' : 'Mastered';
+                saveVault();
+                renderVault();
+            }
+        }
+
+        function setFilter(cat, btn) {
+            currentFilter = cat;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderVault();
+        }
+
+        function escapeHtml(str) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return String(str).replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        function renderVault() {
+            const grid = document.getElementById('vaultGrid');
+            const search = document.getElementById('vaultSearch').value.toLowerCase();
+            
+            const filtered = vault.filter(v => {
+                const matchesSearch = v.mistake.toLowerCase().includes(search) || v.correction.toLowerCase().includes(search);
+                const matchesFilter = currentFilter === 'All' || v.status === currentFilter;
+                return matchesSearch && matchesFilter;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="ri-shield-flash-line"></i>
+                        <p>The vault is empty. Deposit your first lesson to begin improvement tracking.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(v => `
+                <div class="failure-card">
+                    <div class="card-header">
+                        <span class="category-tag">${escapeHtml(v.category)}</span>
+                        <span class="status-pill status-${v.status.toLowerCase()}">${v.status}</span>
+                    </div>
+                    <h3 class="mistake-text">${escapeHtml(v.mistake)}</h3>
+                    <div class="correction-box">
+                        <strong>Correction Notes</strong>
+                        ${escapeHtml(v.correction)}
+                    </div>
+                    <div class="card-footer">
+                        <span class="date">${new Date(v.timestamp).toLocaleDateString()}</span>
+                        <div class="card-actions">
+                            <button class="action-btn" title="Toggle Mastered" onclick="toggleStatus(${v.id})">
+                                <i class="${v.status === 'Mastered' ? 'ri-checkbox-circle-fill' : 'ri-checkbox-blank-circle-line'}"></i>
+                            </button>
+                            <button class="action-btn delete" title="Delete entry" onclick="deleteEntry(${v.id})">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

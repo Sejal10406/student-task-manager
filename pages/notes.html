@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notes & Quick Revision • TaskQuest</title>
     <meta name="description" content="Store short notes, formulas, summaries, and important revision material for quick learning." />
-    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Poppins:wght@600;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <!-- KaTeX for formula rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <style>
+        /* ── Theme Variables (matches style.css) ── */
         :root {
             --bg: #060814;
-            --card: rgba(15, 12, 38, 0.45);
+            --card: rgba(15, 12, 38, 0.55);
             --border: rgba(255, 255, 255, 0.08);
             --primary: #a855f7;
             --secondary: #06b6d4;
@@ -19,18 +22,23 @@
             --text-light: #94a3b8;
             --success: #22c55e;
             --danger: #ef4444;
+            --warning: #f59e0b;
             --shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
             --radius: 24px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
+        [data-theme="aurora"] {
+            --bg: #030e12; --card: rgba(5, 24, 28, 0.55); --border: rgba(255,255,255,0.08);
+            --text: #e2f9f5; --text-light: #64a3a1; --primary: #10b981; --secondary: #2dd4bf;
+        }
+        [data-theme="cyberpunk"] {
+            --bg: #030206; --card: rgba(14, 5, 24, 0.55); --border: rgba(255,255,255,0.08);
+            --text: #f0f3ff; --text-light: #a29bb8; --primary: #ec4899; --secondary: #3b82f6;
+        }
         [data-theme="sunset"] {
-            --bg: #fffcf8;
-            --card: rgba(255, 255, 255, 0.75);
-            --border: rgba(0, 0, 0, 0.07);
-            --text: #1e293b;
-            --text-light: #64748b;
-            --primary: #f59e0b;
-            --secondary: #f43f5e;
+            --bg: #fffcf8; --card: rgba(255, 255, 255, 0.80); --border: rgba(0,0,0,0.07);
+            --text: #1e293b; --text-light: #64748b; --primary: #f59e0b; --secondary: #f43f5e;
+            --shadow: 0 15px 45px rgba(220,150,50,0.08);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,268 +48,895 @@
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
-            padding: 40px 20px;
-            background-image: radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.05) 0%, var(--bg) 100%);
+            padding: 32px 20px 80px;
+            background-image: radial-gradient(circle at 50% 0%, rgba(168,85,247,0.06) 0%, transparent 60%);
+            transition: background 0.3s, color 0.3s;
         }
 
-        .container { width: 100%; max-width: 1000px; margin: 0 auto; }
+        /* ── Layout ── */
+        .container { width: 100%; max-width: 1100px; margin: 0 auto; }
 
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; flex-wrap: wrap; gap: 20px; }
-        header h1 { font-family: 'Poppins', sans-serif; font-size: 2.2rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 36px; flex-wrap: wrap; gap: 16px;
+        }
+        header h1 {
+            font-family: 'Poppins', sans-serif; font-size: 2rem; font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
-        .glass-card { background: var(--card); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: var(--radius); padding: 30px; margin-bottom: 30px; }
+        /* ── Glass Card ── */
+        .glass-card {
+            background: var(--card); backdrop-filter: blur(20px);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 26px; margin-bottom: 26px;
+        }
 
-        .note-form { display: grid; grid-template-columns: 1fr 1fr 150px auto; gap: 15px; align-items: end; }
-        @media (max-width: 768px) { .note-form { grid-template-columns: 1fr; } }
-
-        .input-group { display: flex; flex-direction: column; gap: 8px; }
-        .input-group label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-light); }
-
-        input, select, textarea { background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); padding: 12px 16px; border-radius: 12px; color: var(--text); font-size: 14px; outline: none; transition: all 0.3s; }
-        input:focus, select:focus, textarea:focus { border-color: var(--primary); background: rgba(255, 255, 255, 0.08); }
-        textarea { height: 45px; resize: vertical; }
-
-        .btn { border: none; border-radius: 12px; cursor: pointer; font-weight: 700; padding: 12px 20px; transition: all 0.3s; display: flex; align-items: center; gap: 8px; justify-content: center; text-decoration: none; font-family: 'Poppins', sans-serif; }
+        /* ── Buttons ── */
+        .btn {
+            border: none; border-radius: 12px; cursor: pointer; font-weight: 700;
+            padding: 10px 18px; transition: var(--transition);
+            display: inline-flex; align-items: center; gap: 7px;
+            justify-content: center; text-decoration: none;
+            font-family: 'Poppins', sans-serif; font-size: 13px;
+        }
         .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(168, 85, 247, 0.4); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(168,85,247,0.35); }
+        .btn-ghost {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+            color: var(--text);
+        }
+        .btn-ghost:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
+        [data-theme="sunset"] .btn-ghost { background: rgba(0,0,0,0.04); }
 
-        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 20px; flex-wrap: wrap; }
-        .search-bar { position: relative; flex: 1; max-width: 400px; }
-        .search-bar i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
-        .search-bar input { padding-left: 40px; width: 100%; }
+        /* ── Rich Text Toolbar ── */
+        .toolbar {
+            display: flex; flex-wrap: wrap; gap: 4px;
+            padding: 10px 12px; border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.03); border-radius: 14px 14px 0 0;
+        }
+        .toolbar-btn {
+            background: none; border: 1px solid transparent; border-radius: 8px;
+            color: var(--text-light); cursor: pointer; font-size: 14px;
+            width: 32px; height: 32px; display: flex; align-items: center;
+            justify-content: center; transition: var(--transition);
+        }
+        .toolbar-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); border-color: var(--border); }
+        .toolbar-btn.active { background: var(--primary); color: white; border-color: transparent; }
+        .toolbar-sep { width: 1px; background: var(--border); margin: 4px 2px; align-self: stretch; }
+        .toolbar-select {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text); font-size: 12px; padding: 4px 8px;
+            cursor: pointer; outline: none;
+        }
 
-        .filters { display: flex; gap: 8px; flex-wrap: wrap; }
-        .filter-btn { padding: 8px 16px; border-radius: 20px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); color: var(--text-light); cursor: pointer; font-size: 13px; transition: 0.2s; }
-        .filter-btn:hover { background: rgba(255, 255, 255, 0.1); }
+        /* ── Editor ── */
+        .editor-wrap { border-radius: 0 0 14px 14px; overflow: hidden; border: 1px solid var(--border); border-top: none; }
+        #richEditor {
+            min-height: 110px; max-height: 260px; overflow-y: auto;
+            padding: 14px 16px; outline: none; color: var(--text);
+            font-size: 14px; line-height: 1.65;
+            background: rgba(255,255,255,0.02);
+        }
+        #richEditor:focus { background: rgba(255,255,255,0.04); }
+        #richEditor:empty::before {
+            content: attr(data-placeholder); color: var(--text-light); pointer-events: none;
+        }
+        #richEditor b, #richEditor strong { font-weight: 700; }
+        #richEditor i, #richEditor em { font-style: italic; }
+        #richEditor u { text-decoration: underline; }
+        #richEditor s { text-decoration: line-through; }
+        #richEditor code {
+            background: rgba(255,255,255,0.08); border-radius: 4px;
+            padding: 1px 5px; font-family: monospace; font-size: 13px;
+        }
+        #richEditor mark { background: rgba(168,85,247,0.3); color: var(--text); border-radius: 3px; padding: 0 2px; }
+        #richEditor ul, #richEditor ol { padding-left: 20px; }
+        #richEditor blockquote {
+            border-left: 3px solid var(--primary); padding-left: 12px;
+            color: var(--text-light); font-style: italic; margin: 8px 0;
+        }
+        [data-theme="sunset"] #richEditor { background: rgba(0,0,0,0.02); }
+
+        /* ── Note Form ── */
+        .note-form-grid {
+            display: grid; grid-template-columns: 1fr 1fr 160px; gap: 14px;
+            align-items: end; margin-bottom: 16px;
+        }
+        @media (max-width: 700px) { .note-form-grid { grid-template-columns: 1fr; } }
+
+        .input-group { display: flex; flex-direction: column; gap: 7px; }
+        .input-group label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); }
+        input[type="text"], select {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+            padding: 11px 14px; border-radius: 12px; color: var(--text); font-size: 14px;
+            outline: none; transition: var(--transition); font-family: inherit;
+        }
+        input[type="text"]:focus, select:focus { border-color: var(--primary); background: rgba(255,255,255,0.08); }
+        [data-theme="sunset"] input[type="text"],
+        [data-theme="sunset"] select { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); }
+
+        /* Formula input row */
+        .formula-row {
+            display: flex; gap: 10px; align-items: center; margin-top: 10px;
+            padding: 10px 14px; background: rgba(6,182,212,0.06);
+            border: 1px solid rgba(6,182,212,0.15); border-radius: 12px;
+        }
+        .formula-row input { flex: 1; background: transparent; border: none; padding: 0; }
+        .formula-row input:focus { background: transparent; border: none; }
+        .formula-preview {
+            min-width: 60px; text-align: right; color: var(--secondary);
+            font-size: 13px; cursor: pointer;
+        }
+
+        /* ── Controls bar ── */
+        .controls {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 22px; gap: 14px; flex-wrap: wrap;
+        }
+        .search-bar { position: relative; flex: 1; max-width: 380px; }
+        .search-bar i { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text-light); pointer-events: none; }
+        .search-bar input { padding-left: 38px; width: 100%; }
+
+        .filters { display: flex; gap: 7px; flex-wrap: wrap; }
+        .filter-btn {
+            padding: 7px 14px; border-radius: 20px;
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+            color: var(--text-light); cursor: pointer; font-size: 12px;
+            font-weight: 600; transition: var(--transition);
+        }
+        .filter-btn:hover { background: rgba(255,255,255,0.1); }
         .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        .notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .note-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 24px; transition: all 0.3s; position: relative; display: flex; flex-direction: column; }
-        .note-card:hover { transform: translateY(-5px); border-color: var(--primary); background: rgba(255,255,255,0.02); }
+        /* ── Sort bar ── */
+        .sort-bar { display: flex; align-items: center; gap: 8px; }
+        .sort-bar select { padding: 7px 10px; font-size: 12px; border-radius: 10px; }
 
-        .note-tag { font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; margin-bottom: 12px; display: inline-block; align-self: flex-start; }
-        .tag-formula { background: rgba(6, 182, 212, 0.15); color: var(--secondary); border: 1px solid rgba(6, 182, 212, 0.2); }
-        .tag-summary { background: rgba(168, 85, 247, 0.15); color: var(--primary); border: 1px solid rgba(168, 85, 247, 0.2); }
-        .tag-note { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.2); }
-        .tag-important { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+        /* ── Notes Grid ── */
+        .notes-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 18px;
+        }
 
-        .note-title { font-family: 'Poppins', sans-serif; font-size: 1.15rem; font-weight: 700; margin-bottom: 10px; color: var(--text); }
-        .note-content { font-size: 14px; color: var(--text-light); line-height: 1.6; white-space: pre-wrap; flex: 1; }
+        /* ── Note Card ── */
+        .note-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 18px; padding: 22px; transition: var(--transition);
+            position: relative; display: flex; flex-direction: column;
+            animation: noteIn 0.3s ease both;
+        }
+        @keyframes noteIn { from { opacity:0; transform: translateY(10px); } }
+        .note-card:hover { transform: translateY(-5px); border-color: var(--primary); }
 
-        .note-actions { margin-top: 15px; display: flex; justify-content: flex-end; gap: 12px; opacity: 0; transition: opacity 0.2s; }
+        .note-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .note-tag {
+            font-size: 10px; font-weight: 800; padding: 4px 9px; border-radius: 6px;
+            text-transform: uppercase; display: inline-block;
+        }
+        .tag-formula   { background: rgba(6,182,212,0.15); color: var(--secondary); border: 1px solid rgba(6,182,212,0.25); }
+        .tag-summary   { background: rgba(168,85,247,0.15); color: var(--primary);   border: 1px solid rgba(168,85,247,0.25); }
+        .tag-note      { background: rgba(34,197,94,0.15);  color: var(--success);  border: 1px solid rgba(34,197,94,0.25); }
+        .tag-important { background: rgba(239,68,68,0.15);  color: var(--danger);   border: 1px solid rgba(239,68,68,0.25); }
+
+        .note-title { font-family: 'Poppins', sans-serif; font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+        .note-content { font-size: 13.5px; color: var(--text-light); line-height: 1.65; flex: 1; overflow: hidden; max-height: 120px; }
+        .note-content img { max-width: 100%; }
+        .note-content .katex-render { color: var(--secondary); }
+
+        .note-footer {
+            margin-top: 14px; display: flex; justify-content: space-between;
+            align-items: center; gap: 8px;
+        }
+        .note-date { font-size: 11px; color: var(--text-light); opacity: 0.6; }
+        .note-actions { display: flex; gap: 8px; opacity: 0; transition: opacity 0.2s; }
         .note-card:hover .note-actions { opacity: 1; }
-        .action-btn { background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 1.1rem; transition: 0.2s; }
-        .action-btn:hover { color: var(--text); }
-        .action-btn.delete:hover { color: var(--danger); }
+        .action-btn {
+            background: none; border: none; color: var(--text-light); cursor: pointer;
+            font-size: 15px; transition: var(--transition); width: 30px; height: 30px;
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+        }
+        .action-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+        .action-btn.delete:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
+        .action-btn.edit:hover { color: var(--primary); background: rgba(168,85,247,0.1); }
+        .action-btn.pin:hover { color: var(--warning); }
+        .action-btn.pin.pinned { color: var(--warning); opacity: 1 !important; }
+        .pin-indicator {
+            position: absolute; top: 14px; right: 14px; font-size: 14px;
+            color: var(--warning); display: none;
+        }
+        .note-card.pinned .pin-indicator { display: block; }
+        .note-card.pinned { border-color: rgba(245,158,11,0.35); }
 
-        .revision-overlay { position: fixed; inset: 0; background: rgba(6, 8, 20, 0.95); backdrop-filter: blur(15px); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .revision-card { background: var(--card); border: 2px solid var(--primary); border-radius: 30px; padding: 40px; max-width: 700px; width: 100%; text-align: center; position: relative; box-shadow: 0 0 50px rgba(168, 85, 247, 0.2); animation: cardPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        /* ── Empty State ── */
+        .empty-state {
+            text-align: center; padding: 70px 20px; color: var(--text-light);
+            grid-column: 1 / -1;
+        }
+        .empty-state i { font-size: 3.5rem; display: block; margin-bottom: 16px; opacity: 0.25; }
+
+        /* ── Edit Modal ── */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px); z-index: 2000; display: none;
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 28px;
+            padding: 32px; max-width: 680px; width: 100%; max-height: 92vh;
+            overflow-y: auto; animation: modalPop 0.35s cubic-bezier(0.34,1.56,0.64,1);
+            position: relative;
+        }
+        @keyframes modalPop { from { transform: scale(0.85); opacity: 0; } }
+        .modal-close {
+            position: absolute; top: 18px; right: 18px; background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border); border-radius: 10px; color: var(--text-light);
+            width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 18px; transition: var(--transition);
+        }
+        .modal-close:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
+        .modal-title { font-family: 'Poppins', sans-serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 20px; }
+
+        /* ── Revision Overlay ── */
+        .revision-overlay {
+            position: fixed; inset: 0; background: rgba(6,8,20,0.96);
+            backdrop-filter: blur(18px); z-index: 3000; display: none;
+            flex-direction: column; align-items: center; justify-content: center; padding: 24px;
+        }
+        .revision-card {
+            background: var(--card); border: 2px solid var(--primary); border-radius: 30px;
+            padding: 40px; max-width: 720px; width: 100%; text-align: center;
+            position: relative; box-shadow: 0 0 60px rgba(168,85,247,0.2);
+            animation: cardPop 0.5s cubic-bezier(0.34,1.56,0.64,1);
+        }
         @keyframes cardPop { from { transform: scale(0.8); opacity: 0; } }
-
-        .revision-title { font-family: 'Poppins', sans-serif; font-size: 2.2rem; margin-bottom: 20px; color: var(--primary); font-weight: 800; }
-        .revision-content { font-size: 1.3rem; line-height: 1.7; color: var(--text); }
-        .revision-nav { display: flex; gap: 20px; margin-top: 40px; width: 100%; max-width: 400px; }
-        .btn-rev { flex: 1; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border); padding: 15px; border-radius: 15px; font-size: 1.1rem; cursor: pointer; transition: 0.3s; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .revision-title { font-family: 'Poppins'; font-size: 2rem; margin-bottom: 18px; color: var(--primary); font-weight: 800; }
+        .revision-content { font-size: 1.15rem; line-height: 1.7; color: var(--text); }
+        .revision-nav { display: flex; gap: 18px; margin-top: 36px; width: 100%; max-width: 400px; }
+        .btn-rev {
+            flex: 1; background: rgba(255,255,255,0.05); color: white;
+            border: 1px solid var(--border); padding: 14px; border-radius: 15px;
+            font-size: 1rem; cursor: pointer; transition: var(--transition); font-weight: 600;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
         .btn-rev:hover { background: var(--primary); transform: translateY(-2px); }
-
-        .close-rev { position: absolute; top: 30px; right: 30px; font-size: 2.5rem; color: var(--text-light); cursor: pointer; transition: 0.3s; }
+        .close-rev {
+            position: absolute; top: 22px; right: 22px; font-size: 2rem;
+            color: var(--text-light); cursor: pointer; transition: var(--transition);
+            background: none; border: none;
+        }
         .close-rev:hover { color: var(--danger); transform: rotate(90deg); }
+        .revision-progress { margin-top: 18px; color: var(--text-light); font-family: 'Poppins'; font-weight: 600; }
 
-        .empty-state { text-align: center; padding: 80px 20px; color: var(--text-light); grid-column: 1 / -1; }
-        .empty-state i { font-size: 4rem; display: block; margin-bottom: 20px; opacity: 0.3; }
+        /* ── Stats bar ── */
+        .stats-bar {
+            display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 24px;
+        }
+        .stat-chip {
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 10px 16px; font-size: 13px; font-weight: 600;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .stat-chip i { color: var(--primary); }
 
-        .revision-progress { margin-top: 20px; color: var(--text-light); font-family: 'Poppins'; font-weight: 600; }
+        /* ── Toast ── */
+        .toast-wrap {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            z-index: 9999; pointer-events: none;
+        }
+        .toast {
+            background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+            padding: 12px 20px; color: var(--text); font-size: 14px; font-weight: 600;
+            box-shadow: var(--shadow); display: flex; align-items: center; gap: 10px;
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.2s forwards;
+            pointer-events: auto;
+        }
+        @keyframes toastIn  { from { opacity:0; transform: translateY(12px); } }
+        @keyframes toastOut { to   { opacity:0; transform: translateY(12px); } }
+
+        /* ── Theme Dots ── */
+        .theme-dots { display: flex; gap: 8px; align-items: center; }
+        .t-dot {
+            width: 18px; height: 18px; border-radius: 50%; cursor: pointer;
+            border: 2px solid transparent; transition: var(--transition);
+        }
+        .t-dot:hover, .t-dot.active { border-color: var(--text); transform: scale(1.2); }
+
+        /* ── Char counter ── */
+        .char-counter { font-size: 11px; color: var(--text-light); text-align: right; margin-top: 5px; }
+        .char-counter.warn { color: var(--warning); }
+        .char-counter.over { color: var(--danger); }
+
+        /* ── Responsive ── */
+        @media (max-width: 500px) {
+            .controls { flex-direction: column; align-items: stretch; }
+            .search-bar { max-width: 100%; }
+        }
     </style>
 </head>
 <body data-theme="cosmic">
-    <div class="container">
-        <header>
-            <a href="../index.html" class="btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text);"><i class="ri-home-4-line"></i> Dashboard</a>
-            <h1>Quick Revision</h1>
-            <button class="btn btn-primary" onclick="startRevision()"><i class="ri-flashlight-line"></i> Start Revision Session</button>
-        </header>
+<div class="container">
 
-        <div class="glass-card">
-            <div class="note-form">
-                <div class="input-group">
-                    <label for="noteTitle">Topic / Title</label>
-                    <input type="text" id="noteTitle" placeholder="e.g. Euler's Identity">
-                </div>
-                <div class="input-group">
-                    <label for="noteContent">Key Material</label>
-                    <textarea id="noteContent" placeholder="Formulas, summaries, or key points..."></textarea>
-                </div>
-                <div class="input-group">
-                    <label for="noteCategory">Category</label>
-                    <select id="noteCategory">
-                        <option value="Formula">Formula ➗</option>
-                        <option value="Summary">Summary 📝</option>
-                        <option value="Note">Note 📌</option>
-                        <option value="Important">Important ⚠️</option>
-                    </select>
-                </div>
-                <button class="btn btn-primary" onclick="addNote()"><i class="ri-add-box-line"></i> Store Note</button>
+    <!-- HEADER -->
+    <header>
+        <div style="display:flex;align-items:center;gap:14px;">
+            <a href="../index.html" class="btn btn-ghost"><i class="ri-home-4-line"></i> Dashboard</a>
+            <h1>📓 Revision Notes</h1>
+        </div>
+        <div class="header-actions">
+            <div class="theme-dots">
+                <button class="t-dot active" data-theme="cosmic"  style="background:linear-gradient(135deg,#a855f7,#06b6d4)"  title="Cosmic"></button>
+                <button class="t-dot"        data-theme="aurora"   style="background:linear-gradient(135deg,#10b981,#2dd4bf)"  title="Aurora"></button>
+                <button class="t-dot"        data-theme="cyberpunk"style="background:linear-gradient(135deg,#ec4899,#3b82f6)"  title="Cyberpunk"></button>
+                <button class="t-dot"        data-theme="sunset"   style="background:linear-gradient(135deg,#f59e0b,#f43f5e)"  title="Sunset"></button>
+            </div>
+            <button class="btn btn-ghost" onclick="exportNotes()"><i class="ri-download-line"></i> Export</button>
+            <button class="btn btn-primary" onclick="startRevision()"><i class="ri-flashlight-line"></i> Revise</button>
+        </div>
+    </header>
+
+    <!-- STATS -->
+    <div class="stats-bar" id="statsBar"></div>
+
+    <!-- ADD / EDIT FORM (glass card) -->
+    <div class="glass-card" id="formCard">
+        <div style="font-family:'Poppins',sans-serif;font-size:1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+            <i class="ri-add-circle-line" style="color:var(--primary);"></i>
+            <span id="formTitle">New Note</span>
+        </div>
+
+        <div class="note-form-grid">
+            <div class="input-group">
+                <label for="noteTitle">Topic / Title</label>
+                <input type="text" id="noteTitle" placeholder="e.g. Newton's Second Law" maxlength="80">
+            </div>
+            <div class="input-group">
+                <label for="noteSubject">Subject (optional)</label>
+                <input type="text" id="noteSubject" placeholder="e.g. Physics" maxlength="40" list="subjectList">
+                <datalist id="subjectList"></datalist>
+            </div>
+            <div class="input-group">
+                <label for="noteCategory">Category</label>
+                <select id="noteCategory">
+                    <option value="Formula">Formula ➗</option>
+                    <option value="Summary">Summary 📝</option>
+                    <option value="Note">Note 📌</option>
+                    <option value="Important">Important ⚠️</option>
+                </select>
             </div>
         </div>
 
-        <div class="controls">
-            <div class="search-bar">
-                <i class="ri-search-line"></i>
-                <input type="text" id="noteSearch" placeholder="Search revision material..." oninput="renderNotes()">
-            </div>
-            <div class="filters" role="group" aria-label="Filter revision notes">
-                <button class="filter-btn active" onclick="setFilter('All', this)" aria-pressed="true">All</button>
-                <button class="filter-btn" onclick="setFilter('Formula', this)" aria-pressed="false">Formulas</button>
-                <button class="filter-btn" onclick="setFilter('Summary', this)" aria-pressed="false">Summaries</button>
-                <button class="filter-btn" onclick="setFilter('Important', this)" aria-pressed="false">Important</button>
-            </div>
+        <!-- Rich Text Toolbar -->
+        <div class="toolbar" id="toolbar">
+            <select class="toolbar-select" onchange="execCmd('formatBlock',this.value);this.value='p'">
+                <option value="p">Paragraph</option>
+                <option value="h3">Heading</option>
+                <option value="pre">Code Block</option>
+            </select>
+            <div class="toolbar-sep"></div>
+            <button class="toolbar-btn" title="Bold (Ctrl+B)"       onclick="execCmd('bold')"          ><b>B</b></button>
+            <button class="toolbar-btn" title="Italic (Ctrl+I)"     onclick="execCmd('italic')"        ><i>I</i></button>
+            <button class="toolbar-btn" title="Underline (Ctrl+U)"  onclick="execCmd('underline')"     ><u>U</u></button>
+            <button class="toolbar-btn" title="Strikethrough"       onclick="execCmd('strikeThrough')" ><s>S</s></button>
+            <button class="toolbar-btn" title="Highlight"           onclick="execCmd('hiliteColor','rgba(168,85,247,0.3)')"><i class="ri-mark-pen-line"></i></button>
+            <div class="toolbar-sep"></div>
+            <button class="toolbar-btn" title="Inline code"         onclick="wrapCode()"               ><i class="ri-code-line"></i></button>
+            <button class="toolbar-btn" title="Bullet list"         onclick="execCmd('insertUnorderedList')"><i class="ri-list-unordered"></i></button>
+            <button class="toolbar-btn" title="Numbered list"       onclick="execCmd('insertOrderedList')"><i class="ri-list-ordered"></i></button>
+            <button class="toolbar-btn" title="Blockquote"          onclick="execCmd('formatBlock','blockquote')"><i class="ri-double-quotes-l"></i></button>
+            <div class="toolbar-sep"></div>
+            <button class="toolbar-btn" title="Insert formula (LaTeX)" onclick="toggleFormulaRow()" id="formulaToggleBtn"><i class="ri-function-line"></i> Σ</button>
+            <div class="toolbar-sep"></div>
+            <button class="toolbar-btn" title="Align left"    onclick="execCmd('justifyLeft')"><i class="ri-align-left"></i></button>
+            <button class="toolbar-btn" title="Align center"  onclick="execCmd('justifyCenter')"><i class="ri-align-center"></i></button>
+            <button class="toolbar-btn" title="Clear format"  onclick="execCmd('removeFormat')"><i class="ri-eraser-line"></i></button>
         </div>
 
-        <div class="notes-grid" id="notesGrid"></div>
+        <!-- Contenteditable editor -->
+        <div class="editor-wrap">
+            <div id="richEditor" contenteditable="true"
+                 data-placeholder="Write your note here… use the toolbar above for rich formatting."></div>
+        </div>
+        <div class="char-counter" id="charCounter">0 chars</div>
+
+        <!-- Formula input row (hidden by default) -->
+        <div class="formula-row" id="formulaRow" style="display:none;">
+            <i class="ri-function-line" style="color:var(--secondary);flex-shrink:0;"></i>
+            <input type="text" id="formulaInput" placeholder="Enter LaTeX formula, e.g.  E = mc^2  or  \frac{a}{b}" style="flex:1;">
+            <span class="formula-preview" id="formulaPreview" title="Click to insert">Preview →</span>
+            <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="insertFormula()">Insert</button>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+            <button class="btn btn-ghost" id="cancelEditBtn" style="display:none;" onclick="cancelEdit()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveNote()"><i class="ri-save-line"></i> <span id="saveBtnLabel">Save Note</span></button>
+        </div>
     </div>
 
-    <div class="revision-overlay" id="revisionOverlay">
-        <i class="ri-close-line close-rev" onclick="stopRevision()" title="Close revision"></i>
-        <div class="revision-card">
-            <div class="note-tag" id="revTag"></div>
-            <h2 class="revision-title" id="revTitle">Title</h2>
-            <div class="revision-content" id="revContent">Content</div>
+    <!-- CONTROLS -->
+    <div class="controls">
+        <div class="search-bar">
+            <i class="ri-search-line"></i>
+            <input type="text" id="noteSearch" placeholder="Search notes…" oninput="renderNotes()">
         </div>
-        <div class="revision-progress" id="revProgress">1 / 10</div>
-        <div class="revision-nav">
-            <button class="btn-rev" onclick="prevNote()"><i class="ri-arrow-left-s-line"></i> Previous</button>
-            <button class="btn-rev" onclick="nextNote()">Next <i class="ri-arrow-right-s-line"></i></button>
+        <div class="filters" id="filterBtns" role="group">
+            <button class="filter-btn active" onclick="setFilter('All',this)">All</button>
+            <button class="filter-btn" onclick="setFilter('Formula',this)">Formulas</button>
+            <button class="filter-btn" onclick="setFilter('Summary',this)">Summaries</button>
+            <button class="filter-btn" onclick="setFilter('Note',this)">Notes</button>
+            <button class="filter-btn" onclick="setFilter('Important',this)">Important</button>
+        </div>
+        <div class="sort-bar">
+            <i class="ri-sort-desc" style="color:var(--text-light);"></i>
+            <select id="sortSelect" onchange="renderNotes()" style="padding:7px 10px;font-size:12px;border-radius:10px;">
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
+                <option value="az">A → Z</option>
+                <option value="pinned">Pinned first</option>
+            </select>
         </div>
     </div>
 
-    <script>
-        let notes = JSON.parse(localStorage.getItem('taskquest_v1.notes') || '[]');
-        let currentFilter = 'All';
+    <!-- NOTES GRID -->
+    <div class="notes-grid" id="notesGrid"></div>
+</div>
 
-        function addNote() {
-            const title = document.getElementById('noteTitle').value.trim();
-            const content = document.getElementById('noteContent').value.trim();
-            const category = document.getElementById('noteCategory').value;
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal-card">
+        <button class="modal-close" onclick="closeEditModal()"><i class="ri-close-line"></i></button>
+        <div class="modal-title"><i class="ri-edit-line" style="color:var(--primary);"></i> Edit Note</div>
 
-            if (!title || !content) {
-                alert('Please provide a title and content for your revision material.');
-                return;
-            }
+        <div class="note-form-grid">
+            <div class="input-group">
+                <label>Title</label>
+                <input type="text" id="editTitle" maxlength="80">
+            </div>
+            <div class="input-group">
+                <label>Subject</label>
+                <input type="text" id="editSubject" maxlength="40">
+            </div>
+            <div class="input-group">
+                <label>Category</label>
+                <select id="editCategory">
+                    <option value="Formula">Formula ➗</option>
+                    <option value="Summary">Summary 📝</option>
+                    <option value="Note">Note 📌</option>
+                    <option value="Important">Important ⚠️</option>
+                </select>
+            </div>
+        </div>
 
-            const note = {
-                id: Date.now(),
-                title,
-                content,
-                category,
-                timestamp: new Date().toISOString()
-            };
+        <div class="toolbar" id="editToolbar">
+            <button class="toolbar-btn" onclick="execCmdEdit('bold')"><b>B</b></button>
+            <button class="toolbar-btn" onclick="execCmdEdit('italic')"><i>I</i></button>
+            <button class="toolbar-btn" onclick="execCmdEdit('underline')"><u>U</u></button>
+            <button class="toolbar-btn" onclick="execCmdEdit('strikeThrough')"><s>S</s></button>
+            <div class="toolbar-sep"></div>
+            <button class="toolbar-btn" onclick="execCmdEdit('insertUnorderedList')"><i class="ri-list-unordered"></i></button>
+            <button class="toolbar-btn" onclick="execCmdEdit('insertOrderedList')"><i class="ri-list-ordered"></i></button>
+            <button class="toolbar-btn" onclick="execCmdEdit('removeFormat')"><i class="ri-eraser-line"></i></button>
+        </div>
+        <div class="editor-wrap">
+            <div id="editEditor" contenteditable="true"
+                 style="min-height:100px;max-height:220px;overflow-y:auto;padding:14px 16px;outline:none;font-size:14px;line-height:1.65;background:rgba(255,255,255,0.02);"></div>
+        </div>
 
-            notes.unshift(note);
-            saveNotes();
-            
-            document.getElementById('noteTitle').value = '';
-            document.getElementById('noteContent').value = '';
-            
-            renderNotes();
-        }
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
+            <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveEdit()"><i class="ri-save-line"></i> Save Changes</button>
+        </div>
+    </div>
+</div>
 
-        function saveNotes() {
-            localStorage.setItem('taskquest_v1.notes', JSON.stringify(notes));
-        }
+<!-- REVISION OVERLAY -->
+<div class="revision-overlay" id="revisionOverlay">
+    <button class="close-rev" onclick="stopRevision()" title="Close"><i class="ri-close-line"></i></button>
+    <div class="revision-card">
+        <div class="note-tag" id="revTag"></div>
+        <h2 class="revision-title" id="revTitle">Title</h2>
+        <div class="revision-content" id="revContent"></div>
+    </div>
+    <div class="revision-progress" id="revProgress">1 / 10</div>
+    <div class="revision-nav">
+        <button class="btn-rev" onclick="prevNote()"><i class="ri-arrow-left-s-line"></i> Previous</button>
+        <button class="btn-rev" onclick="nextNote()">Next <i class="ri-arrow-right-s-line"></i></button>
+    </div>
+</div>
 
-        function deleteNote(id) {
-            if (!confirm('Are you sure you want to delete this revision material?')) return;
-            notes = notes.filter(n => n.id !== id);
-            saveNotes();
-            renderNotes();
-        }
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toastWrap" style="display:none;"></div>
 
-        function setFilter(cat, btn) {
-            currentFilter = cat;
-            document.querySelectorAll('.filter-btn').forEach(b => {
-                b.classList.remove('active');
-                b.setAttribute('aria-pressed', 'false');
-            });
-            btn.classList.add('active');
-            btn.setAttribute('aria-pressed', 'true');
-            renderNotes();
-        }
+<script>
+/* ════════════════════════════════════════
+   STATE
+════════════════════════════════════════ */
+const STORAGE_KEY = 'taskquest_v1.notes';
+const THEME_KEY   = 'taskquest_v1.theme';
+let notes         = [];
+let currentFilter = 'All';
+let editingId     = null;
+let revIndex      = 0;
 
-        function escapeHtml(str) {
-            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-            return String(str).replace(/[&<>"']/g, function(m) { return map[m]; });
-        }
+/* ── Load ── */
+function loadNotes() {
+    try { notes = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+    catch(e) { notes = []; }
+}
+function saveNotes() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+}
 
-        function renderNotes() {
-            const grid = document.getElementById('notesGrid');
-            const search = document.getElementById('noteSearch').value.toLowerCase();
-            
-            const filtered = notes.filter(n => {
-                const matchesSearch = n.title.toLowerCase().includes(search) || n.content.toLowerCase().includes(search);
-                const matchesFilter = currentFilter === 'All' || n.category === currentFilter;
-                return matchesSearch && matchesFilter;
-            });
+/* ════════════════════════════════════════
+   THEME
+════════════════════════════════════════ */
+function applyTheme(t) {
+    document.body.setAttribute('data-theme', t);
+    localStorage.setItem(THEME_KEY, t);
+    document.querySelectorAll('.t-dot').forEach(d => {
+        d.classList.toggle('active', d.dataset.theme === t);
+    });
+}
+document.querySelectorAll('.t-dot').forEach(d => {
+    d.addEventListener('click', () => applyTheme(d.dataset.theme));
+});
+applyTheme(localStorage.getItem(THEME_KEY) || 'cosmic');
 
-            if (filtered.length === 0) {
-                grid.innerHTML = `
-                    <div class="empty-state">
-                        <i class="ri-sticky-note-2-line"></i>
-                        <p>No revision material found. Add formulas or summaries to start your knowledge base!</p>
-                    </div>
-                `;
-                return;
-            }
+/* ════════════════════════════════════════
+   RICH TEXT EDITOR HELPERS
+════════════════════════════════════════ */
+function execCmd(cmd, val) {
+    document.getElementById('richEditor').focus();
+    document.execCommand(cmd, false, val || null);
+}
+function execCmdEdit(cmd, val) {
+    document.getElementById('editEditor').focus();
+    document.execCommand(cmd, false, val || null);
+}
+function wrapCode() {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    const code  = document.createElement('code');
+    try { range.surroundContents(code); } catch(e) { execCmd('insertHTML','<code>code</code>'); }
+}
 
-            grid.innerHTML = filtered.map(n => `
-                <div class="note-card">
-                    <span class="note-tag tag-${n.category.toLowerCase()}">${escapeHtml(n.category)}</span>
-                    <h3 class="note-title">${escapeHtml(n.title)}</h3>
-                    <p class="note-content">${escapeHtml(n.content)}</p>
-                    <div class="note-actions">
-                        <button class="action-btn delete" onclick="deleteNote(${n.id})" title="Delete note"><i class="ri-delete-bin-line"></i></button>
-                    </div>
-                </div>
-            `).join('');
-        }
+/* Char counter */
+const richEditor = document.getElementById('richEditor');
+const charCounter = document.getElementById('charCounter');
+richEditor.addEventListener('input', () => {
+    const len = richEditor.innerText.length;
+    charCounter.textContent = len + ' chars';
+    charCounter.className = 'char-counter' + (len > 2000 ? ' over' : len > 1500 ? ' warn' : '');
+});
 
-        let revIndex = 0;
-        function startRevision() {
-            if (notes.length === 0) {
-                alert('Add some revision notes first!');
-                return;
-            }
-            revIndex = 0;
-            document.getElementById('revisionOverlay').style.display = 'flex';
-            updateRevCard();
-        }
+/* ── Formula Row ── */
+function toggleFormulaRow() {
+    const row = document.getElementById('formulaRow');
+    row.style.display = row.style.display === 'none' ? 'flex' : 'none';
+    if (row.style.display === 'flex') document.getElementById('formulaInput').focus();
+}
+const formulaInput   = document.getElementById('formulaInput');
+const formulaPreview = document.getElementById('formulaPreview');
+formulaInput.addEventListener('input', debounce(() => {
+    const val = formulaInput.value.trim();
+    if (!val || !window.katex) { formulaPreview.textContent = 'Preview →'; return; }
+    try { formulaPreview.innerHTML = katex.renderToString(val, { throwOnError: false }); }
+    catch(e) { formulaPreview.textContent = '⚠ Error'; }
+}, 400));
+function insertFormula() {
+    const val = formulaInput.value.trim();
+    if (!val) return;
+    let html = val;
+    if (window.katex) {
+        try { html = '<span class="katex-render">' + katex.renderToString(val, { throwOnError: false }) + '</span>'; }
+        catch(e) { html = '<code>' + escapeHtml(val) + '</code>'; }
+    }
+    richEditor.focus();
+    document.execCommand('insertHTML', false, ' ' + html + ' ');
+    formulaInput.value = '';
+    formulaPreview.textContent = 'Preview →';
+    document.getElementById('formulaRow').style.display = 'none';
+}
 
-        function stopRevision() {
-            document.getElementById('revisionOverlay').style.display = 'none';
-        }
+/* ════════════════════════════════════════
+   SAVE NOTE
+════════════════════════════════════════ */
+function saveNote() {
+    const title    = document.getElementById('noteTitle').value.trim();
+    const subject  = document.getElementById('noteSubject').value.trim();
+    const category = document.getElementById('noteCategory').value;
+    const content  = richEditor.innerHTML.trim();
 
-        function updateRevCard() {
-            const n = notes[revIndex];
-            document.getElementById('revTag').textContent = n.category;
-            document.getElementById('revTag').className = `note-tag tag-${n.category.toLowerCase()}`;
-            document.getElementById('revTitle').textContent = n.title;
-            document.getElementById('revContent').textContent = n.content;
-            document.getElementById('revProgress').textContent = `${revIndex + 1} / ${notes.length}`;
-        }
+    if (!title)   { shake('noteTitle');   return; }
+    if (!content || content === '<br>') { shake('richEditor'); showToast('⚠️ Note content is empty.'); return; }
 
-        function nextNote() {
-            revIndex = (revIndex + 1) % notes.length;
-            updateRevCard();
-        }
+    const note = {
+        id:        Date.now(),
+        title,
+        subject,
+        category,
+        content,         // rich HTML
+        contentText: richEditor.innerText,  // for search
+        timestamp:   new Date().toISOString(),
+        pinned:      false
+    };
+    notes.unshift(note);
+    saveNotes();
+    clearForm();
+    renderNotes();
+    renderStats();
+    updateSubjectList();
+    showToast('✅ Note saved!');
+}
 
-        function prevNote() {
-            revIndex = (revIndex - 1 + notes.length) % notes.length;
-            updateRevCard();
-        }
+function clearForm() {
+    document.getElementById('noteTitle').value   = '';
+    document.getElementById('noteSubject').value = '';
+    document.getElementById('noteCategory').value = 'Formula';
+    richEditor.innerHTML = '';
+    charCounter.textContent = '0 chars';
+    charCounter.className = 'char-counter';
+    document.getElementById('formulaRow').style.display = 'none';
+    formulaInput.value = '';
+    formulaPreview.textContent = 'Preview →';
+}
 
-        const savedTheme = localStorage.getItem('taskquest_v1.theme') || 'cosmic';
-        document.body.setAttribute('data-theme', savedTheme);
+/* ════════════════════════════════════════
+   FILTER / SORT / RENDER
+════════════════════════════════════════ */
+function setFilter(cat, btn) {
+    currentFilter = cat;
+    document.querySelectorAll('#filterBtns .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderNotes();
+}
 
-        renderNotes();
-    </script>
+function getSorted(arr) {
+    const sort = document.getElementById('sortSelect').value;
+    const copy = [...arr];
+    if (sort === 'oldest') copy.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+    else if (sort === 'newest') copy.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+    else if (sort === 'az') copy.sort((a,b) => a.title.localeCompare(b.title));
+    else if (sort === 'pinned') copy.sort((a,b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    return copy;
+}
+
+function renderNotes() {
+    const grid   = document.getElementById('notesGrid');
+    const search = document.getElementById('noteSearch').value.toLowerCase();
+
+    let filtered = notes.filter(n => {
+        const matchCat    = currentFilter === 'All' || n.category === currentFilter;
+        const matchSearch = !search
+            || n.title.toLowerCase().includes(search)
+            || n.contentText.toLowerCase().includes(search)
+            || (n.subject || '').toLowerCase().includes(search);
+        return matchCat && matchSearch;
+    });
+    filtered = getSorted(filtered);
+
+    if (!filtered.length) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <i class="ri-sticky-note-2-line"></i>
+                <p style="font-size:1.1rem;font-weight:600;margin-bottom:8px;">No notes found</p>
+                <p>Add a note above or try a different filter.</p>
+            </div>`;
+        return;
+    }
+
+    grid.innerHTML = filtered.map(n => noteCardHTML(n)).join('');
+}
+
+function noteCardHTML(n) {
+    const date = new Date(n.timestamp).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+    const subjectBadge = n.subject
+        ? `<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(255,255,255,0.08);color:var(--text-light);">${escapeHtml(n.subject)}</span>` : '';
+    return `
+    <div class="note-card ${n.pinned ? 'pinned' : ''}" id="card-${n.id}">
+        <span class="pin-indicator"><i class="ri-pushpin-fill"></i></span>
+        <div class="note-card-top">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                <span class="note-tag tag-${n.category.toLowerCase()}">${escapeHtml(n.category)}</span>
+                ${subjectBadge}
+            </div>
+        </div>
+        <h3 class="note-title">${escapeHtml(n.title)}</h3>
+        <div class="note-content">${n.content}</div>
+        <div class="note-footer">
+            <span class="note-date"><i class="ri-calendar-line"></i> ${date}</span>
+            <div class="note-actions">
+                <button class="action-btn pin ${n.pinned ? 'pinned' : ''}" onclick="togglePin(${n.id})" title="${n.pinned ? 'Unpin' : 'Pin'}">
+                    <i class="${n.pinned ? 'ri-pushpin-fill' : 'ri-pushpin-line'}"></i>
+                </button>
+                <button class="action-btn edit" onclick="openEdit(${n.id})" title="Edit"><i class="ri-edit-line"></i></button>
+                <button class="action-btn delete" onclick="deleteNote(${n.id})" title="Delete"><i class="ri-delete-bin-line"></i></button>
+            </div>
+        </div>
+    </div>`;
+}
+
+/* ════════════════════════════════════════
+   EDIT
+════════════════════════════════════════ */
+function openEdit(id) {
+    const n = notes.find(x => x.id === id);
+    if (!n) return;
+    editingId = id;
+    document.getElementById('editTitle').value    = n.title;
+    document.getElementById('editSubject').value  = n.subject || '';
+    document.getElementById('editCategory').value = n.category;
+    document.getElementById('editEditor').innerHTML = n.content;
+    document.getElementById('editModal').classList.add('open');
+}
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('open');
+    editingId = null;
+}
+function saveEdit() {
+    const n = notes.find(x => x.id === editingId);
+    if (!n) return;
+    const title   = document.getElementById('editTitle').value.trim();
+    const content = document.getElementById('editEditor').innerHTML.trim();
+    if (!title) { shake('editTitle'); return; }
+    n.title       = title;
+    n.subject     = document.getElementById('editSubject').value.trim();
+    n.category    = document.getElementById('editCategory').value;
+    n.content     = content;
+    n.contentText = document.getElementById('editEditor').innerText;
+    saveNotes();
+    closeEditModal();
+    renderNotes();
+    renderStats();
+    showToast('✏️ Note updated!');
+}
+
+/* ════════════════════════════════════════
+   DELETE / PIN
+════════════════════════════════════════ */
+function deleteNote(id) {
+    if (!confirm('Delete this note?')) return;
+    notes = notes.filter(n => n.id !== id);
+    saveNotes();
+    renderNotes();
+    renderStats();
+    showToast('🗑️ Note deleted.');
+}
+function togglePin(id) {
+    const n = notes.find(x => x.id === id);
+    if (!n) return;
+    n.pinned = !n.pinned;
+    saveNotes();
+    renderNotes();
+    showToast(n.pinned ? '📌 Note pinned!' : '📌 Note unpinned.');
+}
+
+/* ════════════════════════════════════════
+   REVISION MODE
+════════════════════════════════════════ */
+function startRevision() {
+    if (!notes.length) { showToast('⚠️ Add notes first!'); return; }
+    revIndex = 0;
+    document.getElementById('revisionOverlay').style.display = 'flex';
+    updateRevCard();
+}
+function stopRevision() { document.getElementById('revisionOverlay').style.display = 'none'; }
+function updateRevCard() {
+    const n = notes[revIndex];
+    document.getElementById('revTag').textContent = n.category;
+    document.getElementById('revTag').className   = `note-tag tag-${n.category.toLowerCase()}`;
+    document.getElementById('revTitle').textContent = n.title;
+    document.getElementById('revContent').innerHTML = n.content;
+    document.getElementById('revProgress').textContent = `${revIndex + 1} / ${notes.length}`;
+}
+function nextNote() { revIndex = (revIndex + 1) % notes.length; updateRevCard(); }
+function prevNote() { revIndex = (revIndex - 1 + notes.length) % notes.length; updateRevCard(); }
+document.addEventListener('keydown', e => {
+    if (document.getElementById('revisionOverlay').style.display === 'flex') {
+        if (e.key === 'ArrowRight') nextNote();
+        if (e.key === 'ArrowLeft')  prevNote();
+        if (e.key === 'Escape')     stopRevision();
+    }
+    if (e.key === 'Escape' && document.getElementById('editModal').classList.contains('open')) {
+        closeEditModal();
+    }
+});
+
+/* ════════════════════════════════════════
+   STATS BAR
+════════════════════════════════════════ */
+function renderStats() {
+    const total = notes.length;
+    const cats  = ['Formula','Summary','Note','Important'];
+    const counts = {};
+    cats.forEach(c => counts[c] = notes.filter(n => n.category === c).length);
+    const pinned = notes.filter(n => n.pinned).length;
+    document.getElementById('statsBar').innerHTML = `
+        <div class="stat-chip"><i class="ri-sticky-note-2-line"></i> <b>${total}</b> total</div>
+        <div class="stat-chip"><i class="ri-function-line"></i> <b>${counts.Formula}</b> formulas</div>
+        <div class="stat-chip"><i class="ri-file-text-line"></i> <b>${counts.Summary}</b> summaries</div>
+        <div class="stat-chip"><i class="ri-error-warning-line"></i> <b>${counts.Important}</b> important</div>
+        <div class="stat-chip"><i class="ri-pushpin-line"></i> <b>${pinned}</b> pinned</div>
+    `;
+}
+
+/* ════════════════════════════════════════
+   SUBJECT DATALIST
+════════════════════════════════════════ */
+function updateSubjectList() {
+    const subjects = [...new Set(notes.map(n => n.subject).filter(Boolean))];
+    document.getElementById('subjectList').innerHTML =
+        subjects.map(s => `<option value="${escapeHtml(s)}">`).join('');
+}
+
+/* ════════════════════════════════════════
+   EXPORT
+════════════════════════════════════════ */
+function exportNotes() {
+    if (!notes.length) { showToast('⚠️ No notes to export.'); return; }
+    const data = JSON.stringify(notes, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'taskquest-notes.json'; a.click();
+    URL.revokeObjectURL(url);
+    showToast('📥 Exported successfully!');
+}
+
+/* ════════════════════════════════════════
+   UTILITIES
+════════════════════════════════════════ */
+function escapeHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function shake(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.animation = 'none';
+    el.offsetHeight;
+    el.style.animation = 'shakeInput 0.4s ease';
+    setTimeout(() => el.style.animation = '', 500);
+}
+function debounce(fn, ms) {
+    let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+function showToast(msg) {
+    const wrap  = document.getElementById('toastWrap');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = msg;
+    wrap.innerHTML = '';
+    wrap.appendChild(toast);
+    wrap.style.display = 'flex';
+    setTimeout(() => { wrap.style.display = 'none'; wrap.innerHTML = ''; }, 2700);
+}
+function cancelEdit() {
+    editingId = null;
+    clearForm();
+    document.getElementById('cancelEditBtn').style.display = 'none';
+    document.getElementById('formTitle').textContent = 'New Note';
+    document.getElementById('saveBtnLabel').textContent = 'Save Note';
+}
+
+/* ════════════════════════════════════════
+   INIT
+════════════════════════════════════════ */
+loadNotes();
+renderNotes();
+renderStats();
+updateSubjectList();
+</script>
+
+<!-- Inline shakeInput keyframe (mirrors style.css) -->
+<style>
+@keyframes shakeInput {
+    0%,100% { transform: translateX(0); }
+    20%,60%  { transform: translateX(-6px); }
+    40%,80%  { transform: translateX(6px); }
+}
+</style>
 </body>
 </html>
