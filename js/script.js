@@ -33,12 +33,16 @@ if (IS_FILE_PROTOCOL) {
 
 // Consolidated escapeHtml defined before first use
 function escapeHtml(str) {
-  return String(str || '')
+  if (typeof str !== 'string' && typeof str !== 'number' && typeof str !== 'boolean') return '';
+  return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/'/g, '&#39;')
+    .replace(/\//g, '&#x2F;')
+    .replace(/\\/g, '&#x5C;')
+    .replace(/`/g, '&#96;');
 }
 const taskCharCounter =
 document.getElementById("taskCharCounter");
@@ -1457,7 +1461,7 @@ function addTask() {
     priority = prioritySelect.value;
   }
   
-  const text = taskInput.value.trim();
+  const text = escapeHtml(taskInput.value.trim());
   const tags = parseTags(taskTagsInput ? taskTagsInput.value : "");
 
   const deadlineInput = document.getElementById("deadlineInput");
@@ -4478,19 +4482,6 @@ try {
 }
 
 // --- Security Helpers ---
-// Escapes user-supplied strings before injecting into innerHTML.
-// Without this, a task saved as <img src=x onerror=alert(1)> executes
-// on every render — a persistent stored XSS vector with full access to
-// all localStorage data.
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 // --- ID Generation ---
 // Date.now() has millisecond resolution. Two tasks added within the same
 // millisecond (programmatic calls, keyboard shortcuts, rapid submission)
