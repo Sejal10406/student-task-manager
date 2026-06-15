@@ -22,6 +22,13 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+const taskCharCounter =
+document.getElementById("taskCharCounter");
+
+taskInput?.addEventListener("input", () => {
+  taskCharCounter.textContent =
+    `${taskInput.value.length} / 200`;
+});
 
 // Audio state & helpers for subtle feedback
 const audioState = {
@@ -367,6 +374,8 @@ const points = document.getElementById("coins");
 const streakCount = document.getElementById("streakCount");
 const xpFill = document.getElementById("xpFill");
 const xpText = document.getElementById("xpText");
+const pendingTasks =
+document.getElementById("pendingTasks");
 
 // Filters & Navigation
 const tabBtns = document.querySelectorAll(".tab-btn");
@@ -516,7 +525,8 @@ const achievementSpecs = [
     }
   }
 ];
-
+pendingTasks.textContent =
+tasks.filter(t => !t.completed).length;
 // Focus milestones specifications
 const milestoneSpecs = [
   { id: "30mins", title: "Focus Apprentice", desc: "Studied for 30 minutes cumulative!", minutes: 30, reward: 50 },
@@ -1549,7 +1559,7 @@ function createTaskEl(task) {
   div.innerHTML = `
     <div class="drag-handle" title="Drag to reorder"><i class="ri-drag-move-fill"></i></div>
     <div class="task-left">
-      <div class="check-btn" tabindex="0" aria-label="Toggle completed task"></div>
+        title="Mark Complete" tabindex="0" aria-label="Toggle completed task"></div>
       <div>
         <h3 class="task-title">${escapeHtml(task.text)}</h3>
         <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px; flex-wrap: wrap;">
@@ -1564,10 +1574,16 @@ function createTaskEl(task) {
       </div>
     </div>
     <div class="task-actions">
-      <button class="icon-btn edit-btn" aria-label="Edit Quest">
+     <button
+  class="icon-btn edit-btn"
+  aria-label="Edit Quest"
+  title="Edit Task">
         <i class="ri-edit-line"></i>
       </button>
-      <button class="icon-btn delete-btn" aria-label="Delete Quest">
+      <button
+  class="icon-btn delete-btn"
+  aria-label="Delete Quest"
+  title="Delete Task">
         <i class="ri-delete-bin-6-line"></i>
       </button>
     </div>
@@ -4928,45 +4944,4 @@ function dispatchNativeBrowserAlert(title, message) {
       });
     }
   }
-}
-function updateTaskProgressBar() {
-  const total = tasks.length;
-
-  const completed =
-    tasks.filter(
-      task => task.completed
-    ).length;
-
-  const percent =
-    total === 0
-      ? 0
-      : Math.round(
-          (completed / total) * 100
-        );
-
-  const fill =
-    document.getElementById(
-      "taskProgressFill"
-    );
-
-  const text =
-    document.getElementById(
-      "taskProgressPercent"
-    );
-
-  if (fill) {
-    fill.style.width = `${percent}%`;
-  }
-
-  if (text) {
-    text.textContent = `${percent}%`;
-  }
-}
-function renderTasks() {
-
-  // existing code
-
-  updateStats();
-
-  updateTaskProgressBar();
 }
