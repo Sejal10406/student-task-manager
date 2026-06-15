@@ -1,0 +1,37 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "worker": true
+  },
+  "extends": ["eslint:recommended"],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "script"
+  },
+  "globals": {
+    "Chart": "readonly",
+    "jspdf": "readonly",
+    "showToast": "writable",
+    "renderTasks": "writable",
+    "loadTasks": "writable",
+    "saveTasks": "writable",
+    "announce": "writable",
+    "escapeHtml": "writable",
+    "loadQuests": "readonly",
+    "saveGameState": "writable",
+    "logEventSafely": "writable"
+  },
+  "rules": {
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^(IS_FILE_PROTOCOL|Log)$" }],
+    "no-var": "off",
+    "prefer-const": "warn",
+    "no-console": "off",
+    "no-undef": "warn",
+    "no-empty": ["warn", { "allowEmptyCatch": true }],
+    "no-prototype-builtins": "off",
+    "no-redeclare": "warn",
+    "no-unused-expressions": "warn",
+    "eqeqeq": ["warn", "smart"]
+  }
+}

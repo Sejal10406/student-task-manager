@@ -4,8 +4,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#8b5cf6" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192x192.png" />
   <title>TaskQuest • Gamified Productivity | Student Task Manager</title>
   <meta name="description" content="A gamified task manager app to boost study productivity, track assignments, subjects, exams and streaks." />
+  <!-- Open Graph / Social Meta Tags -->
+  <meta property="og:title" content="TaskQuest • Gamified Productivity" />
+  <meta property="og:description" content="Level up your productivity with TaskQuest — a gamified student task manager with XP, badges, focus timers, and study analytics." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://sejal10406.github.io/student-task-manager/" />
+  <meta property="og:image" content="https://sejal10406.github.io/student-task-manager/assets/og-preview.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:site_name" content="TaskQuest" />
   <!-- Security Headers -->
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: https:;">
@@ -25,19 +40,20 @@
 
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/collaborative.css">
+  <link rel="stylesheet" href="css/task-categories.css">
 </head>
 
 <body class="dashboard-page">
   <a href="#quests-tab" class="skip-to-content" style="position: absolute; top: -100px; left: 10px; background: var(--primary); color: #fff; padding: 8px 16px; border-radius: 4px; z-index: 10000; transition: top 0.2s;" onfocus="this.style.top='10px'" onblur="this.style.top='-100px'">Skip to content</a>
 
   <!-- GLOBAL HEADER -->
-  <header class="site-header" style="position: sticky; top: 0; z-index: 1000; padding: 12px 0; border-bottom: 1px solid var(--border); background: rgba(15, 12, 38, 0.6); backdrop-filter: blur(15px);">
+  <header class="site-header" role="banner" aria-label="Site header" style="position: sticky; top: 0; z-index: 1000; padding: 12px 0; border-bottom: 1px solid var(--border); background: rgba(15, 12, 38, 0.6); backdrop-filter: blur(15px);">
     <div class="header-inner" style="max-width: 1500px; width: 95%; display: flex; justify-content: space-between; align-items: center; margin: 0 auto;">
       <a href="index.html" class="header-brand" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 10px;">
         <div class="topbar-logo" style="width: 32px; height: 32px; font-size: 18px;"><i class="ri-gamepad-fill"></i></div>
         <h1 style="font-size: 18px; margin: 0; font-family: 'Poppins', sans-serif;">TaskQuest</h1>
       </a>
-      <nav class="header-nav" style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <nav class="header-nav" role="navigation" aria-label="Main navigation" style="display: flex; gap: 8px; flex-wrap: wrap;">
         <a href="pages/notes.html" class="view-btn small" style="text-decoration: none;"><i class="ri-sticky-note-line"></i> Revision Notes</a>
         <a href="pages/Challenge.html" class="view-btn small" style="text-decoration: none;"><i class="ri-trophy-line"></i> Challenges</a>
         <a href="pages/leaderboard.html" class="view-btn small" style="text-decoration: none;"><i class="ri-medal-line"></i> Leaderboard</a>
@@ -58,7 +74,7 @@
   <main class="container">
 
     <!-- SIDEBAR -->
-    <aside class="sidebar">
+    <aside class="sidebar" role="complementary" aria-label="Dashboard sidebar">
 
       <div class="logo-box">
         <div class="logo">
@@ -72,7 +88,7 @@
         <div class="analytics-export-row" style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;position:relative;">
           <div class="export-group">
             <button class="view-btn" id="exportBtn"><i class="ri-download-2-line"></i> Export</button>
-            <div id="exportMenu" class="export-menu" style="display:none; position:absolute; right:0; background:var(--card); border:1px solid var(--border); padding:8px; border-radius:8px; box-shadow:var(--shadow); z-index:50;">
+            <div id="exportMenu" aria-label="Export Options" class="export-menu" style="display:none; position:absolute; right:0; background:var(--card); border:1px solid var(--border); padding:8px; border-radius:8px; box-shadow:var(--shadow); z-index:50;">
               <button class="view-btn" id="exportCsvBtn">Export CSV</button>
               <button class="view-btn" id="exportJsonBtn">Export JSON</button>
               <button class="view-btn" id="exportPngBtn">Export Charts (PNG)</button>
@@ -94,7 +110,7 @@
       </div>
 
       <!-- SIDEBAR MENU -->
-      <nav class="sidebar-nav">
+      <nav class="sidebar-nav" role="navigation" aria-label="Sidebar navigation">
         <a href="index.html" class="sidebar-nav-item active">
           <i class="ri-dashboard-line"></i>
           <span>Dashboard</span>
@@ -229,7 +245,7 @@
     <!-- MAIN CONTENT REMOVED DUPLICATE HEADER -->
 
     <!-- MAIN CONTENT -->
-    <section class="main-content">
+    <section class="main-content" role="region" aria-label="Main dashboard content">
 
       <!-- TOP BAR -->
       <div class="topbar">
@@ -247,15 +263,17 @@
         </div>
 
         <div class="topbar-right">
-          <div class="search-bar-container" style="position: relative; display: flex; align-items: center; margin-right: 15px;">
+          <div class="search-bar-container" role="search" aria-label="Search tasks" style="position: relative; display: flex; align-items: center; margin-right: 15px;">
             <i class="ri-search-line" style="position: absolute; left: 10px; color: var(--text-muted);"></i>
-            <input type="text" id="taskSearchInput" maxlength="100" placeholder="Search tasks..." style="padding: 8px 10px 8px 32px; border-radius: 20px; border: 1px solid var(--border); background: var(--card); color: var(--text); outline: none; width: 100%; max-width: 200px; font-size: 0.9rem;">
+
           </div>
-          <div class="theme-selector-panel">
+          <div class="theme-selector-panel" style="display:flex;align-items:center;gap:6px;">
             <button class="theme-dot active" data-theme="cosmic" aria-label="Cosmic Theme" style="background: linear-gradient(135deg, #a855f7, #06b6d4);"></button>
             <button class="theme-dot" data-theme="aurora" aria-label="Aurora Theme" style="background: linear-gradient(135deg, #10b981, #2dd4bf);"></button>
             <button class="theme-dot" data-theme="cyberpunk" aria-label="Cyberpunk Theme" style="background: linear-gradient(135deg, #ec4899, #3b82f6);"></button>
             <button class="theme-dot" data-theme="sunset" aria-label="Sunset Theme" style="background: linear-gradient(135deg, #f59e0b, #f43f5e);"></button>
+            <span style="font-size:11px;color:var(--text-muted);margin-left:5px;">Custom:</span>
+            <input type="color" id="customThemePrimary" title="Custom Primary Theme Color" value="#a855f7" style="width:20px;height:20px;border:none;border-radius:50%;cursor:pointer;background:transparent;">
           </div>
           <!-- Notification Bell -->
           <div class="notification-wrap">
@@ -2190,6 +2208,7 @@
   <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
   <script src="js/storage.js"></script>
+  <script src="js/task-persistence.js"></script>
   <script src="js/analytics.js"></script>
   <script src="js/prioritization.js"></script>
   <script src="js/script.js"></script>

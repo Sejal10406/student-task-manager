@@ -7,21 +7,50 @@
 
 // Core Elements
 const taskInput = document.getElementById("taskInput");
+
+// Centralized logging utility
+const Log = {
+  info: function (msg, data) { console.info("[TaskQuest]", msg, data || ''); },
+  warn: function (msg, data) { console.warn("[TaskQuest]", msg, data || ''); },
+  error: function (msg, data) { console.error("[TaskQuest]", msg, data || ''); },
+  debug: function (msg, data) {
+    if (localStorage.getItem('taskquest_debug') === 'true') {
+      console.debug("[TaskQuest DEBUG]", msg, data || '');
+    }
+  }
+};
 const addTaskBtn = document.getElementById("addTaskBtn");
 const taskList = document.getElementById("taskList");
 const categorySelect = document.getElementById("categorySelect");
 const taskTemplate = document.getElementById("taskTemplate");
 const taskTagsInput = document.getElementById("taskTagsInput");
 
+// Protocol check for file:// limitations
+var IS_FILE_PROTOCOL = window.location.protocol === 'file:';
+if (IS_FILE_PROTOCOL) {
+  console.info("[TaskQuest] Running from file: protocol — PDF/PNG exports, Chart.js, and service worker require a local HTTP server.");
+}
+
 // Consolidated escapeHtml defined before first use
 function escapeHtml(str) {
-  return String(str || '')
+  if (typeof str !== 'string' && typeof str !== 'number' && typeof str !== 'boolean') return '';
+  return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/'/g, '&#39;')
+    .replace(/\//g, '&#x2F;')
+    .replace(/\\/g, '&#x5C;')
+    .replace(/`/g, '&#96;');
 }
+const taskCharCounter =
+document.getElementById("taskCharCounter");
+
+taskInput?.addEventListener("input", () => {
+  taskCharCounter.textContent =
+    `${taskInput.value.length} / 200`;
+});
 
 // Audio state & helpers for subtle feedback
 const audioState = {
@@ -99,7 +128,7 @@ function playSound(name) {
       setTimeout(() => { os.forEach(o => { try { o.stop(); o.disconnect(); } catch(e){} }); }, 900);
     }
   } catch (e) {
-    console.warn('playSound error', e);
+    console.warn("[TaskQuest] playSound error", e);
   }
 }
 
@@ -367,6 +396,8 @@ const points = document.getElementById("coins");
 const streakCount = document.getElementById("streakCount");
 const xpFill = document.getElementById("xpFill");
 const xpText = document.getElementById("xpText");
+const pendingTasks =
+document.getElementById("pendingTasks");
 
 // Filters & Navigation
 const tabBtns = document.querySelectorAll(".tab-btn");
@@ -516,7 +547,8 @@ const achievementSpecs = [
     }
   }
 ];
-
+pendingTasks.textContent =
+tasks.filter(t => !t.completed).length;
 // Focus milestones specifications
 const milestoneSpecs = [
   { id: "30mins", title: "Focus Apprentice", desc: "Studied for 30 minutes cumulative!", minutes: 30, reward: 50 },
@@ -1420,12 +1452,16 @@ function addTask() {
   }
   
   let priority = "Medium";
+  const newTask = {
+  id: generateTaskId(),
+  text: taskText,
+  completed: false,};
   const prioritySelect = document.getElementById("prioritySelect");
   if (prioritySelect && prioritySelect.value && prioritySelect.value.trim() !== "") {
     priority = prioritySelect.value;
   }
   
-  const text = taskInput.value.trim();
+  const text = escapeHtml(taskInput.value.trim());
   const tags = parseTags(taskTagsInput ? taskTagsInput.value : "");
 
   const deadlineInput = document.getElementById("deadlineInput");
@@ -1537,6 +1573,16 @@ function createTaskEl(task) {
   if (task.completed) {
     div.classList.add("completed");
   }
+  const li = document.createElement("li");
+  if (task.isNew) {
+  li.classList.add("new-task-highlight");
+
+  setTimeout(() => {
+    task.isNew = false;
+    saveData();
+    renderTasks();
+  }, 5000);
+}
 
   const pri = task.priority || "Medium";
   const urgencyInfo = window.Prioritization ? window.Prioritization.getUrgencyInfo(task) : null;
@@ -1549,7 +1595,7 @@ function createTaskEl(task) {
   div.innerHTML = `
     <div class="drag-handle" title="Drag to reorder"><i class="ri-drag-move-fill"></i></div>
     <div class="task-left">
-      <div class="check-btn" tabindex="0" aria-label="Toggle completed task"></div>
+        title="Mark Complete" tabindex="0" aria-label="Toggle completed task"></div>
       <div>
         <h3 class="task-title">${escapeHtml(task.text)}</h3>
         <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px; flex-wrap: wrap;">
@@ -1564,11 +1610,15 @@ function createTaskEl(task) {
       </div>
     </div>
     <div class="task-actions">
-      <button class="icon-btn edit-btn" aria-label="Edit Quest">
+
         <i class="ri-edit-line"></i>
       </button>
-      <button class="icon-btn delete-btn" aria-label="Delete Quest">
+      <button
+  class="icon-btn delete-btn"
+  aria-label="Delete Quest"
+  title="Delete Task">
         <i class="ri-delete-bin-6-line"></i>
+        
       </button>
     </div>
   `;
@@ -4432,19 +4482,6 @@ try {
 }
 
 // --- Security Helpers ---
-// Escapes user-supplied strings before injecting into innerHTML.
-// Without this, a task saved as <img src=x onerror=alert(1)> executes
-// on every render — a persistent stored XSS vector with full access to
-// all localStorage data.
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 // --- ID Generation ---
 // Date.now() has millisecond resolution. Two tasks added within the same
 // millisecond (programmatic calls, keyboard shortcuts, rapid submission)
@@ -4858,6 +4895,23 @@ function initTheme() {
       }
     });
   }
+
+  // Handle custom dynamic color theme builder changes (#377)
+  const customColorInput = document.getElementById("customThemePrimary");
+  if (customColorInput) {
+    const savedCustomColor = localStorage.getItem("taskquest_v1.custom_primary");
+    if (savedCustomColor) {
+      customColorInput.value = savedCustomColor;
+      document.documentElement.style.setProperty("--primary-custom", savedCustomColor);
+      document.documentElement.style.setProperty("--primary", savedCustomColor);
+    }
+    customColorInput.addEventListener("input", (e) => {
+      const color = e.target.value;
+      document.documentElement.style.setProperty("--primary-custom", color);
+      document.documentElement.style.setProperty("--primary", color);
+      localStorage.setItem("taskquest_v1.custom_primary", color);
+    });
+  }
 }
 
 function populateDependsSelect(){
@@ -4875,7 +4929,16 @@ function populateDependsSelect(){
 }
 
 /* Export JSON Logic */
-document.getElementById('exportJsonBtn')?.addEventListener('click', () => { const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tasks, null, 2)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute('href', dataStr); dlAnchorElem.setAttribute('download', 'taskquest_backup.json'); dlAnchorElem.click(); });
+document.getElementById('exportJsonBtn')?.addEventListener('click', () => {
+  if (IS_FILE_PROTOCOL && typeof window.showToast === 'function') {
+    showToast("Export may not work on file:// protocol. Use a local server (npx http-server).", "warning");
+  }
+  const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tasks, null, 2));
+  const dlAnchorElem = document.createElement('a');
+  dlAnchorElem.setAttribute('href', dataStr);
+  dlAnchorElem.setAttribute('download', 'taskquest_backup.json');
+  dlAnchorElem.click();
+});
 
 window.addEventListener('error', (e) => console.error('Global Error:', e.message));
 
@@ -4929,3 +4992,29 @@ function dispatchNativeBrowserAlert(title, message) {
     }
   }
 }
+document
+.getElementById("clearCompletedBtn")
+?.addEventListener("click", () => {
+
+  if (!confirm(
+    "Remove all completed tasks?"
+  )) return;
+
+  tasks = tasks.filter(
+    task => !task.completed
+  );
+
+  saveData();
+  renderTasks();
+});
+copyBtn.addEventListener("click", () => {
+
+  navigator.clipboard.writeText(
+    task.text
+  );
+
+  showToast?.(
+    "Task copied successfully",
+    "success"
+  );
+});

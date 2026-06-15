@@ -1,6 +1,27 @@
-/* =========================
-   DESIGN SYSTEM & VARIABLES
-========================= */
+/* ==========================================================================
+   DESIGN SYSTEM & CUSTOM PROPERTIES
+   
+   Color System:
+   --primary        Main brand color (purple) — used for CTAs, links, accents
+   --secondary      Secondary brand color (cyan) — used for highlights, borders
+   --success        Positive states (green) — completed tasks, achievements
+   --danger         Error/destructive states (red) — overdue, alerts
+   --warning        Caution states (amber) — deadlines, warnings
+   
+   Surface Colors:
+   --bg             Page background
+   --card           Card/surface background
+   --border         Subtle border color for card separation
+   
+   Text Hierarchy:
+   --text           Primary text color
+   --text-light     Secondary text (subtitles, metadata)
+   --text-muted     Muted text (placeholders, disabled states)
+   
+   Spacing & Effects:
+   --radius         Default border-radius (12px)
+   --shadow         Default card shadow
+   ========================================================================== */
 :root {
   /* Default Light Theme */
   --bg-color: #f8fafc;
