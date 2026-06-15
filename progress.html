@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Progress Component Example</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      padding: 2rem;
+      background-color: #0f172a;
+      color: #f1f5f9;
+    }
+    
+    .progress-container {
+      margin-bottom: 20px;
+      max-width: 400px;
+    }
+    
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .progress-label {
+      color: #f1f5f9;
+    }
+    
+    .progress-percentage {
+      color: #94a3b8;
+    }
+    
+    .progress-track {
+      height: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+      border-radius: 999px;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Variants */
+    .progress-fill.success { background: linear-gradient(90deg, #10b981, #34d399); }
+    .progress-fill.warning { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .progress-fill.danger { background: linear-gradient(90deg, #ef4444, #f87171); }
+  </style>
+</head>
+<body>
+  <h2>Basic HTML/CSS Progress Components</h2>
+  
+  <div class="progress-container">
+    <div class="progress-header">
+      <span class="progress-label">Task Completion</span>
+      <span class="progress-percentage">75%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" style="width: 75%"></div>
+    </div>
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-header">
+      <span class="progress-label">Storage Quota</span>
+      <span class="progress-percentage">90%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill danger" style="width: 90%"></div>
+    </div>
+  </div>
+
+  <h2 style="margin-top: 40px;">Web Component Usage</h2>
+  <progress-bar value="45" label="Level Progress" variant="default"></progress-bar>
+  <br>
+  <progress-bar value="100" label="Syllabus Mastery" variant="success"></progress-bar>
+
+  <script>
+    class ProgressBar extends HTMLElement {
+      connectedCallback() {
+        const value = this.getAttribute('value') || '0';
+        const label = this.getAttribute('label') || 'Progress';
+        const variant = this.getAttribute('variant') || 'default';
+        
+        let fillClass = 'progress-fill';
+        if (variant !== 'default') {
+          fillClass += ` ${variant}`;
+        }
+        
+        this.innerHTML = `
+          <div class="progress-container" style="max-width: 100%;">
+            <div class="progress-header">
+              <span class="progress-label">${label}</span>
+              <span class="progress-percentage">${value}%</span>
+            </div>
+            <div class="progress-track">
+              <div class="${fillClass}" style="width: ${value}%"></div>
+            </div>
+          </div>
+        `;
+      }
+    }
+    customElements.define('progress-bar', ProgressBar);
+  </script>
+</body>
+</html>
