@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Calendar Component Example</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      padding: 2rem;
+      background-color: #0f172a;
+      color: #f1f5f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    /* Mini Calendar Component */
+    .mini-calendar {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 20px;
+      width: 300px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .month-year {
+      font-weight: 600;
+      font-size: 16px;
+      color: #f8fafc;
+    }
+    
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #94a3b8;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #f1f5f9;
+    }
+    
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      text-align: center;
+    }
+    
+    .weekday {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+    
+    .day-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #cbd5e1;
+    }
+    
+    .day-cell:hover:not(.empty) {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .day-cell.today {
+      background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);
+    }
+    
+    .day-cell.has-event {
+      position: relative;
+    }
+    
+    .day-cell.has-event::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: #f59e0b;
+    }
+    
+    .day-cell.today.has-event::after {
+      background-color: white;
+    }
+    
+    .day-cell.empty {
+      cursor: default;
+    }
+  </style>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+</head>
+<body>
+  <h2>Mini Calendar Component</h2>
+  
+  <div class="mini-calendar">
+    <div class="calendar-header">
+      <button class="nav-btn"><i class="ri-arrow-left-s-line"></i></button>
+      <div class="month-year">June 2026</div>
+      <button class="nav-btn"><i class="ri-arrow-right-s-line"></i></button>
+    </div>
+    
+    <div class="calendar-grid">
+      <!-- Weekdays -->
+      <div class="weekday">Su</div>
+      <div class="weekday">Mo</div>
+      <div class="weekday">Tu</div>
+      <div class="weekday">We</div>
+      <div class="weekday">Th</div>
+      <div class="weekday">Fr</div>
+      <div class="weekday">Sa</div>
+      
+      <!-- Days (Example for June 2026 starts on Monday) -->
+      <div class="day-cell empty"></div>
+      <div class="day-cell">1</div>
+      <div class="day-cell">2</div>
+      <div class="day-cell">3</div>
+      <div class="day-cell">4</div>
+      <div class="day-cell has-event">5</div>
+      <div class="day-cell">6</div>
+      
+      <div class="day-cell">7</div>
+      <div class="day-cell">8</div>
+      <div class="day-cell">9</div>
+      <div class="day-cell">10</div>
+      <div class="day-cell">11</div>
+      <div class="day-cell">12</div>
+      <div class="day-cell">13</div>
+      
+      <div class="day-cell has-event">14</div>
+      <div class="day-cell today">15</div>
+      <div class="day-cell">16</div>
+      <div class="day-cell">17</div>
+      <div class="day-cell">18</div>
+      <div class="day-cell">19</div>
+      <div class="day-cell">20</div>
+      
+      <div class="day-cell">21</div>
+      <div class="day-cell has-event">22</div>
+      <div class="day-cell">23</div>
+      <div class="day-cell">24</div>
+      <div class="day-cell">25</div>
+      <div class="day-cell">26</div>
+      <div class="day-cell">27</div>
+      
+      <div class="day-cell">28</div>
+      <div class="day-cell">29</div>
+      <div class="day-cell">30</div>
+      <div class="day-cell empty"></div>
+      <div class="day-cell empty"></div>
+      <div class="day-cell empty"></div>
+      <div class="day-cell empty"></div>
+    </div>
+  </div>
+
+  <h2 style="margin-top: 60px;">Web Component Usage</h2>
+  <mini-calendar current-month="July 2026" start-day="3" days-in-month="31" today="10" events="12,18,25"></mini-calendar>
+
+  <script>
+    class MiniCalendar extends HTMLElement {
+      connectedCallback() {
+        const monthYear = this.getAttribute('current-month') || 'Current Month';
+        const startDay = parseInt(this.getAttribute('start-day') || '0'); // 0 = Sunday
+        const daysInMonth = parseInt(this.getAttribute('days-in-month') || '30');
+        const today = parseInt(this.getAttribute('today') || '0');
+        const events = (this.getAttribute('events') || '').split(',').map(Number);
+        
+        let gridHtml = `
+          <div class="weekday">Su</div><div class="weekday">Mo</div><div class="weekday">Tu</div>
+          <div class="weekday">We</div><div class="weekday">Th</div><div class="weekday">Fr</div><div class="weekday">Sa</div>
+        `;
+        
+        // Empty cells before start day
+        for (let i = 0; i < startDay; i++) {
+          gridHtml += `<div class="day-cell empty"></div>`;
+        }
+        
+        // Days
+        for (let d = 1; d <= daysInMonth; d++) {
+          let classes = ['day-cell'];
+          if (d === today) classes.push('today');
+          if (events.includes(d)) classes.push('has-event');
+          
+          gridHtml += `<div class="${classes.join(' ')}">${d}</div>`;
+        }
+        
+        this.innerHTML = `
+          <div class="mini-calendar">
+            <div class="calendar-header">
+              <button class="nav-btn"><i class="ri-arrow-left-s-line"></i></button>
+              <div class="month-year">${monthYear}</div>
+              <button class="nav-btn"><i class="ri-arrow-right-s-line"></i></button>
+            </div>
+            <div class="calendar-grid">
+              ${gridHtml}
+            </div>
+          </div>
+        `;
+      }
+    }
+    customElements.define('mini-calendar', MiniCalendar);
+  </script>
+</body>
+</html>
