@@ -1,0 +1,22 @@
+{
+  "name": "taskquest",
+  "version": "2.0.0",
+  "private": true,
+  "description": "TaskQuest - Gamified Student Task Manager",
+  "keywords": ["productivity", "student", "gamification", "task-manager"],
+  "license": "MIT",
+  "scripts": {
+    "lint:js": "eslint js/ --ext .js",
+    "lint:css": "stylelint css/",
+    "lint:md": "markdownlint *.md pages/*.md 2>/dev/null || true",
+    "format": "prettier --write \"**/*.{js,css,html,json,md,yml}\"",
+    "format:check": "prettier --check \"**/*.{js,css,html,json,md,yml}\"",
+    "verify": "node verify-env.js"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.0",
+    "stylelint": "^16.1.0",
+    "markdownlint-cli": "^0.39.0"
+  }
+}

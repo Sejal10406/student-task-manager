@@ -1,0 +1,48 @@
+name: Welcome Contributors
+
+on:
+  pull_request_target:
+    types: [closed]
+
+jobs:
+  welcome:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Check if first merged PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const author = context.payload.pull_request.user.login;
+            const prNumber = context.payload.pull_request.number;
+            const prTitle = context.payload.pull_request.title;
+
+            // Get all merged PRs by this author
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'closed',
+              author: author,
+              per_page: 100
+            });
+
+            const mergedPrs = prs.filter(pr => pr.merged_at !== null);
+            
+            if (mergedPrs.length === 1) {
+              // First merged PR - send special welcome
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: `🎉 Congratulations @${author} on your first merged pull request!\n\n` +
+                      `Your contribution "${prTitle}" has been merged. Thank you for helping make TaskQuest better!\n\n` +
+                      `Here are some ways to continue contributing:\n` +
+                      `- 🐛 Look for [good first issues](https://github.com/${context.repo.owner}/${context.repo.repo}/labels/good%20first%20issue)\n` +
+                      `- 📝 Improve documentation\n` +
+                      `- ✨ Suggest new features\n\n` +
+                      `Keep up the great work! 🚀`
+              });
+            }

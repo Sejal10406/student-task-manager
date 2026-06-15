@@ -1,0 +1,41 @@
+# CODEOWNERS for TaskQuest
+# Each line is a file pattern followed by one or more owners.
+# Learn more: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owners (fallback for anything not matched below)
+* @Sejal10406
+
+# Core JavaScript modules
+/js/script.js @Sejal10406 @KGFCH2
+/js/storage.js @Sejal10406
+/js/analytics.js @Sejal10406
+
+# CSS stylesheets
+/css/style.css @Sejal10406
+/css/collaborative.css @Sejal10406
+
+# Main entry points
+/index.html @Sejal10406
+
+# Documentation
+*.md @Sejal10406 @KGFCH2
+/docs/ @Sejal10406
+
+# CI/CD and GitHub configuration
+/.github/ @Sejal10406 @KGFCH2
+/.github/workflows/ @Sejal10406 @KGFCH2
+
+# Security policies
+/Security.md @Sejal10406
+/CODE_OF_CONDUCT.md @Sejal10406
+
+# PWA
+/sw.js @Sejal10406
+/manifest.json @Sejal10406
+
+# Games
+/js/Games.js @Sejal10406
+/pages/Games.html @Sejal10406
+
+# Pages
+/pages/ @Sejal10406

@@ -1,0 +1,43 @@
+name: Contributor Checklist
+
+on:
+  pull_request_target:
+    types: [opened, edited]
+
+jobs:
+  check-contributing:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Check PR description completeness
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const checks = [
+              { name: 'Related Issue', pattern: /closes #\d+/i },
+              { name: 'Summary', pattern: /summary/i },
+              { name: 'Changes Made', pattern: /changes made/i },
+              { name: 'Testing', pattern: /testing/i },
+              { name: 'Screenshots', pattern: /screenshots/i },
+              { name: 'Checklist', pattern: /checklist/i },
+              { name: 'Related Issue', pattern: /#\d+/ },
+            ];
+
+            const missingChecks = checks.filter(c => !c.pattern.test(body)).map(c => c.name);
+            
+            if (missingChecks.length > 0) {
+              const comment = `## 📋 PR Checklist Reminder\n\n` +
+                `Your PR description appears to be missing the following sections:\n\n` +
+                missingChecks.map(c => `- ❌ **${c}**`).join('\n') +
+                `\n\nPlease update your PR description to include these sections for a smoother review process. ` +
+                `Refer to the [PR template](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/.github/PULL_REQUEST_TEMPLATE.md) for guidance.`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: comment
+              });
+            }

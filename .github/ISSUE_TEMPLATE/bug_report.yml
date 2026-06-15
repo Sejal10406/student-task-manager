@@ -49,9 +49,11 @@ body:
       label: Environment Details
       description: Provide details about your system and browser.
       placeholder: |
-        - OS: [e.g. Windows, macOS]
-        - Browser: [e.g. Chrome, Firefox]
-        - Screen / Viewport: [e.g. Desktop, Mobile]
+        - OS: [e.g. Windows, macOS, Linux]
+        - Browser: [e.g. Chrome 120, Firefox 121]
+        - App Version: [e.g. v2.0.0 - check CHANGELOG.md]
+        - Screen / Viewport: [e.g. Desktop 1920x1080, Mobile 375x667]
+        - Running from: [e.g. file:// protocol, local server, GitHub Pages]
     validations:
       required: true
   - type: textarea

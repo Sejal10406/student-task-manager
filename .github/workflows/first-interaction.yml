@@ -1,0 +1,37 @@
+name: First Interaction
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Greet first-time contributors
+        uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: |
+            👋 Welcome! Thank you for opening your first issue in TaskQuest!
+
+            Please make sure to:
+            - Check if this issue already exists
+            - Provide all requested information in the template
+            - Be patient — maintainers will review it soon
+
+            Happy contributing! 🚀
+          pr-message: |
+            🎉 Thank you for submitting your first pull request to TaskQuest!
+
+            Here's what happens next:
+            1. Maintainers will review your changes
+            2. CI checks will run automatically
+            3. You may receive feedback or suggestions
+
+            We appreciate your contribution! 💪
