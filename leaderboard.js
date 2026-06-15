@@ -161,6 +161,10 @@
     renderLeaderboard();
   }
 
+  function normalizePlayerName(name) {
+    return name.toLowerCase().trim().replace(/\s+/g, " ");
+  }
+
   function addOrUpdatePlayer() {
     const name = elements.playerNameInput.value.trim();
     const score = Number(elements.playerScoreInput.value) || 0;
@@ -173,17 +177,19 @@
     }
 
     const entries = loadLeaderboard();
-    const normalizedName = name.toLowerCase().replace(/[^a-z0-9]+/gi, "-");
-    const existing = entries.find(entry => entry.name.toLowerCase() === name.toLowerCase());
+    const canonicalName = normalizePlayerName(name);
+    const existing = entries.find(entry => normalizePlayerName(entry.name) === canonicalName);
 
     if (existing) {
+      existing.name = name;
       existing.score = score;
       existing.completedTasks = completedTasks;
       existing.streak = streak;
       existing.lastUpdated = currentTimestamp();
     } else {
+      const idSuffix = canonicalName.replace(/[^a-z0-9]+/gi, "-");
       entries.push({
-        id: `player-${normalizedName}-${Date.now()}`,
+        id: `player-${idSuffix}-${Date.now()}`,
         name,
         score,
         completedTasks,
