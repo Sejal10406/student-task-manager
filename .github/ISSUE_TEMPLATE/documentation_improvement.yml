@@ -1,0 +1,40 @@
+name: 📖 Documentation Improvement
+description: Suggest improvements to documentation, README, or inline comments.
+title: "[DOCS]: "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping us improve TaskQuest documentation!
+  - type: textarea
+    id: location
+    attributes:
+      label: Documentation Location
+      description: Which file or page needs improvement? Please provide the path or URL.
+      placeholder: e.g., README.md, CONTRIBUTING.md, JSDoc comments in script.js
+    validations:
+      required: true
+  - type: textarea
+    id: improvement
+    attributes:
+      label: Suggested Improvement
+      description: Describe what should be added, changed, or clarified.
+      placeholder: What documentation change is needed?
+    validations:
+      required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: Why This Improvement Matters
+      description: Explain how this helps users or contributors.
+      placeholder: Why is this important?
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Validation Checklist
+      options:
+        - label: I have searched existing documentation issues to ensure this is not a duplicate.
+          required: true

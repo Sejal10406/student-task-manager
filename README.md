@@ -4,10 +4,19 @@
 
 <div align="center">
 
-[![GitHub stars](https://img.shields.io/github/stars/Sejal10406/student-task-manager?style=flat-square)](https://github.com/Sejal10406/student-task-manager/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/Sejal10406/student-task-manager?style=flat-square)](https://github.com/Sejal10406/student-task-manager/network)
-[![GitHub issues](https://img.shields.io/github/issues/Sejal10406/student-task-manager?style=flat-square)](https://github.com/Sejal10406/student-task-manager/issues)
-[![License](https://img.shields.io/github/license/Sejal10406/student-task-manager?style=flat-square)](./License.md)
+<div align="center">
+
+[![GitHub stars](https://img.shields.io/github/stars/Sejal10406/student-task-manager?style=for-the-badge&logo=github)](https://github.com/Sejal10406/student-task-manager/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/Sejal10406/student-task-manager?style=for-the-badge&logo=git)](https://github.com/Sejal10406/student-task-manager/network)
+[![GitHub issues](https://img.shields.io/github/issues/Sejal10406/student-task-manager?style=for-the-badge&logo=github)](https://github.com/Sejal10406/student-task-manager/issues)
+[![GitHub PRs](https://img.shields.io/github/issues-pr/Sejal10406/student-task-manager?style=for-the-badge&logo=github)](https://github.com/Sejal10406/student-task-manager/pulls)
+[![License](https://img.shields.io/github/license/Sejal10406/student-task-manager?style=for-the-badge)](./License.md)
+[![Contributors](https://img.shields.io/github/contributors/Sejal10406/student-task-manager?style=for-the-badge&logo=contributorcovenant)](https://github.com/Sejal10406/student-task-manager/graphs/contributors)
+[![Last Commit](https://img.shields.io/github/last-commit/Sejal10406/student-task-manager?style=for-the-badge&logo=github)](https://github.com/Sejal10406/student-task-manager/commits/main)
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/Sejal10406/student-task-manager/codeql-analysis.yml?style=for-the-badge&label=CodeQL&logo=github)](https://github.com/Sejal10406/student-task-manager/actions/workflows/codeql-analysis.yml)
+[![Deploy](https://img.shields.io/github/actions/workflow/status/Sejal10406/student-task-manager/deploy.yml?style=for-the-badge&label=Deploy&logo=githubpages)](https://github.com/Sejal10406/student-task-manager/actions/workflows/deploy.yml)
+[![PWA](https://img.shields.io/badge/PWA-Ready-8B5CF6?style=for-the-badge&logo=pwa)](.)
+[![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%20AA-10B981?style=for-the-badge)](.)
 
 **Level up your productivity! A gamified, interactive web application** designed to help students manage their daily tasks with XP, badges, and focus timers.
 
@@ -22,22 +31,41 @@
 | Feature | Description |
 |---|---|
 | 🎮 **Gamification** | Earn XP, level up, and collect coins by completing tasks |
-| 🍅 **Focus Mode** | Built-in Pomodoro timer (25 min study / 5 min break) |
+| 🍅 **Focus Mode** | Built-in Pomodoro timer (25 min study / 5 min break) with Web Worker |
 | 🏅 **Achievements** | Unlock badges for streaks and productivity milestones |
 | 📊 **Analytics** | View your progress with interactive Chart.js graphs |
-| 💾 **Data Export** | Export your tasks to CSV, PNG, or PDF |
-| 👥 **Study Together** | Collaborative study lobbies (coming soon) |
-| 🎵 **Audio Feedback** | Subtle sound effects for task completion |
-| 🎨 **Glassmorphism** | Stunning translucent UI with dynamic backgrounds |
+| 💾 **Data Export** | Export your tasks to CSV, JSON, PNG, or PDF |
+| 👥 **Study Together** | Collaborative study lobbies via BroadcastChannel API |
+| 📝 **Revision Notes** | Rich text notes with localStorage persistence |
+| 🎯 **Task Prioritization** | Eisenhower matrix with smart sorting |
+| 🔗 **Task Dependencies** | Define prerequisites with cycle detection |
+| 🔄 **Recurring Tasks** | Daily, weekly, and monthly task repetition |
+| 📅 **Calendar View** | Visual calendar with timetable scheduling |
+| 🎮 **Study Games** | Interactive games (Word Scramble, Math Blitz) |
+| 🏆 **Challenges** | Weekly/monthly challenges with milestone tracking |
+| ⚡ **Keyboard Shortcuts** | Power-user shortcuts for common actions |
+| 🎨 **Theme Customizer** | Multiple themes (Cosmic, Aurora, Cyberpunk, Sunset) |
+| 🔊 **Audio Feedback** | Subtle sound effects for task completion |
+| 🔔 **Notifications** | Browser notifications for deadlines and reminders |
+| 📱 **PWA Support** | Installable as native app with offline caching |
+| 🗂️ **Files Vault** | Store and organize study materials |
+| 🎯 **Daily Goals** | Set and track daily productivity goals |
+| 🧠 **Flashcards** | Create and review study flashcards |
+| 🏃 **Streak Tracking** | Weekly streak grid with visual progression |
 
 ---
 
 ## 💻 Tech Stack
 
-- **HTML5** — Semantic markup and accessible structure
-- **CSS3** — Glassmorphism, CSS Custom Properties, Animations
-- **Vanilla JavaScript** — Zero framework dependencies
+- **HTML5** — Semantic markup and accessible structure (30+ pages)
+- **CSS3** — Glassmorphism, CSS Custom Properties, Animations, Grid/Flexbox
+- **Vanilla JavaScript** — Zero framework dependencies (ES2021+)
 - **Chart.js & jsPDF** — Client-side analytics and exports
+- **Service Worker API** — Offline caching and PWA support
+- **BroadcastChannel API** — Cross-tab real-time collaboration
+- **Web Audio API** — Subtle sound effects and audio feedback
+- **Web Workers** — Pomodoro timer drift correction
+- **GitHub Actions** — 20+ CI/CD workflows for quality assurance
 
 ---
 
@@ -46,15 +74,77 @@
 TaskQuest is designed as a modular, client-side web application leveraging Vanilla JS:
 
 ```
-[ UI Layer: HTML5/CSS3 ] <--> [ Controller: script.js ] <--> [ Storage: storage.js ]
-                                   ^
-                                   |
-                       [ Modules: analytics.js, collaborative.js ]
+┌─────────────────────────────────────────────────────────────────────┐
+│                        UI LAYER (HTML5/CSS3)                        │
+│  index.html · pages/*.html · css/style.css · css/collaborative.css  │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │ DOM events
+                             ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                      CONTROLLER LAYER (script.js)                    │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────────────────┐  │
+│  │ tasks.js │  │ tabs.js  │  │ toast.js │  │ badges.js           │  │
+│  └──────────┘  └──────────┘  └──────────┘  └─────────────────────┘  │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────────────────┐  │
+│  │ fab.js   │  │ sidebar  │  │ prioriti │  │ analytics.js        │  │
+│  │          │  │ toggle   │  │ zation   │  │ correlationEngine   │  │
+│  └──────────┘  └──────────┘  └──────────┘  └─────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  collaborative.js · collab-utils.js · leaderboard.js         │   │
+│  │  Challenge.js · Games.js · correlationEngine.js              │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+└────────────────────────────┬─────────────────────────────────────────┘
+                             │ API calls
+                             ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                       STORAGE LAYER (storage.js)                     │
+│  LocalStorage (taskquest_v1.*) · IndexedDB (backup)                  │
+│  BroadcastChannel (cross-tab sync) · Service Worker (offline cache)  │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Data Models**: Configured under versioned namespaces in LocalStorage (e.g. `taskquest_v1.tasks`, `taskquest_v1.notes`) using `storage.js`.
-- **Theme Engine**: Centralized theme rules toggling matching HSL color maps variables inside `style.css`.
-- **Prioritization Logic**: Managed in `prioritization.js` using weight factors on task deadlines.
+### Key Modules
+
+| Module | Path | Responsibility |
+|--------|------|----------------|
+| **Controller** | `js/script.js` | Task CRUD, XP, gamification, DOM rendering, event handling |
+| **Storage** | `js/storage.js` | LocalStorage + IndexedDB with checksum verification |
+| **Analytics** | `js/analytics.js` | Chart.js dashboards, CSV/PNG/PDF export |
+| **Badges** | `js/badges.js` | Achievement system with celebration effects |
+| **Prioritization** | `js/prioritization.js` | Eisenhower matrix & smart sorting |
+| **Tabs** | `js/tabs.js` | Tab switching with lazy initialization |
+| **Collaboration** | `js/collaborative.js` | BroadcastChannel-based real-time sync |
+| **Toast** | `js/toast.js` | Notification queue with screen-reader support |
+| **Games** | `js/Games.js` | Interactive study games |
+| **Challenges** | `js/Challenge.js` | Challenge and milestone tracking |
+| **Leaderboard** | `js/leaderboard.js` | Rankings and XP leaderboard |
+| **FAB** | `js/fab.js` | Floating action button |
+| **Sidebar** | `js/sidebar-toggle.js` | Collapsible sidebar |
+| **SW** | `sw.js` | Service Worker for offline PWA support |
+
+### Data Flow
+
+```
+User Action → DOM Event → script.js handler → storage.js write
+                                                    │
+                          ┌─────────────────────────┘
+                          ▼
+                    storage.js read → renderTasks() → DOM update
+                                                    │
+                          ┌─────────────────────────┘
+                          ▼
+                    badges.js check → analytics.js update → UI refresh
+```
+
+### Cross-Tab Sync
+
+```
+Tab A: saveTasks() → localStorage.setItem() → storage event fires
+                                                    │
+                          ┌─────────────────────────┘
+                          ▼
+                    Tab B: storage event listener → renderTasks() → sync UI
+```
 
 ---
 
@@ -66,15 +156,72 @@ student-task-manager/
 ├── index.html              ← Main gamified dashboard
 ├── style.css               ← Core design system & glassmorphism
 ├── script.js               ← Task logic, XP, and local storage
+├── manifest.json           ← PWA manifest for installable app
+├── sw.js                   ← Service Worker for offline caching
+├── robots.txt              ← Search engine crawling rules
+├── sitemap.xml             ← XML sitemap for SEO
+├── 404.html                ← Custom 404 error page
 │
-├── focus.html              ← Dedicated Pomodoro focus mode
-├── leaderboard.html        ← Global rankings and XP
-├── collaborative.html      ← Multiplayer study lobbies
+├── css/
+│   ├── style.css           ← Design system & all component styles
+│   ├── collaborative.css   ← Study Together theme
+│   ├── Challenge.css       ← Challenge page styles
+│   └── Games.css           ← Games page styles
+│
+├── js/
+│   ├── script.js           ← Core controller & task logic
+│   ├── storage.js          ← LocalStorage + IndexedDB with checksums
+│   ├── analytics.js        ← Chart.js dashboards & exports
+│   ├── badges.js           ← Achievement system
+│   ├── tabs.js             ← Tab switching with lazy init
+│   ├── toast.js            ← Notification queue system
+│   ├── fab.js              ← Floating action button
+│   ├── sidebar-toggle.js   ← Collapsible sidebar
+│   ├── priorization.js     ← Eisenhower matrix & smart sort
+│   ├── collaborative.js    ← BroadcastChannel real-time sync
+│   ├── collab-utils.js     ← Shared collaboration helpers
+│   ├── leaderboard.js      ← XP leaderboard & rankings
+│   ├── Challenge.js        ← Challenge milestones
+│   ├── Games.js            ← Interactive study games
+│   ├── correlationEngine.js← Study correlation analytics
+│
+├── pages/
+│   ├── notes.html          ← Revision notes with rich text
+│   ├── Challenge.html      ← Challenges & milestones
+│   ├── leaderboard.html    ← Global rankings and XP
+│   ├── focus.html          ← Dedicated Pomodoro mode
+│   ├── Reflection.html     ← Reflective journal
+│   ├── docs.html           ← Project documentation
+│   ├── faq.html            ← Frequently asked questions
+│   ├── privacy.html        ← Privacy policy
+│   ├── terms.html          ← Terms of service
+│   ├── profile.html        ← User profile & Failure Vault
+│   ├── Games.html          ← Study games hub
+│   ├── Performance.html    ← Performance analytics
+│   ├── milestone.html      ← Milestone center
+│   ├── report.html         ← Study reports
+│   ├── coding.html         ← Coding workspace
+│   ├── battle.html         ← Battle mode
+│   ├── Tournament.html     ← Tournament mode
+│   ├── Spin.html           ← Spin wheel rewards
+│   ├── chatbot.html        ← AI study assistant
+│   ├── mastery.html        ← Subject mastery tracking
+│   ├── journey.html        ← Learning journey
+│   ├── velocity.html       ← Velocity metrics
+│   ├── history.html        ← Activity history
+│   └── achievement.html    ← Achievement showcase
+│
+├── .github/
+│   ├── workflows/          ← GitHub Actions CI/CD (20+ workflows)
+│   ├── ISSUE_TEMPLATE/     ← Bug report & feature request forms
+│   └── CODEOWNERS          ← Auto-review assignments
 │
 ├── README.md               ← Project overview and setup guide
-├── CONTRIBUTING.md         ← How to contribute to this project
+├── CONTRIBUTING.md         ← How to contribute
 ├── CHANGELOG.md            ← Version history and release notes
-└── License.md              ← Project license
+├── CODE_OF_CONDUCT.md      ← Community guidelines
+├── Security.md             ← Security policy & reporting
+└── License.md              ← MIT License
 ```
 
 ---
@@ -141,12 +288,32 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full contribution guide includi
 
 ---
 
+## 📈 GitHub Stats
+
+<div align="center">
+
+![Repo Stars](https://img.shields.io/github/stars/Sejal10406/student-task-manager?style=social)
+![Repo Forks](https://img.shields.io/github/forks/Sejal10406/student-task-manager?style=social)
+![Watchers](https://img.shields.io/github/watchers/Sejal10406/student-task-manager?style=social)
+
+</div>
+
+---
+
 ## 📝 License
 
 This project is open-source and available under the [MIT License](./License.md).
 
 ## 💬 Community
 Join our community and help us build a better task manager for students.
+
+---
+
+## 👥 Contributors
+
+<a href="https://github.com/Sejal10406/student-task-manager/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Sejal10406/student-task-manager" alt="Contributors" />
+</a>
 
 ---
 
