@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Motivational Component Example</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      padding: 2rem;
+      background-color: #0f172a;
+      color: #f1f5f9;
+    }
+    
+    /* Motivational Quote Card Component */
+    .motivational-quote-card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      max-width: 400px;
+      position: relative;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .motivational-quote-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+    }
+    
+    .motivational-quote-card.quote-card-alt {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+      border-color: rgba(139, 92, 246, 0.3);
+    }
+    
+    .quote-icon {
+      color: #8b5cf6;
+      font-size: 24px;
+      margin-bottom: 12px;
+      opacity: 0.8;
+    }
+    
+    .quote-card-alt .quote-icon {
+      color: #f59e0b;
+    }
+    
+    .quote-text {
+      font-size: 16px;
+      line-height: 1.5;
+      font-style: italic;
+      margin: 0 0 12px 0;
+      color: #e2e8f0;
+    }
+    
+    .quote-author {
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 600;
+      display: block;
+      text-align: right;
+    }
+    
+    .quote-refresh-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: #64748b;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+    
+    .quote-refresh-btn:hover {
+      color: #f1f5f9;
+      background: rgba(255, 255, 255, 0.1);
+      transform: rotate(45deg);
+    }
+  </style>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+</head>
+<body>
+  <h2>Motivational Components</h2>
+  
+  <div class="motivational-quote-card glass">
+    <div class="quote-icon"><i class="ri-double-quotes-l"></i></div>
+    <p class="quote-text">"The secret of getting ahead is getting started."</p>
+    <span class="quote-author">— Mark Twain</span>
+    <button class="quote-refresh-btn" aria-label="Get new quote" title="New quote">
+      <i class="ri-refresh-line"></i>
+    </button>
+  </div>
+
+  <div class="motivational-quote-card glass quote-card-alt">
+    <div class="quote-icon"><i class="ri-lightbulb-flash-line"></i></div>
+    <p class="quote-text">"Small progress is still progress. Keep going."</p>
+    <span class="quote-author">— Anonymous</span>
+    <button class="quote-refresh-btn" aria-label="Get new quote" title="New quote">
+      <i class="ri-refresh-line"></i>
+    </button>
+  </div>
+
+  <h2 style="margin-top: 40px;">Web Component Usage</h2>
+  <motivation-card quote="Don't watch the clock; do what it does. Keep going." author="Sam Levenson"></motivation-card>
+
+  <script>
+    class MotivationCard extends HTMLElement {
+      connectedCallback() {
+        const quote = this.getAttribute('quote') || "Believe you can and you're halfway there.";
+        const author = this.getAttribute('author') || "Theodore Roosevelt";
+        
+        this.innerHTML = `
+          <div class="motivational-quote-card glass">
+            <div class="quote-icon"><i class="ri-double-quotes-l"></i></div>
+            <p class="quote-text">"${quote}"</p>
+            <span class="quote-author">— ${author}</span>
+            <button class="quote-refresh-btn" aria-label="Get new quote" title="New quote">
+              <i class="ri-refresh-line"></i>
+            </button>
+          </div>
+        `;
+      }
+    }
+    customElements.define('motivation-card', MotivationCard);
+  </script>
+</body>
+</html>
