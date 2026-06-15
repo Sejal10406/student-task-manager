@@ -1,0 +1,59 @@
+name: Label-Based Automation
+
+on:
+  issues:
+    types: [labeled, unlabeled]
+  pull_request_target:
+    types: [labeled, unlabeled]
+
+jobs:
+  automate:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Handle label actions
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { label, issue, pull_request } = context.payload;
+            const labelName = label?.name;
+            const isPR = !!pull_request;
+            const item = issue || pull_request;
+
+            if (!labelName) return;
+
+            // Add thank-you comment for "good first issue" label
+            if (labelName === 'good first issue' && !isPR) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: item.number,
+                body: '👋 This issue is marked as a **good first issue** — perfect for new contributors!\n\n' +
+                      'If you would like to work on this, please leave a comment saying you\'d like to take it. ' +
+                      'A maintainer will assign it to you.'
+              });
+            }
+
+            // Add stale comment for "needs-reproduction" label
+            if (labelName === 'needs-reproduction') {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: item.number,
+                body: '🔄 **Needs Reproduction**\n\n' +
+                      'This issue requires a clear set of steps to reproduce the problem. ' +
+                      'Please provide a minimal reproduction case so we can investigate.'
+              });
+            }
+
+            // Congratulate on "merged" label for PRs
+            if (labelName === 'merged' && isPR) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: item.number,
+                body: '✅ This pull request has been merged. Thank you for your contribution! 🎉'
+              });
+            }
