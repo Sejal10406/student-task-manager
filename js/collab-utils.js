@@ -6,6 +6,9 @@
   "use strict";
 
   function escapeHtml(str) {
+    if (typeof window.escapeHtml === 'function') {
+      return window.escapeHtml(str);
+    }
     if (str == null) return "";
     return String(str)
       .replace(/&/g, "&amp;")

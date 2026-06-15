@@ -1,0 +1,49 @@
+name: Issue Comment Response
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  respond-to-trigger-phrases:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Auto-assign on /assign command
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = context.payload.comment.body.trim().toLowerCase();
+            const issue = context.payload.issue;
+            
+            if (comment === '/assign' && !issue.assignees.length) {
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                assignees: [context.payload.comment.user.login]
+              });
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `✅ Assigned to @${context.payload.comment.user.login}`
+              });
+            }
+            
+            if (comment === '/unassign' && issue.assignees.length) {
+              await github.rest.issues.removeAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                assignees: [context.payload.comment.user.login]
+              });
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `👋 Unassigned @${context.payload.comment.user.login}`
+              });
+            }

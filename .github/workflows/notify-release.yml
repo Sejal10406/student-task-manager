@@ -1,0 +1,38 @@
+name: Release Notification
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Comment on linked issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const release = context.payload.release;
+            const tagName = release.tag_name;
+            const releaseUrl = release.html_url;
+            const body = `🎉 **Version ${tagName} has been released!**\n\n${release.body || ''}\n\n[View Release](${releaseUrl})`;
+
+            // Comment on all open issues mentioning this release
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'bug'
+            });
+
+            for (const issue of issues) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `📢 **Release ${tagName}** is now live!\n\nThis release may include fixes relevant to this issue.\n${releaseUrl}`
+              });
+            }

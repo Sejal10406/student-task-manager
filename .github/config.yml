@@ -1,0 +1,11 @@
+# Repository configuration for TaskQuest
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/creating-a-default-community-health-file
+
+blank_issues_enabled: false
+contact_links:
+  - name: TaskQuest Community
+    url: https://github.com/Sejal10406/student-task-manager/discussions
+    about: Please ask questions and discuss ideas here
+  - name: Security Issues
+    url: https://github.com/Sejal10406/student-task-manager/security/policy
+    about: Please report security vulnerabilities here

@@ -24,7 +24,9 @@ const CACHE_NAME = "taskquest-cache-v2";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
+  "./manifest.json",
   "./css/style.css",
+  "./css/collaborative.css",
   "./js/script.js",
   "./js/storage.js",
   "./js/toast.js",
@@ -35,6 +37,10 @@ const ASSETS_TO_CACHE = [
   "./js/prioritization.js",
   "./js/fab.js",
   "./js/collab-utils.js",
+  "./js/collaborative.js",
+  "./js/leaderboard.js",
+  "./js/Challenge.js",
+  "./js/correlationEngine.js",
   "./pages/notes.html",
   "./pages/Challenge.html",
   "./pages/leaderboard.html",
@@ -47,6 +53,18 @@ const ASSETS_TO_CACHE = [
   "./pages/profile.html",
   "./pages/Games.html",
   "./pages/Performance.html",
+  "./pages/milestone.html",
+  "./pages/report.html",
+  "./pages/coding.html",
+  "./pages/battle.html",
+  "./pages/Tournament.html",
+  "./pages/Spin.html",
+  "./pages/Chatbot.html",
+  "./pages/mastery.html",
+  "./pages/journey.html",
+  "./pages/velocity.html",
+  "./pages/history.html",
+  "./pages/achievement.html",
 ];
 
 // ---------------------------------------------------------------------------
@@ -77,7 +95,7 @@ self.addEventListener("install", function (event) {
 });
 
 // ---------------------------------------------------------------------------
-// Activate — evict stale caches from previous versions
+// Activate — evict stale caches from previous versions + enable nav preload
 // ---------------------------------------------------------------------------
 self.addEventListener("activate", function (event) {
   event.waitUntil(
@@ -93,6 +111,11 @@ self.addEventListener("activate", function (event) {
     }).then(function () {
       // Take control of uncontrolled clients immediately
       return self.clients.claim();
+    }).then(function () {
+      // Enable navigation preload for faster page loads
+      if (self.registration.navigationPreload) {
+        return self.registration.navigationPreload.enable();
+      }
     })
   );
 });
@@ -113,8 +136,16 @@ self.addEventListener("fetch", function (event) {
         return cachedResponse;
       }
 
+      // Try the preloaded response first (faster than full fetch)
+      const fetchPromise = event.preloadResponse
+        ? event.preloadResponse.then(function (preloadResponse) {
+            if (preloadResponse) return preloadResponse;
+            return fetch(event.request);
+          })
+        : fetch(event.request);
+
       // Otherwise fetch from network and opportunistically cache the response
-      return fetch(event.request).then(function (networkResponse) {
+      return fetchPromise.then(function (networkResponse) {
         if (
           networkResponse &&
           networkResponse.status === 200 &&
