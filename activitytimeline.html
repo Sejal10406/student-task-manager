@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Activity Timeline Component Example</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      padding: 2rem;
+      background-color: #0f172a;
+      color: #f1f5f9;
+    }
+    
+    /* Timeline Container */
+    .timeline {
+      position: relative;
+      max-width: 600px;
+      margin: 20px 0;
+      padding-left: 24px;
+    }
+    
+    /* The vertical line */
+    .timeline::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 7px;
+      width: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+    
+    /* Timeline Item */
+    .timeline-item {
+      position: relative;
+      margin-bottom: 24px;
+      padding-left: 20px;
+    }
+    
+    .timeline-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    /* The dot */
+    .timeline-dot {
+      position: absolute;
+      left: -24px;
+      top: 4px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #0f172a;
+      border: 2px solid #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      transition: all 0.3s ease;
+    }
+    
+    .timeline-item:hover .timeline-dot {
+      transform: scale(1.2);
+    }
+    
+    /* Dot Colors based on type */
+    .timeline-item.success .timeline-dot { border-color: #10b981; }
+    .timeline-item.primary .timeline-dot { border-color: #8b5cf6; }
+    .timeline-item.warning .timeline-dot { border-color: #f59e0b; }
+    .timeline-item.danger .timeline-dot { border-color: #ef4444; }
+    
+    /* Optional icon inside dot */
+    .timeline-dot i {
+      font-size: 8px;
+      color: transparent;
+      transition: color 0.3s ease;
+    }
+    
+    .timeline-item.success .timeline-dot i { color: #10b981; }
+    .timeline-item.primary .timeline-dot i { color: #8b5cf6; }
+    
+    /* Content Area */
+    .timeline-content {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      transition: background 0.3s ease;
+    }
+    
+    .timeline-item:hover .timeline-content {
+      background: rgba(30, 41, 59, 0.8);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .timeline-time {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    
+    .timeline-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #f8fafc;
+      margin-bottom: 4px;
+    }
+    
+    .timeline-desc {
+      font-size: 14px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+  </style>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+</head>
+<body>
+  <h2>Activity Timeline Components</h2>
+  
+  <div class="timeline">
+    
+    <div class="timeline-item success">
+      <div class="timeline-dot"><i class="ri-check-line"></i></div>
+      <div class="timeline-content">
+        <div class="timeline-time">Today, 10:30 AM</div>
+        <div class="timeline-title">Completed "Math Assignment 4"</div>
+        <div class="timeline-desc">You finished this task 2 days ahead of the deadline!</div>
+      </div>
+    </div>
+    
+    <div class="timeline-item primary">
+      <div class="timeline-dot"><i class="ri-star-fill"></i></div>
+      <div class="timeline-content">
+        <div class="timeline-time">Yesterday, 4:15 PM</div>
+        <div class="timeline-title">Level Up: Scholar</div>
+        <div class="timeline-desc">Reached 2,500 XP and unlocked the Scholar badge.</div>
+      </div>
+    </div>
+    
+    <div class="timeline-item warning">
+      <div class="timeline-dot"></div>
+      <div class="timeline-content">
+        <div class="timeline-time">Oct 12, 2:00 PM</div>
+        <div class="timeline-title">Created new project: Science Fair</div>
+        <div class="timeline-desc">Added 5 sub-tasks to the project.</div>
+      </div>
+    </div>
+
+    <div class="timeline-item danger">
+      <div class="timeline-dot"></div>
+      <div class="timeline-content">
+        <div class="timeline-time">Oct 10, 11:59 PM</div>
+        <div class="timeline-title">Missed Deadline</div>
+        <div class="timeline-desc">"Read Chapter 5" was not completed on time.</div>
+      </div>
+    </div>
+    
+  </div>
+
+  <h2 style="margin-top: 60px;">Web Component Usage</h2>
+  <activity-timeline></activity-timeline>
+
+  <script>
+    class ActivityTimeline extends HTMLElement {
+      connectedCallback() {
+        this.innerHTML = `
+          <div class="timeline">
+            <div class="timeline-item primary">
+              <div class="timeline-dot"><i class="ri-focus-2-line"></i></div>
+              <div class="timeline-content">
+                <div class="timeline-time">Just now</div>
+                <div class="timeline-title">Completed a 25m Focus Session</div>
+                <div class="timeline-desc">Subject: Physics. Great work staying focused!</div>
+              </div>
+            </div>
+            <div class="timeline-item success">
+              <div class="timeline-dot"><i class="ri-check-line"></i></div>
+              <div class="timeline-content">
+                <div class="timeline-time">2 hours ago</div>
+                <div class="timeline-title">Task Finished</div>
+                <div class="timeline-desc">Physics Lab Report completed.</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+    customElements.define('activity-timeline', ActivityTimeline);
+  </script>
+</body>
+</html>
