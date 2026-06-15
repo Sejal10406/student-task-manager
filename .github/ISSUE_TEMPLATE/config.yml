@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: TaskQuest Community Discussions
+    url: https://github.com/Sejal10406/student-task-manager/discussions
+    about: Please ask and answer questions here
+  - name: Security Issue
+    url: https://github.com/Sejal10406/student-task-manager/security/policy
+    about: Please report security vulnerabilities here
