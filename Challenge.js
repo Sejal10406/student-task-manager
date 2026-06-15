@@ -40,6 +40,38 @@ let state = {
   usedIndices: [],
 };
 
+const CHALLENGE_STORAGE_KEY = "taskquest_challenges_v1";
+
+function loadChallengeState() {
+  try {
+    const saved = localStorage.getItem(CHALLENGE_STORAGE_KEY);
+    if (saved) {
+      const loaded = JSON.parse(saved);
+      if (loaded && typeof loaded === "object") {
+        state = {
+          totalPts: Number(loaded.totalPts || 0),
+          badgeCount: Number(loaded.badgeCount || 0),
+          earnedBadges: Array.isArray(loaded.earnedBadges) ? loaded.earnedBadges : [],
+          currentChallenge: loaded.currentChallenge || null,
+          activeChallenges: Array.isArray(loaded.activeChallenges) ? loaded.activeChallenges : [],
+          completedChallenges: Array.isArray(loaded.completedChallenges) ? loaded.completedChallenges : [],
+          usedIndices: Array.isArray(loaded.usedIndices) ? loaded.usedIndices : [],
+        };
+      }
+    }
+  } catch (e) {
+    console.error("Failed to load challenge state:", e);
+  }
+}
+
+function saveChallengeState() {
+  try {
+    localStorage.setItem(CHALLENGE_STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error("Failed to save challenge state:", e);
+  }
+}
+
 function generateChallenge() {
   const btn = document.getElementById("randomBtn");
   btn.classList.add("spinning");
@@ -53,6 +85,7 @@ function generateChallenge() {
 
   const idx = available[Math.floor(Math.random() * available.length)];
   state.usedIndices.push(idx);
+  saveChallengeState();
   const challenge = CHALLENGES[idx];
   state.currentChallenge = { ...challenge, id: Date.now() };
 
@@ -75,6 +108,7 @@ function addToActive(challenge) {
   const existing = state.activeChallenges.find(c => c.id === challenge.id);
   if (existing) return;
   state.activeChallenges.push(challenge);
+  saveChallengeState();
   renderActiveChallenges();
 }
 
@@ -104,6 +138,7 @@ function handleResponse() {
     state.activeChallenges = state.activeChallenges.filter(c => c.id !== state.currentChallenge.id);
     state.completedChallenges.push({ ...state.currentChallenge, completedAt: new Date() });
     state.currentChallenge = null;
+    saveChallengeState();
 
     updatePoints();
     checkBadges();
@@ -139,6 +174,7 @@ function checkBadges() {
       addBadgeToBar(badge.label);
     }
   });
+  saveChallengeState();
 }
 
 function addBadgeToBar(label) {
@@ -189,3 +225,5 @@ function renderCompletedChallenges() {
 document.getElementById("user-input").addEventListener("keydown", function(e) {
   if (e.key === "Enter") handleResponse();
 });
+
+document.addEventListener("DOMContentLoaded", loadChallengeState);
