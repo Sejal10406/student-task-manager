@@ -102,6 +102,38 @@
     }
   }
 
+  /**
+   * Ordered list of non-critical cache keys to evict when quota is exceeded.
+   * Keys earlier in the list are evicted first (lowest priority data).
+   * Critical user data (tasks, profile, xp, coins, streak) is never evicted here.
+   */
+  var EVICTION_CANDIDATES = [
+    "taskquest_v1.collab",
+    "quests_recent_tags",
+    "quests_notifications",
+    "quests_chat_history",
+    "taskquest_v1.reflection_draft",
+  ];
+
+  /**
+   * Attempts to free space by evicting non-critical cached keys in priority order.
+   * @returns {boolean} true if at least one key was evicted
+   */
+  function _evictNonCriticalKeys() {
+    var freed = false;
+    EVICTION_CANDIDATES.forEach(function (candidateKey) {
+      try {
+        if (localStorage.getItem(candidateKey) !== null) {
+          localStorage.removeItem(candidateKey);
+          localStorage.removeItem(candidateKey + "_checksum");
+          console.info("[TaskQuest Storage] Evicted non-critical key to free space:", candidateKey);
+          freed = true;
+        }
+      } catch (err) { /* ignore */ }
+    });
+    return freed;
+  }
+
   function set(key, value) {
     try {
       const rawString = JSON.stringify(value);
@@ -109,13 +141,33 @@
       localStorage.setItem(key + "_checksum", calculateChecksum(rawString));
       return true;
     } catch (e) {
-      console.warn("[TaskQuest Storage] Failed to write key:", key, e);
       if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
-        console.error("[TaskQuest Storage] LocalStorage quota exceeded!");
-        // Try clearing older non-critical keys to make room if possible
+        console.error("[TaskQuest Storage] LocalStorage quota exceeded! Attempting graceful eviction…");
+
+        // Try to free space by removing low-priority cached data
+        const freed = _evictNonCriticalKeys();
+
+        if (freed) {
+          // Retry the write once after eviction
+          try {
+            const rawString = JSON.stringify(value);
+            localStorage.setItem(key, rawString);
+            localStorage.setItem(key + "_checksum", calculateChecksum(rawString));
+            console.info("[TaskQuest Storage] Write succeeded after eviction for key:", key);
+            return true;
+          } catch (retryErr) {
+            console.error("[TaskQuest Storage] Write still failed after eviction:", retryErr);
+          }
+        }
+
+        // Dispatch a custom event so the UI can show a storage-full warning
         try {
-          localStorage.removeItem("taskquest_v1.collab");
-        } catch (err) {}
+          window.dispatchEvent(new CustomEvent("taskquest:storage-full", {
+            detail: { key: key, message: "Storage quota exceeded. Please export and clear your data." }
+          }));
+        } catch (_) {}
+      } else {
+        console.warn("[TaskQuest Storage] Failed to write key:", key, e);
       }
       return false;
     }
