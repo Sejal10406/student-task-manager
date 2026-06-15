@@ -22,6 +22,13 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+const taskCharCounter =
+document.getElementById("taskCharCounter");
+
+taskInput?.addEventListener("input", () => {
+  taskCharCounter.textContent =
+    `${taskInput.value.length} / 200`;
+});
 
 // Audio state & helpers for subtle feedback
 const audioState = {
