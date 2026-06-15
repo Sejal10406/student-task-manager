@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Study Streak Component Example</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      padding: 2rem;
+      background-color: #0f172a;
+      color: #f1f5f9;
+    }
+    
+    .streak-tracker-card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 350px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    .card-title i {
+      color: #f59e0b;
+      font-size: 20px;
+    }
+    
+    .streak-days {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    
+    .streak-day-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .streak-day-cell span {
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+    
+    .streak-day-cell .day-indicator {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .streak-day-cell .day-indicator i {
+      color: #64748b;
+      font-size: 16px;
+    }
+    
+    .streak-day-cell.active span {
+      color: #f59e0b;
+    }
+    
+    .streak-day-cell.active .day-indicator {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: #f59e0b;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+    }
+    
+    .streak-day-cell.active .day-indicator i {
+      color: #f59e0b;
+    }
+    
+    .streak-footer {
+      font-size: 12px;
+      color: #94a3b8;
+      text-align: center;
+      margin: 0;
+    }
+  </style>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+</head>
+<body>
+  <h2>Study Streak Component</h2>
+  
+  <div class="streak-tracker-card glass">
+    <div class="card-title">
+      <i class="ri-fire-fill"></i>
+      <span>Weekly Streak</span>
+    </div>
+    
+    <div class="streak-days" id="streakDaysGrid">
+      <div class="streak-day-cell active">
+        <span>M</span>
+        <div class="day-indicator">
+          <i class="ri-fire-fill"></i>
+        </div>
+      </div>
+      <div class="streak-day-cell active">
+        <span>T</span>
+        <div class="day-indicator">
+          <i class="ri-fire-fill"></i>
+        </div>
+      </div>
+      <div class="streak-day-cell">
+        <span>W</span>
+        <div class="day-indicator">
+          <i class="ri-checkbox-blank-circle-line"></i>
+        </div>
+      </div>
+      <div class="streak-day-cell">
+        <span>T</span>
+        <div class="day-indicator">
+          <i class="ri-checkbox-blank-circle-line"></i>
+        </div>
+      </div>
+      <div class="streak-day-cell">
+        <span>F</span>
+        <div class="day-indicator">
+          <i class="ri-checkbox-blank-circle-line"></i>
+        </div>
+      </div>
+      <div class="streak-day-cell">
+        <span>S</span>
+        <div class="day-indicator">
+          <i class="ri-checkbox-blank-circle-line"></i>
+        </div>
+      </div>
+      <div class="streak-day-cell">
+        <span>S</span>
+        <div class="day-indicator">
+          <i class="ri-checkbox-blank-circle-line"></i>
+        </div>
+      </div>
+    </div>
+    
+    <p class="streak-footer">Complete at least one task daily to protect your streak!</p>
+  </div>
+  
+  <!-- Web Component Implementation -->
+  <h2 style="margin-top: 40px;">Web Component Version</h2>
+  <study-streak streak-data="1,1,0,0,0,0,0"></study-streak>
+
+  <script>
+    class StudyStreak extends HTMLElement {
+      connectedCallback() {
+        // e.g. "1,1,0,0,0,0,0" for active days
+        const data = (this.getAttribute('streak-data') || "0,0,0,0,0,0,0").split(',').map(Number);
+        const dayNames = ["M", "T", "W", "T", "F", "S", "S"];
+        
+        let daysHtml = '';
+        for(let i=0; i<7; i++) {
+          const isActive = data[i] === 1;
+          daysHtml += `
+            <div class="streak-day-cell ${isActive ? 'active' : ''}">
+              <span>${dayNames[i]}</span>
+              <div class="day-indicator">
+                <i class="${isActive ? 'ri-fire-fill' : 'ri-checkbox-blank-circle-line'}"></i>
+              </div>
+            </div>
+          `;
+        }
+
+        this.innerHTML = `
+          <div class="streak-tracker-card glass">
+            <div class="card-title">
+              <i class="ri-fire-fill"></i>
+              <span>Weekly Streak</span>
+            </div>
+            <div class="streak-days">
+              ${daysHtml}
+            </div>
+            <p class="streak-footer">Complete at least one task daily to protect your streak!</p>
+          </div>
+        `;
+      }
+    }
+    customElements.define('study-streak', StudyStreak);
+  </script>
+</body>
+</html>
