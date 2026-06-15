@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Deadline Component Example</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      padding: 2rem;
+      background-color: #1e293b;
+      color: #f8fafc;
+    }
+    /* Basic Deadline Component Styles */
+    .task-deadline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .task-deadline.critical { 
+      color: #ef4444; 
+      background: rgba(239, 68, 68, 0.15); 
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    .task-deadline.warning { 
+      color: #f59e0b; 
+      background: rgba(245, 158, 11, 0.15); 
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+    .task-deadline.normal { 
+      color: #06b6d4; 
+      background: rgba(6, 182, 212, 0.15); 
+      border-color: rgba(6, 182, 212, 0.3);
+    }
+    .task-deadline i { font-size: 15px; }
+  </style>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+</head>
+<body>
+  <h2>Basic HTML/CSS Deadline Components</h2>
+  <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 2rem;">
+    <!-- Normal Deadline -->
+    <div class="task-deadline normal">
+      <i class="ri-calendar-line"></i> Due in 3 days
+    </div>
+    
+    <!-- Warning Deadline -->
+    <div class="task-deadline warning">
+      <i class="ri-timer-line"></i> Due Tomorrow
+    </div>
+
+    <!-- Critical Deadline -->
+    <div class="task-deadline critical">
+      <i class="ri-alert-line"></i> Overdue
+    </div>
+  </div>
+
+  <h2>Web Component Usage</h2>
+  <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+    <deadline-badge type="normal" text="Next Week"></deadline-badge>
+    <deadline-badge type="critical" text="Action Required"></deadline-badge>
+  </div>
+
+  <script>
+    // Web Component Version
+    class DeadlineBadge extends HTMLElement {
+      connectedCallback() {
+        const type = this.getAttribute('type') || 'normal';
+        const text = this.getAttribute('text') || 'No deadline';
+        let icon = 'ri-calendar-line';
+        if (type === 'critical') icon = 'ri-alert-line';
+        if (type === 'warning') icon = 'ri-timer-line';
+
+        this.innerHTML = `
+          <div class="task-deadline ${type}">
+            <i class="${icon}"></i> ${text}
+          </div>
+        `;
+      }
+    }
+    customElements.define('deadline-badge', DeadlineBadge);
+  </script>
+</body>
+</html>
