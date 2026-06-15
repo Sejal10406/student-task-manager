@@ -99,24 +99,36 @@ self.addEventListener("install", function (event) {
 // ---------------------------------------------------------------------------
 self.addEventListener("activate", function (event) {
   event.waitUntil(
-    caches.keys().then(function (keys) {
-      return Promise.all(
-        keys.map(function (key) {
-          if (key !== CACHE_NAME) {
-            console.info("[TaskQuest SW] Evicting stale cache:", key);
-            return caches.delete(key);
-          }
-        })
-      );
-    }).then(function () {
-      // Take control of uncontrolled clients immediately
-      return self.clients.claim();
-    }).then(function () {
-      // Enable navigation preload for faster page loads
-      if (self.registration.navigationPreload) {
-        return self.registration.navigationPreload.enable();
-      }
-    })
+    Promise.all([
+      // 1. Evict all stale caches from previous versions
+      caches.keys().then(function (keys) {
+        return Promise.all(
+          keys.map(function (key) {
+            if (key !== CACHE_NAME) {
+              console.info("[TaskQuest SW] Evicting stale cache:", key);
+              return caches.delete(key);
+            }
+          })
+        );
+      }),
+
+      // 2. Take control of all open clients immediately so they receive
+      //    responses from this worker without requiring a page reload.
+      //    Must happen in parallel with (not after) navigationPreload.enable()
+      //    to avoid a window where old clients still hold control.
+      self.clients.claim(),
+
+      // 3. Enable Navigation Preload for faster navigation responses.
+      //    Guarded to avoid throwing on browsers that do not support it.
+      (function () {
+        if (self.registration.navigationPreload) {
+          return self.registration.navigationPreload.enable().catch(function (e) {
+            console.warn("[TaskQuest SW] Could not enable navigationPreload:", e);
+          });
+        }
+        return Promise.resolve();
+      })()
+    ])
   );
 });
 
