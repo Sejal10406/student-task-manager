@@ -12,7 +12,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Auto-assign on /assign command
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const comment = context.payload.comment.body.trim().toLowerCase();
