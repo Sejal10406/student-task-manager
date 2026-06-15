@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Floating Component Example</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      padding: 2rem;
+      background-color: #0f172a;
+      color: #f1f5f9;
+      height: 200vh; /* Make page scrollable */
+    }
+    
+    /* Floating Action Button (FAB) */
+    .fab-container {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      gap: 15px;
+      z-index: 1000;
+    }
+    
+    .fab-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 20px rgba(139, 92, 246, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .fab-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 25px rgba(139, 92, 246, 0.6);
+    }
+    
+    .fab-btn:active {
+      transform: scale(0.95);
+    }
+    
+    /* Secondary FABs (Menu items) */
+    .fab-menu {
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 12px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(20px) scale(0.8);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-origin: bottom center;
+    }
+    
+    .fab-container:hover .fab-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+    }
+    
+    .fab-menu-btn {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      background: #1e293b;
+      color: #f1f5f9;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    
+    .fab-menu-btn:hover {
+      background: #334155;
+      transform: scale(1.1);
+    }
+    
+    /* Tooltips for menu items */
+    .fab-menu-btn::before {
+      content: attr(data-tooltip);
+      position: absolute;
+      right: 55px;
+      background: rgba(15, 23, 42, 0.9);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(10px);
+      transition: all 0.2s ease;
+      pointer-events: none;
+    }
+    
+    .fab-menu-btn:hover::before {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+    }
+  </style>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+</head>
+<body>
+  <h2>Floating Action Button Component</h2>
+  <p>Hover over the button in the bottom right corner to see the expandable floating menu.</p>
+  
+  <div class="fab-container">
+    <button class="fab-btn">
+      <i class="ri-add-line"></i>
+    </button>
+    
+    <div class="fab-menu">
+      <button class="fab-menu-btn" data-tooltip="Add Note">
+        <i class="ri-sticky-note-line"></i>
+      </button>
+      <button class="fab-menu-btn" data-tooltip="Add Event">
+        <i class="ri-calendar-event-line"></i>
+      </button>
+      <button class="fab-menu-btn" data-tooltip="Settings">
+        <i class="ri-settings-3-line"></i>
+      </button>
+    </div>
+  </div>
+
+  <h2 style="margin-top: 60px;">Web Component Version</h2>
+  <p>Using a custom element to generate an additional floating menu (positioned slightly to the left).</p>
+  
+  <!-- Web Component Implementation -->
+  <floating-menu></floating-menu>
+
+  <script>
+    class FloatingMenu extends HTMLElement {
+      connectedCallback() {
+        this.innerHTML = `
+          <div class="fab-container" style="right: 120px;">
+            <button class="fab-btn" style="background: linear-gradient(135deg, #10b981, #06b6d4);">
+              <i class="ri-magic-line"></i>
+            </button>
+            <div class="fab-menu">
+              <button class="fab-menu-btn" data-tooltip="Quick Action 1">
+                <i class="ri-flashlight-line"></i>
+              </button>
+              <button class="fab-menu-btn" data-tooltip="Quick Action 2">
+                <i class="ri-star-line"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }
+    }
+    customElements.define('floating-menu', FloatingMenu);
+  </script>
+</body>
+</html>
