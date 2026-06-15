@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Filter Component Example</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      padding: 2rem;
+      background-color: #0f172a;
+      color: #f1f5f9;
+    }
+    
+    /* Filter Bar Container */
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 24px;
+      align-items: center;
+    }
+    
+    /* Filter Button Component */
+    .filter-btn {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 999px; /* Pill shape */
+      color: #94a3b8;
+      font-weight: 500;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    
+    .filter-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #f1f5f9;
+      transform: translateY(-1px);
+    }
+    
+    .filter-btn.active {
+      background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);
+    }
+    
+    /* Icon styling within filter buttons */
+    .filter-btn i {
+      font-size: 16px;
+    }
+    
+    /* Special variants */
+    .filter-btn.reset-btn {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+    
+    .filter-btn.reset-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+  </style>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+</head>
+<body>
+  <h2>Filter Group Component</h2>
+  
+  <div class="filters">
+    <button class="filter-btn active" data-filter="All">All</button>
+    <button class="filter-btn" data-filter="Theory">📘 Theory</button>
+    <button class="filter-btn" data-filter="Practical">🧪 Practical</button>
+    <button class="filter-btn" data-filter="Assignment">📝 Assignment</button>
+    <button class="filter-btn" data-filter="Revision">📖 Revision</button>
+    <button class="filter-btn" data-filter="Overdue"><i class="ri-error-warning-line"></i> Overdue</button>
+    <div style="width: 1px; height: 24px; background: rgba(255,255,255,0.1); margin: 0 8px;"></div>
+    <button class="filter-btn reset-btn"><i class="ri-delete-bin-line"></i> Clear Filters</button>
+  </div>
+
+  <h2 style="margin-top: 40px;">Web Component Usage</h2>
+  <filter-group active="Favorites" items='["All", "Favorites", "Videos", "Articles"]'></filter-group>
+
+  <script>
+    class FilterGroup extends HTMLElement {
+      connectedCallback() {
+        const items = JSON.parse(this.getAttribute('items') || '[]');
+        const activeItem = this.getAttribute('active') || items[0];
+        
+        let buttonsHtml = '';
+        items.forEach(item => {
+          const isActive = item === activeItem ? 'active' : '';
+          buttonsHtml += `<button class="filter-btn ${isActive}" data-filter="${item}">${item}</button>`;
+        });
+        
+        this.innerHTML = `
+          <div class="filters">
+            ${buttonsHtml}
+          </div>
+        `;
+        
+        // Add click behavior
+        const buttons = this.querySelectorAll('.filter-btn');
+        buttons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+          });
+        });
+      }
+    }
+    customElements.define('filter-group', FilterGroup);
+    
+    // Add click behavior to standard HTML buttons above
+    const standardButtons = document.querySelectorAll('body > .filters > .filter-btn:not(.reset-btn)');
+    standardButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        standardButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
