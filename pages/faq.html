@@ -195,6 +195,13 @@
     <div class="section-title" style="margin-bottom: 1rem;">
       <h2>Frequently Asked Questions</h2>
     </div>
+
+    <!-- Live FAQ Search Bar -->
+    <div style="margin-bottom: 2rem; display: flex; gap: 10px; position: relative;">
+      <i class="ri-search-line" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--textLight); pointer-events: none;"></i>
+      <input type="text" id="faqSearchInput" placeholder="Search FAQ articles..." aria-label="Search FAQ" style="width: 100%; padding: 12px 12px 12px 42px; border-radius: 14px; border: 1px solid var(--border); background: var(--card); color: var(--text); outline: none;">
+    </div>
+
     <div class="faq-accordion">
       <div class="faq-item">
         <button class="faq-question" id="faq-q-1" aria-expanded="false" aria-controls="faq-a-1">
@@ -303,6 +310,24 @@
         }
       });
     });
+
+    // FAQ Search bar functionality (#377)
+    const faqSearch = document.getElementById("faqSearchInput");
+    if (faqSearch) {
+      faqSearch.addEventListener("input", (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        document.querySelectorAll(".faq-item").forEach(item => {
+          const qText = item.querySelector(".faq-question").textContent.toLowerCase();
+          const aText = item.querySelector(".faq-answer").textContent.toLowerCase();
+          
+          if (qText.includes(query) || aText.includes(query)) {
+            item.style.display = "";
+          } else {
+            item.style.display = "none";
+          }
+        });
+      });
+    }
   </script>
 </body>
 </html>
