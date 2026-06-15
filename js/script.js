@@ -4,6 +4,14 @@
  * @version 2.0.0
  */
 
+// Web Component for Priority Badge
+class PriorityBadge extends HTMLElement {
+  connectedCallback() {
+    const level = this.getAttribute('level') || 'Medium';
+    this.innerHTML = `<span class="priority-pill priority-${level.toLowerCase()}">${level}</span>`;
+  }
+}
+customElements.define('priority-badge', PriorityBadge);
 
 // Core Elements
 const taskInput = document.getElementById("taskInput");
@@ -1600,7 +1608,7 @@ function createTaskEl(task) {
         <h3 class="task-title">${escapeHtml(task.text)}</h3>
         <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px; flex-wrap: wrap;">
           <p class="task-category" style="margin: 0;"><span class="subject-pill" style="background: ${subjectColor}; color: ${subjectTextColor};">${catEmoji} ${escapeHtml(task.category)}</span></p>
-          <span class="priority-pill priority-${pri.toLowerCase()}">${pri}</span>
+          <priority-badge level="${pri}"></priority-badge>
           ${urgencyBadgeHtml}
           ${task.recurrence && task.recurrence !== 'none' ? `<span class="recurrence-pill" data-type="${escapeHtml(task.recurrence)}" title="Recurring: ${escapeHtml(task.recurrence)}">${escapeHtml(task.recurrence)}</span>` : ''}
           ${task.depends && task.depends.length ? `<span class="dependency-pill" title="Depends on ${task.depends.length} task(s)">🔒 ${task.depends.length}</span>` : ''}
