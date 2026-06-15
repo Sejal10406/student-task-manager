@@ -1,0 +1,7 @@
+# Ignore auto-generated and vendored files
+*.min.js
+*.min.css
+*.map
+package-lock.json
+CHANGELOG.md
+LICENSE.md
