@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Animation Component Example</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      padding: 2rem;
+      background-color: #0f172a;
+      color: #f1f5f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    
+    /* Celebration Container */
+    .celebration-container {
+      text-align: center;
+      margin-top: 2rem;
+      padding: 2rem;
+      border-radius: 16px;
+      background: rgba(255, 215, 0, 0.1);
+      border: 2px dashed rgba(255, 215, 0, 0.5);
+      backdrop-filter: blur(10px);
+      max-width: 400px;
+    }
+
+    /* Bounce In Animation */
+    .bounce-in {
+      animation: bounceIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+    }
+    
+    /* Continuous Float Animation */
+    .float {
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    /* Combine both animations */
+    .animated-icon {
+      font-size: 64px;
+      margin-bottom: 1rem;
+      display: inline-block;
+      filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
+      animation: bounceIn 0.8s ease, float 3s ease-in-out infinite 0.8s;
+    }
+    
+    .celebration-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #fcd34d;
+      margin-bottom: 8px;
+    }
+    
+    .celebration-text {
+      color: #f1f5f9;
+      line-height: 1.5;
+    }
+
+    @keyframes bounceIn {
+      0% { transform: scale(0.3) translateY(50px) rotate(-15deg); opacity: 0; }
+      50% { transform: scale(1.1) translateY(-10px) rotate(10deg); opacity: 1; }
+      70% { transform: scale(0.95) translateY(5px) rotate(-5deg); }
+      100% { transform: scale(1) translateY(0) rotate(0); opacity: 1; }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-15px) rotate(5deg); }
+    }
+    
+    /* Trigger Button */
+    .trigger-btn {
+      margin-bottom: 30px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);
+      transition: all 0.2s ease;
+    }
+    
+    .trigger-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(139, 92, 246, 0.5);
+    }
+    
+    .trigger-btn:active {
+      transform: translateY(1px);
+    }
+    
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h2>Animation Components</h2>
+  <p style="color: #94a3b8; margin-bottom: 40px;">Basic reusable animation classes and components.</p>
+  
+  <button id="triggerBtn" class="trigger-btn">Trigger Celebration Animation</button>
+  
+  <div id="celebration" class="celebration-container hidden">
+    <div class="animated-icon">🏆</div>
+    <div class="celebration-title">Achievement Unlocked!</div>
+    <div class="celebration-text">You've completed all your tasks for today. Keep up the great work!</div>
+  </div>
+
+  <h2 style="margin-top: 60px;">Web Component Version</h2>
+  <animated-celebration icon="🚀" title="Level Up!" message="You are now Level 5."></animated-celebration>
+
+  <script>
+    // Vanilla JS trigger for standard component
+    document.getElementById('triggerBtn').addEventListener('click', function() {
+      const el = document.getElementById('celebration');
+      el.classList.remove('hidden');
+      
+      // Reset animation by cloning and replacing
+      const newEl = el.cloneNode(true);
+      el.parentNode.replaceChild(newEl, el);
+    });
+
+    // Web Component Implementation
+    class AnimatedCelebration extends HTMLElement {
+      connectedCallback() {
+        const icon = this.getAttribute('icon') || '🌟';
+        const title = this.getAttribute('title') || 'Success!';
+        const message = this.getAttribute('message') || 'Action completed successfully.';
+        
+        this.innerHTML = `
+          <div class="celebration-container" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.5);">
+            <div class="animated-icon" style="filter: drop-shadow(0 0 15px rgba(16, 185, 129, 0.6));">${icon}</div>
+            <div class="celebration-title" style="color: #34d399;">${title}</div>
+            <div class="celebration-text">${message}</div>
+          </div>
+        `;
+      }
+    }
+    customElements.define('animated-celebration', AnimatedCelebration);
+  </script>
+</body>
+</html>
