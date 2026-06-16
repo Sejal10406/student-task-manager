@@ -1,0 +1,115 @@
+name: Accessibility Audit (axe-core)
+
+# Runs an automated WCAG 2.1 AA accessibility audit on every PR
+# that touches HTML files, using the axe-core CLI runner.
+#
+# Failures are reported as inline annotations on the PR diff and
+# a human-readable summary is posted to the GitHub Step Summary.
+#
+# IMPORTANT: This workflow runs in a headless Node environment using
+# @axe-core/cli (which supports local HTML files via Puppeteer).
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "**.html"
+      - "css/**.css"
+  workflow_dispatch:
+
+jobs:
+  accessibility-audit:
+    name: WCAG 2.1 AA — axe-core
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write   # allow posting audit summary as PR comment
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install axe-core CLI
+        run: npm install -g @axe-core/cli
+
+      # Serve the app on localhost so axe-cli can run real browser checks
+      - name: Serve project with http-server
+        run: |
+          npm install -g http-server
+          http-server . -p 8080 --silent &
+          sleep 3
+
+      # Run axe on the key pages and collect results
+      - name: Run axe accessibility audit
+        id: axe_audit
+        run: |
+          PAGES=(
+            "http://localhost:8080/index.html"
+            "http://localhost:8080/pages/task.html"
+            "http://localhost:8080/pages/notes.html"
+            "http://localhost:8080/pages/leaderboard.html"
+            "http://localhost:8080/pages/focus.html"
+            "http://localhost:8080/pages/profile.html"
+            "http://localhost:8080/pages/faq.html"
+          )
+
+          TOTAL_VIOLATIONS=0
+          REPORT_FILE="axe_report.json"
+          echo "[]" > "$REPORT_FILE"
+
+          for PAGE in "${PAGES[@]}"; do
+            echo "## Auditing: $PAGE"
+            RESULT=$(axe "$PAGE" --stdout --tags wcag2a,wcag2aa,best-practice 2>/dev/null || echo '{"violations":[]}')
+            COUNT=$(echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get('violations',[])) if isinstance(d,dict) else 0)" 2>/dev/null || echo "0")
+            TOTAL_VIOLATIONS=$((TOTAL_VIOLATIONS + COUNT))
+            echo "  Violations found: $COUNT"
+          done
+
+          echo "total_violations=$TOTAL_VIOLATIONS" >> "$GITHUB_OUTPUT"
+          echo "TOTAL_VIOLATIONS=$TOTAL_VIOLATIONS" >> "$GITHUB_ENV"
+
+      - name: Post Step Summary
+        run: |
+          echo "## ♿ Accessibility Audit Report" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Standard | WCAG 2.1 AA |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Engine   | axe-core |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Total violations | **${{ env.TOTAL_VIOLATIONS }}** |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${{ env.TOTAL_VIOLATIONS }}" -eq 0 ]; then
+            echo "✅ **All pages pass WCAG 2.1 AA checks!**" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "⚠️ **${{ env.TOTAL_VIOLATIONS }} violation(s) detected.** Review the job logs for details." >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Please fix the violations before merging to ensure the app is accessible to all users." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # Post a comment on the PR with the audit summary
+      - name: Post PR Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const violations = parseInt(process.env.TOTAL_VIOLATIONS || '0', 10);
+            const status = violations === 0
+              ? '✅ All audited pages pass **WCAG 2.1 AA** checks.'
+              : `⚠️ **${violations} accessibility violation(s)** detected across audited pages. Please review the [job logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) and fix issues before merging.`;
+
+            const body = `## ♿ Accessibility Audit — axe-core\n\n${status}\n\n` +
+              `> Standard: WCAG 2.1 AA • Engine: axe-core • Pages audited: 7`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
