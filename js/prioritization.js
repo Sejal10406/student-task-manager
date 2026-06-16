@@ -13,6 +13,15 @@
   /**
    * Calculates a numeric urgency score for a task.
    * Higher = needs more attention.
+   *
+   * Scoring breakdown:
+   *   - Deadline proximity  : 0–60 pts
+   *   - User priority level : 0–30 pts
+   *   - Task category weight: 0–10 pts  (Exam/Assignment ranked higher)
+   *   - Task age penalty    : 0–5 pts   (older pending tasks surface higher)
+   *
+   * @param {Object} task - Task with deadline, priority, category, createdAt
+   * @returns {number} urgency score; -1 for completed tasks
    */
   function calculatePriorityScore(task) {
     if (task.completed) return -1;
@@ -38,6 +47,30 @@
     if (pri === "high")        score += 30;
     else if (pri === "medium") score += 15;
     else                       score += 5;
+
+    // 3. Category weight (0–10 pts)
+    // Academic categories with higher real-world stakes are scored higher.
+    var CATEGORY_WEIGHTS = {
+      "exam":       10,
+      "assignment": 8,
+      "practical":  6,
+      "revision":   5,
+      "theory":     4,
+      "general":    2
+    };
+    var cat = (task.category || "General").toLowerCase();
+    score += CATEGORY_WEIGHTS[cat] !== undefined ? CATEGORY_WEIGHTS[cat] : 2;
+
+    // 4. Task age penalty (0–5 pts)
+    // Prevents old pending tasks from being permanently buried.
+    // Score increases by 1 pt per 2 days the task remains incomplete (capped at 5).
+    if (task.createdAt) {
+      var created = new Date(task.createdAt);
+      var ageInDays = (Date.now() - created.getTime()) / (1000 * 60 * 60 * 24);
+      if (!isNaN(ageInDays) && ageInDays > 2) {
+        score += Math.min(5, Math.floor(ageInDays / 2));
+      }
+    }
 
     return score;
   }
