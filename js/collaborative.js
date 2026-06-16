@@ -421,18 +421,64 @@ function showToast(msg, type = 'info') {
 }
 
 /* ═══════════════════════ AUDIO ═══════════════════════ */
+/* ── Shared AudioContext for chat ping sounds ────────────────────────────
+ * Creating a new AudioContext on every playPing() call leaks browser resources
+ * and eventually exceeds the browser's concurrent context limit (~6–12),
+ * causing audio to silently stop working.  We keep a single shared instance
+ * and reuse it for every ping.
+ */
+let _pingAudioCtx = null;
+
+/**
+ * Returns (or lazily creates) the shared AudioContext for ping sounds.
+ * @returns {AudioContext|null}
+ */
+function _getOrCreatePingCtx() {
+  try {
+    if (!_pingAudioCtx || _pingAudioCtx.state === "closed") {
+      _pingAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return _pingAudioCtx;
+  } catch (e) {
+    return null;
+  }
+}
+
 function playPing() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
+    const ctx = _getOrCreatePingCtx();
+    if (!ctx) return;
+
+    // Resume context if it was suspended (browser autoplay policy)
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(function () {});
+    }
+
+    const osc  = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
     osc.frequency.value = 880;
     gain.gain.setValueAtTime(0.07, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
-    osc.start(); osc.stop(ctx.currentTime + 0.25);
-  } catch(e) {}
+    osc.start();
+    osc.stop(ctx.currentTime + 0.25);
+
+    // Disconnect nodes after playback to release GC pressure
+    osc.addEventListener("ended", function () {
+      try { osc.disconnect(); gain.disconnect(); } catch (_) {}
+    });
+  } catch (e) {
+    // Swallow errors (e.g. NotSupportedError on restricted pages)
+  }
 }
+
+/* Release the shared context when the page unloads */
+window.addEventListener("beforeunload", function () {
+  if (_pingAudioCtx && _pingAudioCtx.state !== "closed") {
+    _pingAudioCtx.close().catch(function () {});
+  }
+});
 
 /* ═══════════════════════ INIT ═══════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
