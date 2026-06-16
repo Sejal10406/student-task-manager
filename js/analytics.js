@@ -177,21 +177,40 @@
     start.setDate(start.getDate() - (HEATMAP_WEEKS * 7 - 1));
     while (start.getDay() !== 0) start.setDate(start.getDate() - 1);
 
+    // ── Shared tooltip element (created once, reused across re-renders) ────
+    // Keeping it outside `container` means clearing container.innerHTML
+    // does NOT affect the tooltip node, and we avoid creating duplicates.
+    let tooltip = document.getElementById("heatmapTooltip");
+    if (!tooltip) {
+      tooltip = document.createElement("div");
+      tooltip.id = "heatmapTooltip";
+      tooltip.className = "heatmap-tooltip";
+      tooltip.setAttribute("role", "tooltip");
+      tooltip.setAttribute("aria-hidden", "true");
+      tooltip.style.cssText =
+        "position:fixed;display:none;z-index:9999;pointer-events:none;" +
+        "background:rgba(15,14,31,0.92);color:#e2e8f0;padding:6px 12px;" +
+        "border-radius:8px;font-size:0.8rem;border:1px solid rgba(255,255,255,0.12);" +
+        "box-shadow:0 4px 16px rgba(0,0,0,0.3);white-space:nowrap;";
+      document.body.appendChild(tooltip);
+
+      // Hide tooltip when window loses focus to prevent stale visible tooltip
+      window.addEventListener("blur", function () { tooltip.style.display = "none"; });
+    }
+
+    // ── Clear previous cells (no dangling listeners because we use delegation) ──
     container.innerHTML = "";
+
     if (quests.length === 0) {
       container.innerHTML =
         '<p style="padding:16px;opacity:.7;margin:0;">Complete quests to see your consistency heatmap.</p>';
       return;
     }
 
-    let tooltip = document.getElementById("heatmapTooltip");
-    if (!tooltip) {
-      tooltip = document.createElement("div");
-      tooltip.id = "heatmapTooltip";
-      tooltip.className = "heatmap-tooltip";
-      tooltip.style.display = "none";
-      document.body.appendChild(tooltip);
-    }
+    // ── Build day-cell metadata map for O(1) delegation lookups ────────────
+    // Stores { dateLabel, count } keyed by a sequential cell index stored as
+    // data-cell-index on each cell element.
+    const cellMeta = [];
 
     for (let w = 0; w < HEATMAP_WEEKS; w++) {
       const weekCol = document.createElement("div");
@@ -200,32 +219,61 @@
         const cellDate = new Date(start);
         cellDate.setDate(start.getDate() + w * 7 + d);
         if (cellDate > end) continue;
-        const key = dateKey(cellDate);
+        const key   = dateKey(cellDate);
         const count = activity[key] || 0;
+        const idx   = cellMeta.length;
+        cellMeta.push({
+          label: cellDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }),
+          count
+        });
+
         const cell = document.createElement("div");
         cell.className = `heatmap-day level-${activityLevel(count)}`;
         cell.setAttribute("role", "gridcell");
+        cell.setAttribute("tabindex", "0");
         cell.setAttribute(
           "aria-label",
           `${cellDate.toLocaleDateString()}: ${count} completion${count !== 1 ? "s" : ""}`
         );
-        cell.addEventListener("mouseenter", (e) => {
-          tooltip.style.display = "block";
-          tooltip.textContent = `${cellDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} — ${count} completed`;
-          tooltip.style.left = `${e.clientX + 12}px`;
-          tooltip.style.top = `${e.clientY + 12}px`;
-        });
-        cell.addEventListener("mousemove", (e) => {
-          tooltip.style.left = `${e.clientX + 12}px`;
-          tooltip.style.top = `${e.clientY + 12}px`;
-        });
-        cell.addEventListener("mouseleave", () => {
-          tooltip.style.display = "none";
-        });
+        cell.dataset.cellIndex = idx;
         weekCol.appendChild(cell);
       }
       if (weekCol.childNodes.length) container.appendChild(weekCol);
     }
+
+    // ── Single delegated listener on the container (no per-cell listeners) ─
+    // Replaces any previously attached delegated listener to avoid stacking.
+    if (container._heatmapDelegated) {
+      container.removeEventListener("mouseover", container._heatmapDelegated);
+      container.removeEventListener("mousemove", container._heatmapMoveHandler);
+      container.removeEventListener("mouseout",  container._heatmapOutHandler);
+    }
+
+    container._heatmapMoveHandler = function (e) {
+      tooltip.style.left = (e.clientX + 14) + "px";
+      tooltip.style.top  = (e.clientY + 14) + "px";
+    };
+    container._heatmapOutHandler = function (e) {
+      if (!e.relatedTarget || !container.contains(e.relatedTarget)) {
+        tooltip.style.display = "none";
+        tooltip.setAttribute("aria-hidden", "true");
+      }
+    };
+    container._heatmapDelegated = function (e) {
+      const cell = e.target.closest(".heatmap-day[data-cell-index]");
+      if (!cell) { tooltip.style.display = "none"; return; }
+      const meta = cellMeta[parseInt(cell.dataset.cellIndex, 10)];
+      if (!meta) return;
+      tooltip.textContent = `${meta.label} — ${meta.count} completed`;
+      tooltip.style.display = "block";
+      tooltip.setAttribute("aria-hidden", "false");
+      tooltip.style.left = (e.clientX + 14) + "px";
+      tooltip.style.top  = (e.clientY + 14) + "px";
+    };
+
+    container.addEventListener("mouseover", container._heatmapDelegated);
+    container.addEventListener("mousemove", container._heatmapMoveHandler);
+    container.addEventListener("mouseout",  container._heatmapOutHandler);
   }
 
   function bucketByPeriod(quests, mode) {
